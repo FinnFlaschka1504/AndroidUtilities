@@ -1,17 +1,21 @@
 package com.finn.androidUtilities;
 
-import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.drawable.Animatable2;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -47,7 +51,7 @@ public class CustomRecycler<T>{
     private boolean showDivider = false;
     private boolean hideLastDivider;
     private boolean useCustomRipple = true;
-    private Context context;
+    private AppCompatActivity context;
     private RecyclerView recycler;
     private int layoutId = -1;
     private SetItemContent<T> setItemContent;
@@ -81,9 +85,10 @@ public class CustomRecycler<T>{
     private int dividerMargin;
     private OnSwiped<T> onSwiped;
     private Pair<Boolean,Boolean> leftRightSwipe_pair;
+    private ExpandableHelper expandableHelper;
 
 
-    public CustomRecycler(Context context) {
+    public CustomRecycler(AppCompatActivity context) {
         this.context = context;
     }
 
@@ -97,7 +102,7 @@ public class CustomRecycler<T>{
 //        return customRecycler;
 //    }
 
-    public CustomRecycler(Context context, RecyclerView recycler) {
+    public CustomRecycler(AppCompatActivity context, RecyclerView recycler) {
         this.context = context;
         this.recycler = recycler;
     }
@@ -158,7 +163,7 @@ public class CustomRecycler<T>{
         return this;
     }
 
-    public CustomRecycler<T> showDivider() {
+    public CustomRecycler<T> enableDivider() {
         this.showDivider = true;
         return this;
     }
@@ -415,6 +420,10 @@ public class CustomRecycler<T>{
             notifyItemRangeChanged(index, dataSet.size());
         }
 
+        public List<? extends T> getDataSet() {
+            return dataSet;
+        }
+
         public class ViewHolder extends RecyclerView.ViewHolder {
 
             public ViewHolder(View v) {
@@ -422,11 +431,131 @@ public class CustomRecycler<T>{
             }
         }
 
-        public List<? extends T> getDataSet() {
-            return dataSet;
-        }
     }
     //  <----- Adapter -----
+
+
+    //  --------------- Expandable --------------->
+    CustomRecycler.OnClickListener<CustomRecycler.Expandable<T>> expandableOnClickListener = (customRecycler1, itemView, expandable, index) -> {
+        View expansion = itemView.findViewById(R.id.listItem_expandable_expansionLayout);
+        boolean expanded = expandable.isExpended();
+
+        ImageView imageView = itemView.findViewById(expandableHelper.getArrowId());
+        if (imageView != null) {
+            Drawable drawable = imageView.getDrawable();
+//        if (drawable instanceof AnimatedVectorDrawableCompat) {
+//            AnimatedVectorDrawableCompat compat = (AnimatedVectorDrawableCompat) drawable;
+//            compat.start();
+//        } else
+            if (drawable instanceof AnimatedVectorDrawable) {
+                AnimatedVectorDrawable compat = (AnimatedVectorDrawable) drawable;
+                compat.start();
+                compat.registerAnimationCallback(new Animatable2.AnimationCallback() {
+                    @Override
+                    public void onAnimationEnd(Drawable drawable) {
+                        imageView.setImageDrawable(context.getDrawable(expanded ? R.drawable.ic_arrow_down_to_up : R.drawable.ic_arrow_up_to_down));
+                    }
+                });
+            }
+        }
+
+        if (expanded) {
+            CustomUtility.collapse(expansion);
+        } else {
+            CustomUtility.expand(expansion);
+        }
+
+        expandable.setExpended(!expanded);
+//                    Toast.makeText(this, expandable, Toast.LENGTH_SHORT).show();
+    };
+
+    public CustomRecycler<T> setExpandableHelper(ExpandableHelper<T> expandableHelper) {
+        this.expandableHelper = expandableHelper;
+        return this;
+    }
+
+    public static class ExpandableHelper<T> {
+        enum TYPE {
+            DROPDOWN, LIST, CHANGE
+        }
+        private List<Expandable<T>> expandableList = new ArrayList<>();
+        private boolean showArrow;
+        private int arrowId = R.id.listItem_expandable_arrow;
+        private int contentLayoutId;
+        private boolean nestedRecycler;
+        private SetItemContent<T> setItemContent;
+        private TYPE type;
+
+        public ExpandableHelper(int contentLayoutId, SetItemContent<T> setItemContent) {
+            this.contentLayoutId = contentLayoutId;
+            this.setItemContent = setItemContent;
+            type = TYPE.DROPDOWN;
+        }
+
+        public int getContentLayoutId() {
+            return contentLayoutId;
+        }
+
+        public List<Expandable<T>> getExpandableList() {
+            return expandableList;
+        }
+
+        public ExpandableHelper<T> setExpandableList(List<Expandable<T>> expandableList) {
+            this.expandableList = expandableList;
+            return this;
+        }
+
+        public int getArrowId() {
+            return arrowId;
+        }
+
+        public ExpandableHelper<T> setArrowId(int arrowId) {
+            this.arrowId = arrowId;
+            return this;
+        }
+    }
+
+    public static class Expandable<T> {
+        public Expandable(String name) {
+            this.name = name;
+        }
+
+        public Expandable(String name, T object) {
+            this.name = name;
+
+            if (object instanceof List)
+                this.list = (List<T>) object;
+            else
+                this.object = object;
+        }
+
+        private String name;
+        private boolean expended;
+        private List<T> list = new ArrayList<>();
+        private T object;
+
+        public String getName() {
+            return name;
+        }
+
+        public T getObject() {
+            return object;
+        }
+
+        public List<T> getList() {
+            return list;
+        }
+
+        public boolean isExpended() {
+            return expended;
+        }
+
+        public Expandable setExpended(boolean expended) {
+            this.expended = expended;
+            return this;
+        }
+    }
+    //  <--------------- Expandable ---------------
 
 
     //  ----- Generate ----->
@@ -450,6 +579,41 @@ public class CustomRecycler<T>{
         else
             layoutManager = new LinearLayoutManager(context, orientation, false);
         recycler.setLayoutManager(layoutManager);
+
+
+        if (setItemContent == null && expandableHelper != null) {
+            expandableHelper.setExpandableList(objectList);
+            layoutId = R.layout.list_item_expandable;
+            setSetItemContent( (itemView, t) -> {
+                Expandable<T> expandable = (Expandable<T>) t;
+                ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(expandable.getName());
+
+                View v;
+                if (expandable.getList().isEmpty()) {
+                    v = context.getLayoutInflater().inflate(expandableHelper.getContentLayoutId(), null);
+                } else {
+                    CustomRecycler<T> tCustomRecycler = new CustomRecycler<T>(context).setObjectList(expandable.getList()).enableDivider().removeLastDivider();
+//                    if (onClickListener != null)
+//                        tCustomRecycler.setOnClickListener((customRecycler, itemView1, t1, index) -> {
+//                            onClickListener.runOnClickListener(customRecycler, itemView1, t1, index);
+//                        });
+                    v = tCustomRecycler.generateRecyclerView();
+                }
+
+
+                FrameLayout listItem_expandable_content = itemView.findViewById(R.id.listItem_expandable_content);
+                listItem_expandable_content.removeAllViews();
+                listItem_expandable_content.addView(v);
+                expandableHelper.setItemContent.runSetCellContent(itemView, expandable);
+
+                itemView.findViewById(R.id.listItem_expandable_expansionLayout).setVisibility(expandable.isExpended() ? View.VISIBLE : View.GONE);
+                ((ImageView) itemView.findViewById(expandableHelper.getArrowId()))
+                        .setImageDrawable(context.getDrawable(expandable.isExpended() ? R.drawable.ic_arrow_up_to_down : R.drawable.ic_arrow_down_to_up));
+            });
+            onClickListener = (OnClickListener<T>) expandableOnClickListener;
+        }
+
+
 
         mAdapter = new MyAdapter(objectList);
         recycler.setAdapter(mAdapter);

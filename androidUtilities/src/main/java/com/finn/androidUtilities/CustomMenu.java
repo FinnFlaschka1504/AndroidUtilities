@@ -102,7 +102,7 @@ public class CustomMenu {
         customRecycler = new CustomRecycler<MenuItem>(context)
                 .setItemLayout(R.layout.popup_standard_list)
                 .setObjectList(menus)
-                .showDivider()
+                .enableDivider()
                 .hideOverscroll()
                 .setSetItemContent((itemView, item) -> {
                     ((TextView) itemView.findViewById(R.id.popup_standardList_text)).setText(item.getName());
