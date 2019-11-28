@@ -2,10 +2,12 @@ package com.finn.androidUtilities;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -16,6 +18,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,6 +35,7 @@ import java.util.Locale;
 
 public class CustomUtility {
 
+    //  --------------- isOnline --------------->
     static public boolean isOnline(Context context) {
         boolean isOnleine = isOnline();
         if (isOnleine) {
@@ -40,6 +45,7 @@ public class CustomUtility {
             return false;
         }
     }
+
     static public boolean isOnline() {
         Runtime runtime = Runtime.getRuntime();
         try {
@@ -53,6 +59,7 @@ public class CustomUtility {
         }
         return false;
     }
+    //  <--------------- isOnline ---------------
 
     public static void restartApp(Context context, Class startClass) {
         Intent mStartActivity = new Intent(context, startClass);
@@ -153,6 +160,8 @@ public class CustomUtility {
 }
     //  <----- Filter -----
 
+
+    //  --------------- Time --------------->
     public static Date removeTime(Date date) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
@@ -162,6 +171,16 @@ public class CustomUtility {
         cal.set(Calendar.MILLISECOND, 0);
         return cal.getTime();
     }
+
+    public static Date shiftTime(Date date, int field, int amount) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(field, amount);
+        return calendar.getTime();
+
+    }
+    //  <--------------- Time ---------------
+
 
     //  --------------- Toast --------------->
     public static Toast centeredToast(Context context, String text) {
@@ -223,13 +242,5 @@ public class CustomUtility {
             Toast.makeText(activity, "WhatsApp not found", Toast.LENGTH_SHORT).show();
         }
 
-    }
-
-    public static Date getDateFromJsonString(String key, JSONObject jsonObject) {
-        try {
-            return new SimpleDateFormat("yyyy-MM-dd", Locale.GERMANY).parse(jsonObject.getString(key));
-        } catch (ParseException | JSONException e) {
-            return null;
-        }
     }
 }

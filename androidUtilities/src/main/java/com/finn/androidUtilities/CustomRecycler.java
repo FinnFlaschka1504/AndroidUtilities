@@ -42,7 +42,7 @@ public class CustomRecycler<T>{
 
     private int rowOrColumnCount = 1;
     private long multipleClickDelay = 300;
-    private long lastClickTime = System.currentTimeMillis();
+    private long lastClickTime;
     private boolean isMultiClickEnabled = false;
     private boolean showDivider = false;
     private boolean hideLastDivider;

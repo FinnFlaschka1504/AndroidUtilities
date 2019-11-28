@@ -52,6 +52,7 @@ public class CustomDialog {
     private boolean buttonLabelAllCaps = true;
     private boolean stackButtons;
     private boolean expandButtons;
+    private boolean firstTime = true;
 
     private SetViewContent setViewContent;
 
@@ -494,8 +495,10 @@ public class CustomDialog {
 }
 
     public CustomDialog show() {
-        TextView dialog_custom_text = dialog.findViewById(R.id.dialog_custom_text);
-
+        if (!firstTime){
+            dialog.show();
+            return this;
+        }
         // ToDo: TextBuilder
 
         if (title != null) {
@@ -504,7 +507,7 @@ public class CustomDialog {
         }
 
         if (text != null) {
-            dialog_custom_text.setText(this.text);
+            ((TextView) dialog.findViewById(R.id.dialog_custom_text)).setText(this.text);
             dialog.findViewById(R.id.dialog_custom_text_layout).setVisibility(View.VISIBLE);
         }
 
@@ -604,6 +607,7 @@ public class CustomDialog {
         setDialogLayoutParameters(dialog, dimensions.first, dimensions.second);
         dialog.show();
 
+        firstTime = false;
         return this;
     }
 
