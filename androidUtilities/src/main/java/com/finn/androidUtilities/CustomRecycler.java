@@ -30,7 +30,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 public class CustomRecycler<T>{
 
@@ -421,6 +424,8 @@ public class CustomRecycler<T>{
     //  <----- Adapter -----
 
 
+
+
     //  --------------- Expandable --------------->
     private CustomRecycler.OnClickListener<CustomRecycler.Expandable<T>> expandableOnClickListener = (customRecycler1, itemView, expandable, index) -> {
         if (!expandable.canExpand())
@@ -487,6 +492,7 @@ public class CustomRecycler<T>{
         private CustomizeRecycler<E> customizeRecycler;
 
         public ExpandableHelper() {
+            setItemContent = (itemView, e) -> {};
         }
 
         public ExpandableHelper(int contentLayoutId, SetItemContent<E> setItemContent) {
@@ -522,7 +528,7 @@ public class CustomRecycler<T>{
         }
 
 
-        public CustomRecycler<E> generateRecycler(AppCompatActivity context, View itemView, Expandable<List<E>> expandable) {
+        public CustomRecycler<E> generateRecycler(AppCompatActivity context, Expandable<List<E>> expandable) {
             CustomRecycler<E> customRecycler = new CustomRecycler<E>(context).setObjectList((Collection<E>) expandable.getList()).enableDivider().removeLastDivider();
             if (customizeRecycler != null)
                 customizeRecycler.runCustomizeRecycler(customRecycler);
@@ -547,10 +553,14 @@ public class CustomRecycler<T>{
     }
 
     public interface CustomizeRecycler<T> {
-        void runCustomizeRecycler(CustomRecycler<T> customRecycler);
+        void runCustomizeRecycler(CustomRecycler<T> subRecycler);
     }
-
+    // ToDo:
+    //  animationslänge (evl. auch komplett deaktivieren)
     public static class Expandable<T> {
+        public Expandable() {
+        }
+
         public Expandable(String name) {
             this.name = name;
         }
@@ -612,6 +622,36 @@ public class CustomRecycler<T>{
         }
         //  <--------------- Convenience ---------------
 
+        //  --------------- toExpandable --------------->
+        public List<Expandable<T>> toExpandableList(List<T> list) {
+            return list.stream().map(t -> new CustomRecycler.Expandable<>(t.toString(), t)).collect(toList());
+        }
+        public List<Expandable<T>> toExpandableList(List<T> list, ToExpandable<T> toExpandable) {
+            return list.stream().map(toExpandable::runToExpandable).collect(toList());
+        }
+        public interface ToExpandable<T> {
+            Expandable<T> runToExpandable(T t);
+        }
+
+        static class ToGroupExpandableList<Result, Item, Key> {
+            List<Expandable<List<Result>>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
+                    , KeyToString<Key> keyToString, ItemToResult<Item, Result> itemToResult){
+                Map<Key, List<Item>> group = list.stream().collect(Collectors.groupingBy(classifier));
+
+                List<Expandable<List<Result>>> expandableList = new ArrayList<>();
+                for (Map.Entry<Key, List<Item>> entry : group.entrySet()) {
+                    expandableList.add(new Expandable<>(keyToString.runKeyToString(entry.getKey()), entry.getValue().stream().map(itemToResult::runItemToResult).collect(Collectors.toList())));
+                }
+                return expandableList;
+            }
+        }
+        public interface KeyToString<T> {
+            String runKeyToString(T t);
+        }
+        public interface ItemToResult<Item, Result> {
+            Result runItemToResult(Item item);
+        }
+        //  <--------------- toExpandable ---------------
     }
     //  <--------------- Expandable ---------------
 
@@ -662,7 +702,7 @@ public class CustomRecycler<T>{
                         if (expandable.getList().isEmpty()) {
                             v = context.getLayoutInflater().inflate(expandableHelper.getContentLayoutId(), null);
                         } else {
-                            v = expandableHelper.generateRecycler(context, itemView, (Expandable<List>) t).getRecycler();
+                            v = expandableHelper.generateRecycler(context, (Expandable<List>) t).getRecycler();
                             subRecyclerMap.put(((Expandable<List>) t).getCustomRecycler(), ((Expandable<List>) t));
                         }
                         FrameLayout listItem_expandable_content = itemView.findViewById(R.id.listItem_expandable_content);
@@ -781,7 +821,7 @@ public class CustomRecycler<T>{
 
         if (search != null) {
             filterdObjectList.clear();
-            filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(search, t)).collect(Collectors.toList()));
+            filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(search, t)).collect(toList()));
             if (filterdObjectList.isEmpty())
                 Toast.makeText(context, "Kein Eintrag für diese Suche", Toast.LENGTH_SHORT).show();
             else if (filterdObjectList.size() == 1) {
@@ -806,7 +846,7 @@ public class CustomRecycler<T>{
                 .setEdit(new CustomDialog.EditBuilder().setHint("Filter").setFireActionDirectly(search != null && !search.isEmpty()).setText(search != null ? search : "").allowEmpty()
                         .setOnAction((textInputHelper, textInputLayout, actionId, text1) -> {
                     filterdObjectList.clear();
-                    filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(text1, t)).collect(Collectors.toList()));
+                    filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(text1, t)).collect(toList()));
                     if (filterdObjectList.isEmpty())
                         Toast.makeText(context, "Kein Eintrag für diese Suche", Toast.LENGTH_SHORT).show();
                     else if (filterdObjectList.size() == 1) {

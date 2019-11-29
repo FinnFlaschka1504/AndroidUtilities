@@ -15,6 +15,7 @@ import com.finn.androidUtilities.Helpers;
 import com.finn.androidUtilities.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
@@ -29,54 +30,57 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
         Test.test(this);
 
+        List<String> testList = Arrays.asList("1", "2", "3");
+        new CustomRecycler.Expandable<String>().toExpandableList(testList, s -> new CustomRecycler.Expandable<>(s, s));
 
-        List<CustomRecycler.Expandable<String>> expandableList = new ArrayList<>();
-        for (int i = 0; i < amount; i++) {
-            List<String> numberList = new ArrayList<>();
-            if (i % 2 == 0) {
-                for (int i1 = 0; i1 < i + 1; i1++) {
-                    numberList.add(String.valueOf(i1 + 1));
-                }
-                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), String.join("\n", numberList)));
-            }
-            else
-                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1)));
-        }
 
-//        List<CustomRecycler.Expandable<List<String>>> expandableList = new ArrayList<>();
+//        List<CustomRecycler.Expandable<String>> expandableList = new ArrayList<>();
 //        for (int i = 0; i < amount; i++) {
 //            List<String> numberList = new ArrayList<>();
 //            if (i % 2 == 0) {
 //                for (int i1 = 0; i1 < i + 1; i1++) {
 //                    numberList.add(String.valueOf(i1 + 1));
 //                }
+//                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), String.join("\n", numberList)));
 //            }
-//            expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), numberList));
+//            else
+//                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1)));
 //        }
+
+        List<CustomRecycler.Expandable<List<String>>> expandableList = new ArrayList<>();
+        for (int i = 0; i < amount; i++) {
+            List<String> numberList = new ArrayList<>();
+            if (i % 2 == 0) {
+                for (int i1 = 0; i1 < i + 1; i1++) {
+                    numberList.add(String.valueOf(i1 + 1));
+                }
+            }
+            expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), numberList));
+        }
 
 
 
 //        testRecycler =
-                new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
-                .setItemLayout(R.layout.list_item_expandable)
+                new CustomRecycler<CustomRecycler.Expandable<List<String>>>(this, findViewById(R.id.recycler))
+//                .setItemLayout(R.layout.list_item_expandable)
 //                .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(s))
 //                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
-                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s, expanded) -> {
-                    TextView test = itemView.findViewById(R.id.test);
-                    test.setText(s != null ? s : "<Nix>");
-                    if (expanded) {
-                        test.setMaxLines(Integer.MAX_VALUE);
-                    } else {
-                        test.setMaxLines(2);
-
-                    }
-                })
-//                        .customizeRecycler(subRecycler -> {
-//                            subRecycler.setOnClickListener((customRecycler2, itemView, s, index) -> {
-//                                CustomRecycler.Expandable expandable = customRecycler.getExpandable(customRecycler2);
-//                                Toast.makeText(this, expandable.getName() + ":" + s, Toast.LENGTH_SHORT).show();
-//                            });
-//                        })
+                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>() //R.layout.expandable_content_test, (itemView, s, expanded) -> {
+//                    TextView test = itemView.findViewById(R.id.test);
+//                    test.setText(s != null ? s : "<Nix>");
+//                    if (expanded) {
+//                        test.setMaxLines(Integer.MAX_VALUE);
+//                    } else {
+//                        test.setMaxLines(2);
+//
+//                    }
+//                })
+                        .customizeRecycler(subRecycler -> {
+                            subRecycler.setOnClickListener((customRecycler2, itemView, s, index) -> {
+                                CustomRecycler.Expandable expandable = customRecycler.getExpandable(customRecycler2);
+                                Toast.makeText(this, expandable.getName() + ":" + s, Toast.LENGTH_SHORT).show();
+                            });
+                        })
                         .enableExpandByDefault()
                 )
                 .setObjectList(expandableList)
