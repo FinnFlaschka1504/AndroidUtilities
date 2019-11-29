@@ -92,16 +92,6 @@ public class CustomRecycler<T>{
         this.context = context;
     }
 
-//    public static CustomRecycler Builder(Context context) {
-//        return new CustomRecycler<>(context);
-//    }
-
-//    public static CustomRecycler Builder(Context context, RecyclerView recycler) {
-//        CustomRecycler customRecycler = new CustomRecycler<>(context);
-//        customRecycler.recycler = recycler;
-//        return customRecycler;
-//    }
-
     public CustomRecycler(AppCompatActivity context, RecyclerView recycler) {
         this.context = context;
         this.recycler = recycler;
@@ -247,14 +237,12 @@ public class CustomRecycler<T>{
 
     public CustomRecycler<T> enableDragAndDrop(OnDragAndDrop<T> onDragAndDrop) {
         this.onDragAndDrop = onDragAndDrop;
-//        dragAndDrop = true;
         return this;
     }
 
     public CustomRecycler<T> enableSwiping(OnSwiped<T> onSwiped, boolean start, boolean end) {
         this.onSwiped = onSwiped;
         this.leftRightSwipe_pair = new Pair<>(start, end);
-//        dragAndDrop = true;
         return this;
     }
 
@@ -289,7 +277,6 @@ public class CustomRecycler<T>{
                 int index = viewHolder.getAdapterPosition();
 
                 T t = objectList.remove(index);
-//                mAdapter.notifyItemRangeChanged(index, 1);
                 mAdapter.notifyDataSetChanged();
                 onSwiped.runSwyped(objectList, direction, t);
             }
@@ -415,7 +402,6 @@ public class CustomRecycler<T>{
             if (dataSet.isEmpty())
                 return;
             dataSet.remove(index);
-//                notifyDataSetChanged();
             notifyItemRemoved(index);
             notifyItemRangeChanged(index, dataSet.size());
         }
@@ -436,17 +422,15 @@ public class CustomRecycler<T>{
 
 
     //  --------------- Expandable --------------->
-    CustomRecycler.OnClickListener<CustomRecycler.Expandable<T>> expandableOnClickListener = (customRecycler1, itemView, expandable, index) -> {
+    private CustomRecycler.OnClickListener<CustomRecycler.Expandable<T>> expandableOnClickListener = (customRecycler1, itemView, expandable, index) -> {
+        if (!expandable.canExpand())
+            return;
         View expansion = itemView.findViewById(R.id.listItem_expandable_expansionLayout);
         boolean expanded = expandable.isExpended();
 
         ImageView imageView = itemView.findViewById(expandableHelper.getArrowId());
         if (imageView != null) {
             Drawable drawable = imageView.getDrawable();
-//        if (drawable instanceof AnimatedVectorDrawableCompat) {
-//            AnimatedVectorDrawableCompat compat = (AnimatedVectorDrawableCompat) drawable;
-//            compat.start();
-//        } else
             if (drawable instanceof AnimatedVectorDrawable) {
                 AnimatedVectorDrawable compat = (AnimatedVectorDrawable) drawable;
                 compat.start();
@@ -466,41 +450,64 @@ public class CustomRecycler<T>{
         }
 
         expandable.setExpended(!expanded);
-//                    Toast.makeText(this, expandable, Toast.LENGTH_SHORT).show();
+    };
+    private CustomRecycler.OnClickListener<CustomRecycler.Expandable<T>> expandableOnClickListener_change = (customRecycler1, itemView, expandable, index) -> {
+        if (!expandable.canExpand())
+            return;
+        boolean expanded = expandable.isExpended();
+        CustomUtility.changeHeight(itemView, view -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(view, expandable.getObject(), !expandable.isExpended()));
+        expandable.setExpended(!expanded);
     };
 
-    public CustomRecycler<T> setExpandableHelper(ExpandableHelper<T> expandableHelper) {
-        this.expandableHelper = expandableHelper;
-        return this;
+    private Map<CustomRecycler, Expandable> subRecyclerMap = new HashMap<>();
+    public Expandable getExpandable(CustomRecycler customRecycler) {
+        return subRecyclerMap.get(customRecycler);
     }
 
-    public static class ExpandableHelper<T> {
-        enum TYPE {
-            DROPDOWN, LIST, CHANGE
-        }
-        private List<Expandable<T>> expandableList = new ArrayList<>();
-        private boolean showArrow;
+    public CustomRecycler<T> setExpandableHelper(GetExpandableHelper<T> getExpandableHelper) {
+        this.expandableHelper = (ExpandableHelper) getExpandableHelper.runGetExpandableHelper(this);
+        return this;
+    }
+    public interface GetExpandableHelper<T> {
+        Object runGetExpandableHelper(CustomRecycler<T> customRecycler);
+    }
+
+    public interface SetExpandableItemContent<E> {
+        void runSetExpandableItemContent(View itemView, E e, boolean expanded);
+    }
+
+    public class ExpandableHelper<E> {
+        private boolean expandByDefault;
+        private List<Expandable<E>> expandableList = new ArrayList<>();
+        private boolean showArrow_default = true;
         private int arrowId = R.id.listItem_expandable_arrow;
         private int contentLayoutId;
-        private boolean nestedRecycler;
-        private SetItemContent<T> setItemContent;
-        private TYPE type;
+        private SetItemContent<E> setItemContent;
+        private SetExpandableItemContent<E> setExpandableItemContent;
+        private CustomizeRecycler<E> customizeRecycler;
 
-        public ExpandableHelper(int contentLayoutId, SetItemContent<T> setItemContent) {
+        public ExpandableHelper() {
+        }
+
+        public ExpandableHelper(int contentLayoutId, SetItemContent<E> setItemContent) {
             this.contentLayoutId = contentLayoutId;
             this.setItemContent = setItemContent;
-            type = TYPE.DROPDOWN;
+        }
+
+        public ExpandableHelper(int contentLayoutId, SetExpandableItemContent<E> setExpandableItemContent) {
+            this.contentLayoutId = contentLayoutId;
+            this.setExpandableItemContent = setExpandableItemContent;
         }
 
         public int getContentLayoutId() {
             return contentLayoutId;
         }
 
-        public List<Expandable<T>> getExpandableList() {
+        public List<Expandable<E>> getExpandableList() {
             return expandableList;
         }
 
-        public ExpandableHelper<T> setExpandableList(List<Expandable<T>> expandableList) {
+        public ExpandableHelper<E> setExpandableList(List<Expandable<E>> expandableList) {
             this.expandableList = expandableList;
             return this;
         }
@@ -509,10 +516,38 @@ public class CustomRecycler<T>{
             return arrowId;
         }
 
-        public ExpandableHelper<T> setArrowId(int arrowId) {
+        public ExpandableHelper<E> setArrowId(int arrowId) {
             this.arrowId = arrowId;
             return this;
         }
+
+
+        public CustomRecycler<E> generateRecycler(AppCompatActivity context, View itemView, Expandable<List<E>> expandable) {
+            CustomRecycler<E> customRecycler = new CustomRecycler<E>(context).setObjectList((Collection<E>) expandable.getList()).enableDivider().removeLastDivider();
+            if (customizeRecycler != null)
+                customizeRecycler.runCustomizeRecycler(customRecycler);
+            expandable.customRecycler = (CustomRecycler<List<E>>) customRecycler;
+            return customRecycler.generate();
+        }
+
+        public ExpandableHelper<E> customizeRecycler(CustomizeRecycler<E> customRecycler) {
+            this.customizeRecycler = customRecycler;
+            return this;
+        }
+
+        public ExpandableHelper<E> disableArrows() {
+            showArrow_default = false;
+            return this;
+        }
+
+        public ExpandableHelper<E> enableExpandByDefault() {
+            this.expandByDefault = true;
+            return this;
+        }
+    }
+
+    public interface CustomizeRecycler<T> {
+        void runCustomizeRecycler(CustomRecycler<T> customRecycler);
     }
 
     public static class Expandable<T> {
@@ -533,6 +568,9 @@ public class CustomRecycler<T>{
         private boolean expended;
         private List<T> list = new ArrayList<>();
         private T object;
+        private CustomRecycler<T> customRecycler;
+        private boolean showArrow = true;
+        private Object payload;
 
         public String getName() {
             return name;
@@ -554,6 +592,26 @@ public class CustomRecycler<T>{
             this.expended = expended;
             return this;
         }
+
+        public CustomRecycler<T> getCustomRecycler() {
+            return customRecycler;
+        }
+
+        public Object getPayload() {
+            return payload;
+        }
+
+        public Expandable<T> setPayload(Object payload) {
+            this.payload = payload;
+            return this;
+        }
+
+        //  --------------- Convenience --------------->
+        public boolean canExpand() {
+            return object != null || !list.isEmpty();
+        }
+        //  <--------------- Convenience ---------------
+
     }
     //  <--------------- Expandable ---------------
 
@@ -581,36 +639,49 @@ public class CustomRecycler<T>{
         recycler.setLayoutManager(layoutManager);
 
 
-        if (setItemContent == null && expandableHelper != null) {
+        if (expandableHelper != null) {
             expandableHelper.setExpandableList(objectList);
-            layoutId = R.layout.list_item_expandable;
-            setSetItemContent( (itemView, t) -> {
-                Expandable<T> expandable = (Expandable<T>) t;
-                ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(expandable.getName());
+            for (Object o : expandableHelper.getExpandableList()) {
+                Expandable expandable = (Expandable) o;
+                if (!expandableHelper.showArrow_default)
+                    expandable.showArrow = false;
+                else
+                    expandable.showArrow = expandable.canExpand();
 
-                View v;
-                if (expandable.getList().isEmpty()) {
-                    v = context.getLayoutInflater().inflate(expandableHelper.getContentLayoutId(), null);
-                } else {
-                    CustomRecycler<T> tCustomRecycler = new CustomRecycler<T>(context).setObjectList(expandable.getList()).enableDivider().removeLastDivider();
-//                    if (onClickListener != null)
-//                        tCustomRecycler.setOnClickListener((customRecycler, itemView1, t1, index) -> {
-//                            onClickListener.runOnClickListener(customRecycler, itemView1, t1, index);
-//                        });
-                    v = tCustomRecycler.generateRecyclerView();
-                }
+                if (expandableHelper.expandByDefault && expandable.canExpand())
+                    expandable.setExpended(true);
+            }
+            if (expandableHelper.setItemContent != null) {
+                layoutId = R.layout.list_item_expandable;
+                setSetItemContent((itemView, t) -> {
+                    Expandable<T> expandable = (Expandable<T>) t;
+                    ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(expandable.getName());
+                    itemView.findViewById(R.id.listItem_expandable_arrow).setVisibility(expandable.showArrow ? View.VISIBLE : View.GONE);
+                    if (expandable.canExpand()) {
+                        View v;
+                        if (expandable.getList().isEmpty()) {
+                            v = context.getLayoutInflater().inflate(expandableHelper.getContentLayoutId(), null);
+                        } else {
+                            v = expandableHelper.generateRecycler(context, itemView, (Expandable<List>) t).getRecycler();
+                            subRecyclerMap.put(((Expandable<List>) t).getCustomRecycler(), ((Expandable<List>) t));
+                        }
+                        FrameLayout listItem_expandable_content = itemView.findViewById(R.id.listItem_expandable_content);
+                        listItem_expandable_content.removeAllViews();
+                        listItem_expandable_content.addView(v);
+                    }
+                    if (expandableHelper.setItemContent != null && expandable.canExpand())
+                        expandableHelper.setItemContent.runSetCellContent(itemView, expandable.getObject());
 
-
-                FrameLayout listItem_expandable_content = itemView.findViewById(R.id.listItem_expandable_content);
-                listItem_expandable_content.removeAllViews();
-                listItem_expandable_content.addView(v);
-                expandableHelper.setItemContent.runSetCellContent(itemView, expandable);
-
-                itemView.findViewById(R.id.listItem_expandable_expansionLayout).setVisibility(expandable.isExpended() ? View.VISIBLE : View.GONE);
-                ((ImageView) itemView.findViewById(expandableHelper.getArrowId()))
-                        .setImageDrawable(context.getDrawable(expandable.isExpended() ? R.drawable.ic_arrow_up_to_down : R.drawable.ic_arrow_down_to_up));
-            });
-            onClickListener = (OnClickListener<T>) expandableOnClickListener;
+                    itemView.findViewById(R.id.listItem_expandable_expansionLayout).setVisibility(expandable.isExpended() ? View.VISIBLE : View.GONE);
+                    ((ImageView) itemView.findViewById(expandableHelper.getArrowId()))
+                            .setImageDrawable(context.getDrawable(expandable.isExpended() ? R.drawable.ic_arrow_up_to_down : R.drawable.ic_arrow_down_to_up));
+                });
+                onClickListener = (OnClickListener<T>) expandableOnClickListener;
+            } else if (expandableHelper.setExpandableItemContent != null) {
+                layoutId = expandableHelper.contentLayoutId;
+                setSetItemContent((itemView, t) -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(itemView, ((Expandable) t).getObject(), ((Expandable) t).isExpended()));
+                onClickListener = (OnClickListener<T>) expandableOnClickListener_change;
+            }
         }
 
 
@@ -822,6 +893,5 @@ public class CustomRecycler<T>{
 
         return layoutManager.findLastCompletelyVisibleItemPosition() < adapter.getItemCount() - 1 && layoutManager.findFirstCompletelyVisibleItemPosition() == 0;
     }
-
     //  <--------------- Convenience ---------------
 }

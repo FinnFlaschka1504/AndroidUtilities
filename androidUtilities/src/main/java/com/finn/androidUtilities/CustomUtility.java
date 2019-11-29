@@ -1,5 +1,6 @@
 package com.finn.androidUtilities;
 
+import android.animation.ValueAnimator;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -11,6 +12,7 @@ import android.net.wifi.WifiManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -248,14 +250,13 @@ public class CustomUtility {
     }
 
 
-    //  --------------- ExpandableLayout --------------->
+    //  --------------- Layout-Animation --------------->
     public static void expand(final View v) {
         int matchParentMeasureSpec = View.MeasureSpec.makeMeasureSpec(((View) v.getParent()).getWidth(), View.MeasureSpec.EXACTLY);
         int wrapContentMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         v.measure(matchParentMeasureSpec, wrapContentMeasureSpec);
         final int targetHeight = v.getMeasuredHeight();
 
-        // Older versions of android (pre API 21) cancel animations for views with a height of 0.
         v.getLayoutParams().height = 1;
         v.setVisibility(View.VISIBLE);
         Animation a = new Animation()
@@ -274,8 +275,7 @@ public class CustomUtility {
             }
         };
 
-        // Expansion speed of 1dp/ms
-        a.setDuration((long) ((int)(targetHeight / v.getContext().getResources().getDisplayMetrics().density) * 1.5));
+        a.setDuration(300); //(long) ((int)(targetHeight / v.getContext().getResources().getDisplayMetrics().density) * 1.5));
         v.startAnimation(a);
     }
 
@@ -300,9 +300,39 @@ public class CustomUtility {
             }
         };
 
-        // Collapse speed of 1dp/ms
-        a.setDuration((int)(initialHeight / v.getContext().getResources().getDisplayMetrics().density));
+        a.setDuration(300); //(int)(initialHeight / v.getContext().getResources().getDisplayMetrics().density));
         v.startAnimation(a);
     }
-    //  <--------------- ExpandableLayout ---------------
+
+    public static void changeHeight(final View v, ChangeLayout changeLayout){
+        int matchParentMeasureSpec = View.MeasureSpec.makeMeasureSpec(((View) v.getParent()).getWidth(), View.MeasureSpec.EXACTLY);
+        int wrapContentMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        v.measure(matchParentMeasureSpec, wrapContentMeasureSpec);
+        int previousHeight = v.getMeasuredHeight();
+
+        changeLayout.runChangeLayout(v);
+
+        matchParentMeasureSpec = View.MeasureSpec.makeMeasureSpec(((View) v.getParent()).getWidth(), View.MeasureSpec.EXACTLY);
+        wrapContentMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        v.measure(matchParentMeasureSpec, wrapContentMeasureSpec);
+        int targetHeight = v.getMeasuredHeight();
+
+        if (previousHeight == targetHeight)
+            return;
+
+        v.setPressed(false);
+
+        ValueAnimator valueAnimator = ValueAnimator.ofInt(previousHeight, targetHeight);
+        valueAnimator.addUpdateListener(animation -> {
+            int val = (Integer) animation.getAnimatedValue();
+            v.getLayoutParams().height = val == targetHeight ? LinearLayout.LayoutParams.WRAP_CONTENT : val;
+            v.requestLayout();
+        });
+
+        valueAnimator.setDuration(300).start();
+    }
+    public interface ChangeLayout {
+        void runChangeLayout(View view);
+    }
+    //  <--------------- Layout-Animation ---------------
 }

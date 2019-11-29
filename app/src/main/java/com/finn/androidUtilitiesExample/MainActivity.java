@@ -19,7 +19,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
 
-    private CustomRecycler<CustomRecycler.Expandable<List<String>>> customRecycler;
+    private CustomRecycler<CustomRecycler.Expandable<List<String>>> testRecycler;
     private int amount = 25;
 
     @Override
@@ -30,35 +30,56 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         Test.test(this);
 
 
-//        List<CustomRecycler.Expandable<String>> expandableList = new ArrayList<>();
-//        for (int i = 0; i < amount; i++) {
-//            List<String> numberList = new ArrayList<>();
-//            for (int i1 = 0; i1 < i + 1; i1++) {
-//                numberList.add(String.valueOf(i1 + 1));
-//            }
-//            expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), String.join("\n", numberList)));
-//        }
-
-        List<CustomRecycler.Expandable<List<String>>> expandableList = new ArrayList<>();
+        List<CustomRecycler.Expandable<String>> expandableList = new ArrayList<>();
         for (int i = 0; i < amount; i++) {
             List<String> numberList = new ArrayList<>();
-            for (int i1 = 0; i1 < i + 1; i1++) {
-                numberList.add(String.valueOf(i1 + 1));
+            if (i % 2 == 0) {
+                for (int i1 = 0; i1 < i + 1; i1++) {
+                    numberList.add(String.valueOf(i1 + 1));
+                }
+                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), String.join("\n", numberList)));
             }
-            expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), numberList));
+            else
+                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1)));
         }
 
+//        List<CustomRecycler.Expandable<List<String>>> expandableList = new ArrayList<>();
+//        for (int i = 0; i < amount; i++) {
+//            List<String> numberList = new ArrayList<>();
+//            if (i % 2 == 0) {
+//                for (int i1 = 0; i1 < i + 1; i1++) {
+//                    numberList.add(String.valueOf(i1 + 1));
+//                }
+//            }
+//            expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), numberList));
+//        }
 
 
-        customRecycler = new CustomRecycler<CustomRecycler.Expandable<List<String>>>(this, findViewById(R.id.recycler))
+
+//        testRecycler =
+                new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
                 .setItemLayout(R.layout.list_item_expandable)
 //                .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(s))
-                .setExpandableHelper(new CustomRecycler.ExpandableHelper<>(R.layout.expandable_content_test, (itemView, stringExpandable) -> {}))
-//                        ((TextView) itemView.findViewById(R.id.test)).setText(stringExpandable.getObject())))
+//                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
+                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s, expanded) -> {
+                    TextView test = itemView.findViewById(R.id.test);
+                    test.setText(s != null ? s : "<Nix>");
+                    if (expanded) {
+                        test.setMaxLines(Integer.MAX_VALUE);
+                    } else {
+                        test.setMaxLines(2);
+
+                    }
+                })
+//                        .customizeRecycler(subRecycler -> {
+//                            subRecycler.setOnClickListener((customRecycler2, itemView, s, index) -> {
+//                                CustomRecycler.Expandable expandable = customRecycler.getExpandable(customRecycler2);
+//                                Toast.makeText(this, expandable.getName() + ":" + s, Toast.LENGTH_SHORT).show();
+//                            });
+//                        })
+                        .enableExpandByDefault()
+                )
                 .setObjectList(expandableList)
-//                .setOnClickListener(expandableOnClickListener)
-//                .setOnClickListener((customRecycler1, itemView, listExpandable, index) ->
-//                        Toast.makeText(this, listExpandable.getName() + ":" + listExpandable.getList().get(index), Toast.LENGTH_SHORT).show()) // ToDo: onClick
                 .generate();
 
         CustomInternetHelper.initialize(this);
@@ -75,13 +96,13 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setEdit(new CustomDialog.EditBuilder().setHint("Anzahl").setText(String.valueOf(amount)).setInputType(Helpers.TextInputHelper.INPUT_TYPE.NUMBER))
                 .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
                     amount = Integer.parseInt(customDialog.getEditText());
-//                    customRecycler.reload(generateObjectList());
+//                    testRecycler.reload(generateObjectList());
                 })
                 .show();
     }
 
     public void goTo(View view) {
-        customRecycler.goTo((search, o) -> o.equals(search), null);
+        testRecycler.goTo((search, o) -> o.equals(search), null);
     }
 
     @Override

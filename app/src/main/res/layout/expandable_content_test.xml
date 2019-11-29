@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/test"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/TileStyle"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:text="Mip\nMip\nMip\nMip\nMip\nMip\nMip\nMip\nMip\nMip\n" />
+    android:layout_height="wrap_content"
+    android:animateLayoutChanges="true">
+
+    <TextView
+        android:id="@+id/test"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Mip\nMip\nMip\nMip\nMip\nMip\nMip\nMip\nMip\nMip\n" />
+</LinearLayout>
 <!--    android:text="Das \nist \nein \nlanger \nText \n\nDas \nist \nein \nlanger \nText \n\nDas \nist \nein \nlanger \nText \n\n" />-->
