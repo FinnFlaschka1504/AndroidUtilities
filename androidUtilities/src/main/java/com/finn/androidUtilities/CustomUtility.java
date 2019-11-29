@@ -234,6 +234,14 @@ public class CustomUtility {
     public static int dpToPx(int dp) {
         return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
     }
+
+    public static void setMargins (View v, int links, int oben, int rechts, int unten) {
+        if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            p.setMargins(dpToPx(links), dpToPx(oben), dpToPx(rechts), dpToPx(unten));
+            v.requestLayout();
+        }
+    }
     //  <----- Pixels -----
 
 

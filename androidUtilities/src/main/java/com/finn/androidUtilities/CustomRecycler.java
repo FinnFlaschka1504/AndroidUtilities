@@ -635,18 +635,18 @@ public class CustomRecycler<T>{
 
         public static class ToGroupExpandableList<Result, Item, Key> {
             public List<Expandable<List<Result>>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
-                    , KeyToString<Key> keyToString, ItemToResult<Item, Result> itemToResult){
+                    , KeyToString<Key, Item> keyToString, ItemToResult<Item, Result> itemToResult){
                 Map<Key, List<Item>> group = list.stream().collect(Collectors.groupingBy(classifier));
 
                 List<Expandable<List<Result>>> expandableList = new ArrayList<>();
                 for (Map.Entry<Key, List<Item>> entry : group.entrySet()) {
-                    expandableList.add(new Expandable<>(keyToString.runKeyToString(entry.getKey()), entry.getValue().stream().map(itemToResult::runItemToResult).collect(Collectors.toList())));
+                    expandableList.add(new Expandable<>(keyToString.runKeyToString(entry.getKey(), entry.getValue()), entry.getValue().stream().map(itemToResult::runItemToResult).collect(Collectors.toList())));
                 }
                 return expandableList;
             }
         }
-        public interface KeyToString<T> {
-            String runKeyToString(T t);
+        public interface KeyToString<T,M> {
+            String runKeyToString(T t, List<M> m);
         }
         public interface ItemToResult<Item, Result> {
             Result runItemToResult(Item item);
