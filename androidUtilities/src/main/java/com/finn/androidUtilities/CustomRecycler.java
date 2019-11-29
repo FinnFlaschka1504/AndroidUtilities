@@ -728,7 +728,8 @@ public class CustomRecycler<T>{
                     ((ImageView) itemView.findViewById(expandableHelper.getArrowId()))
                             .setImageDrawable(context.getDrawable(expandable.isExpended() ? R.drawable.ic_arrow_up_to_down : R.drawable.ic_arrow_down_to_up));
                 });
-                onClickListener = (OnClickListener<T>) expandableOnClickListener;
+                addSubOnClickListener(R.id.listItem_expandable_header, (OnClickListener<T>) expandableOnClickListener);
+//                onClickListener = (OnClickListener<T>) expandableOnClickListener;
             } else if (expandableHelper.setExpandableItemContent != null) {
                 layoutId = expandableHelper.contentLayoutId;
                 setSetItemContent((itemView, t) -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(itemView, ((Expandable) t).getObject(), ((Expandable) t).isExpended()));
