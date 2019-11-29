@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
             expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), numberList));
         }
 
+        new CustomRecycler.Expandable.ToGroupExpandableList().runToGroupExpandableList(new ArrayList(), o -> new Object(),o -> "", o -> new Object());
 
 //        testRecycler =
                 new CustomRecycler<CustomRecycler.Expandable<List<String>>>(this, findViewById(R.id.recycler))

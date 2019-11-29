@@ -529,7 +529,7 @@ public class CustomRecycler<T>{
 
 
         public CustomRecycler<E> generateRecycler(AppCompatActivity context, Expandable<List<E>> expandable) {
-            CustomRecycler<E> customRecycler = new CustomRecycler<E>(context).setObjectList((Collection<E>) expandable.getList()).enableDivider().removeLastDivider();
+            CustomRecycler<E> customRecycler = new CustomRecycler<E>(context).setObjectList((Collection<E>) expandable.getList());
             if (customizeRecycler != null)
                 customizeRecycler.runCustomizeRecycler(customRecycler);
             expandable.customRecycler = (CustomRecycler<List<E>>) customRecycler;
