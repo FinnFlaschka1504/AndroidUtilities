@@ -3,6 +3,7 @@ package com.finn.androidUtilitiesExample;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Pair;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,18 +48,22 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1)));
 //        }
 
-        List<CustomRecycler.Expandable<List<String>>> expandableList = new ArrayList<>();
-        for (int i = 0; i < amount; i++) {
-            List<String> numberList = new ArrayList<>();
-            if (i % 2 == 0) {
-                for (int i1 = 0; i1 < i + 1; i1++) {
-                    numberList.add(String.valueOf(i1 + 1));
-                }
-            }
-            expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), numberList));
-        }
+//        List<CustomRecycler.Expandable<List<String>>> expandableList = new ArrayList<>();
+//        for (int i = 0; i < amount; i++) {
+//            List<String> numberList = new ArrayList<>();
+//            if (i % 2 == 0) {
+//                for (int i1 = 0; i1 < i + 1; i1++) {
+//                    numberList.add(String.valueOf(i1 + 1));
+//                }
+//            }
+//            expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), numberList));
+//        }
 
-        new CustomRecycler.Expandable.ToGroupExpandableList().runToGroupExpandableList(new ArrayList(), o -> new Object(),(o, m) -> "", o -> new Object());
+        List<Pair<String,String>> pairList = Arrays.asList(new Pair<>("A", "1"), new Pair<>("C", "2"), new Pair<>("A", "3"), new Pair<>("A", "4"), new Pair<>("B", "5"), new Pair<>("C", "6"), new Pair<>("D", "7"), new Pair<>("B", "8"), new Pair<>("A", "9"), new Pair<>("A", "10"), new Pair<>("D", "11"));
+
+        List<CustomRecycler.Expandable<List<String>>> expandableList = new CustomRecycler.Expandable.ToGroupExpandableList<String, Pair<String, String>, String>()
+                .setSort((o1, o2) -> ((String) o1.getPayload()).compareTo(((String) o2.getPayload())) * -1)
+                .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
 
 //        testRecycler =
                 new CustomRecycler<CustomRecycler.Expandable<List<String>>>(this, findViewById(R.id.recycler))
@@ -79,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                             subRecycler.setOnClickListener((customRecycler2, itemView, s, index) -> {
                                 CustomRecycler.Expandable expandable = customRecycler.getExpandable(customRecycler2);
                                 Toast.makeText(this, expandable.getName() + ":" + s, Toast.LENGTH_SHORT).show();
-                            });
+                            }).enableDivider().removeLastDivider();
                         })
                         .enableExpandByDefault()
                 )

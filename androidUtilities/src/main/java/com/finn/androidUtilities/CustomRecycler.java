@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -634,15 +635,26 @@ public class CustomRecycler<T>{
         }
 
         public static class ToGroupExpandableList<Result, Item, Key> {
+            Comparator<Expandable<List<Result>>> keyComparator;
             public List<Expandable<List<Result>>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
                     , KeyToString<Key, Item> keyToString, ItemToResult<Item, Result> itemToResult){
                 Map<Key, List<Item>> group = list.stream().collect(Collectors.groupingBy(classifier));
 
                 List<Expandable<List<Result>>> expandableList = new ArrayList<>();
                 for (Map.Entry<Key, List<Item>> entry : group.entrySet()) {
-                    expandableList.add(new Expandable<>(keyToString.runKeyToString(entry.getKey(), entry.getValue()), entry.getValue().stream().map(itemToResult::runItemToResult).collect(Collectors.toList())));
+                    expandableList.add(new Expandable<>(keyToString.runKeyToString(entry.getKey(), entry.getValue()), entry.getValue().stream().map(itemToResult::runItemToResult).collect(Collectors.toList()))
+                            .setPayload(entry.getKey()));
                 }
+
+                if (keyComparator != null)
+                    expandableList.sort(keyComparator);
+
                 return expandableList;
+            }
+
+            public ToGroupExpandableList<Result, Item, Key> setSort(Comparator<Expandable<List<Result>>> keyComparator) {
+                this.keyComparator = keyComparator;
+                return this;
             }
         }
         public interface KeyToString<T,M> {
