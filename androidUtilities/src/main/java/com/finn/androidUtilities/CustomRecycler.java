@@ -633,8 +633,8 @@ public class CustomRecycler<T>{
             Expandable<T> runToExpandable(T t);
         }
 
-        static class ToGroupExpandableList<Result, Item, Key> {
-            List<Expandable<List<Result>>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
+        public static class ToGroupExpandableList<Result, Item, Key> {
+            public List<Expandable<List<Result>>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
                     , KeyToString<Key> keyToString, ItemToResult<Item, Result> itemToResult){
                 Map<Key, List<Item>> group = list.stream().collect(Collectors.groupingBy(classifier));
 

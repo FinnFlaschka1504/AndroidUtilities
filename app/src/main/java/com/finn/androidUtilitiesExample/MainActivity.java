@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         }
 
 
-
 //        testRecycler =
                 new CustomRecycler<CustomRecycler.Expandable<List<String>>>(this, findViewById(R.id.recycler))
 //                .setItemLayout(R.layout.list_item_expandable)
