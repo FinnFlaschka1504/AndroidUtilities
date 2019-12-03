@@ -717,6 +717,7 @@ public class CustomRecycler<T>{
                             v = expandableHelper.generateRecycler(context, (Expandable<List>) t).getRecycler();
                             subRecyclerMap.put(((Expandable<List>) t).getCustomRecycler(), ((Expandable<List>) t));
                         }
+
                         FrameLayout listItem_expandable_content = itemView.findViewById(R.id.listItem_expandable_content);
                         listItem_expandable_content.removeAllViews();
                         listItem_expandable_content.addView(v);
@@ -870,7 +871,7 @@ public class CustomRecycler<T>{
                         goToDialog.reloadView();
                     }
                 }, Helpers.TextInputHelper.IME_ACTION.SEARCH))
-                .setSetViewContent((customDialog1, view1) -> {
+                .setSetViewContent((customDialog1, view1, reload) -> {
                     view1.setBackground(null);
                     View layoutView = customDialog1.findViewById(R.id.dialog_custom_layout_view);
                     if (currentObject[0] == null)

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SquareLayout">
+        <attr name="equalMode" format="enum">
+            <enum name="matchWidth" value="0"/>
+            <enum name="matchHeight" value="1"/>
+            <enum name="matchMax" value="2"/>
+            <enum name="matchMin" value="3"/>
+        </attr>
+    </declare-styleable>
+</resources>

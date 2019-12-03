@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.util.Log;
@@ -36,6 +37,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+
+import top.defaults.drawabletoolbox.DrawableBuilder;
 
 
 public class CustomUtility {
@@ -296,6 +299,7 @@ public class CustomUtility {
             protected void applyTransformation(float interpolatedTime, Transformation t) {
                 if(interpolatedTime == 1){
                     v.setVisibility(View.GONE);
+                    v.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
                 }else{
                     v.getLayoutParams().height = initialHeight - (int)(initialHeight * interpolatedTime);
                     v.requestLayout();
@@ -343,4 +347,67 @@ public class CustomUtility {
         void runChangeLayout(View view);
     }
     //  <--------------- Layout-Animation ---------------
+
+
+    //  --------------- SquareView --------------->
+    enum EQUAL_MODE {
+        HEIGHT, WIDTH, MAX, MIN
+    }
+
+    public static void squareView(View view){
+        squareView(view, EQUAL_MODE.MAX);
+    }
+    public static void squareView(View view, EQUAL_MODE equalMode){
+        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+        int matchParentMeasureSpec = View.MeasureSpec.makeMeasureSpec(((View) view.getParent()).getWidth(), View.MeasureSpec.EXACTLY);
+        int wrapContentMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        view.measure(matchParentMeasureSpec, wrapContentMeasureSpec);
+        int height = view.getMeasuredHeight();
+
+        int matchParentMeasureSpec_width = View.MeasureSpec.makeMeasureSpec(((View) view.getParent()).getHeight(), View.MeasureSpec.EXACTLY);
+        int wrapContentMeasureSpec_width = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        view.measure(wrapContentMeasureSpec_width, matchParentMeasureSpec_width);
+        int width = view.getMeasuredWidth();
+        switch (equalMode) {
+            case WIDTH:
+                layoutParams.height = width;
+                break;
+            case HEIGHT:
+                layoutParams.width = height;
+                break;
+            case MIN:
+                int min = width < height ? width : height;
+                layoutParams.width = min;
+                layoutParams.height = min;
+                break;
+            case MAX:
+                int max = width > height ? width : height;
+                layoutParams.width = max;
+                layoutParams.height = max;
+                break;
+        }
+    }
+    //  <--------------- SquareView ---------------
+
+
+    //  --------------- DrawableBuilder --------------->
+    public static Drawable drawableBuilder_rectangle(int color, int corners, boolean ripple) {
+        DrawableBuilder drawableBuilder = new DrawableBuilder()
+                .rectangle()
+                .solidColor(color)
+                .cornerRadius(CustomUtility.dpToPx(corners));
+        if (ripple) drawableBuilder
+                .ripple()
+                .rippleColor(0xF8868686);
+        return drawableBuilder
+                .build();
+    }
+    public static Drawable drawableBuilder_oval(int color) {
+        return new DrawableBuilder()
+                .oval()
+                .solidColor(color)
+                .build();
+    }
+    //  <--------------- DrawableBuilder ---------------
+
 }

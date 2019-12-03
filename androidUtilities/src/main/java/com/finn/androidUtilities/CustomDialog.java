@@ -45,7 +45,7 @@ public class CustomDialog {
     private BUTTON_CONFIGURATION buttonConfiguration = BUTTON_CONFIGURATION.CUSTOM;
     private Pair<Boolean, Boolean> dimensions = new Pair<>(true, false);
     private boolean dividerVisibility = true;
-    private Object objectExtra;
+    private Object payload;
     private boolean scroll = true;
     private EditBuilder editBuilder;
     private boolean showEdit;
@@ -140,12 +140,12 @@ public class CustomDialog {
         return dialog;
     }
 
-    public Object getObjectExtra() {
-        return objectExtra;
+    public Object getPayload() {
+        return payload;
     }
 
-    public CustomDialog setObjectExtra(Object objectExtra) {
-        this.objectExtra = objectExtra;
+    public CustomDialog setPayload(Object payload) {
+        this.payload = payload;
         return this;
     }
 
@@ -188,7 +188,7 @@ public class CustomDialog {
     }
 
     public interface SetViewContent{
-        void runSetViewContent(CustomDialog customDialog, View view);
+        void runSetViewContent(CustomDialog customDialog, View view, boolean reload);
     }
 
     public interface OnDialogCallback {
@@ -602,7 +602,7 @@ public class CustomDialog {
         }
 
         if (setViewContent != null)
-            setViewContent.runSetViewContent(this, view);
+            setViewContent.runSetViewContent(this, view, false);
 
         setDialogLayoutParameters(dialog, dimensions.first, dimensions.second);
         dialog.show();
@@ -612,7 +612,10 @@ public class CustomDialog {
     }
 
     public CustomDialog reloadView() {
-        setViewContent.runSetViewContent(this, view);
+        if (setViewContent != null)
+            setViewContent.runSetViewContent(this, view, true);
+        else if (payload instanceof CustomRecycler)
+            ((CustomRecycler) payload).reload();
         return this;
     }
     //  <----- Actions -----

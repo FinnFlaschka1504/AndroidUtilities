@@ -22,7 +22,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
 
     private CustomRecycler<CustomRecycler.Expandable<List<String>>> testRecycler;
-    private int amount = 25;
+    private int amount = 40;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         List<CustomRecycler.Expandable<String>> expandableList = new ArrayList<>();
         for (int i = 0; i < amount; i++) {
             List<String> numberList = new ArrayList<>();
-            if (i % 2 == 0) {
+            if (true /*i % 2 == 0*/) {
                 for (int i1 = 0; i1 < i + 1; i1++) {
                     numberList.add(String.valueOf(i1 + 1));
                 }
@@ -69,7 +69,14 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
 //                .setItemLayout(R.layout.list_item_expandable)
 //                .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(s))
-                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
+                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s) -> {
+                    itemView.setOnClickListener(v -> CustomDialog.Builder(this)
+                            .setTitle("SquareLayout")
+                            .setView(R.layout.square_test)
+                            .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.BACK)
+                            .show());
+                    ((TextView) itemView.findViewById(R.id.test)).setText(s);
+                })
 //                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>() //R.layout.expandable_content_test, (itemView, s, expanded) -> {
 //                    TextView test = itemView.findViewById(R.id.test);
 //                    test.setText(s != null ? s : "<Nix>");
