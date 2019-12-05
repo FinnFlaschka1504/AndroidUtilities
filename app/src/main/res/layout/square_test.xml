@@ -11,13 +11,18 @@
         <com.finn.androidUtilities.SquareLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:background="#2196F3"
+            android:gravity="center"
             app:equalMode="matchMax">
 
             <TextView
-                android:id="@+id/textView2"
+                android:id="@+id/textView4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
                 android:text="TextView" />
         </com.finn.androidUtilities.SquareLayout>
+
     </FrameLayout>
 </LinearLayout>

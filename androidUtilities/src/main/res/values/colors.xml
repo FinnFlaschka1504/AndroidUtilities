@@ -6,6 +6,7 @@
     <color name="colorDivider">#D7D8DD</color>
 
     <color name="colorGreen">#4CAF50</color>
+    <color name="colorTransparent">#00FFFFFF</color>
 
 <!--    <color name="colorTileBackground">@android:color/background_light</color>-->
     <color name="colorDrawable">@color/colorDayNightContent</color>

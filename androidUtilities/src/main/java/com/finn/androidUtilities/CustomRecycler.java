@@ -1,9 +1,17 @@
 package com.finn.androidUtilities;
 
+import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -14,9 +22,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.ColorRes;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -34,9 +46,11 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import kotlin.jvm.JvmStatic;
+
 import static java.util.stream.Collectors.toList;
 
-public class CustomRecycler<T>{
+public class CustomRecycler<T> {
 
     // ToDo: ItemTouchHelper https://www.youtube.com/watch?v=dvDTmJtGE_I
     //  holder.layoutId.setTag
@@ -44,6 +58,7 @@ public class CustomRecycler<T>{
     public enum ORIENTATION {
         VERTICAL, HORIZONTAL
     }
+
     public enum SELECTION_MODE {
         SINGLE_SELECTION, MULTI_SELECTION
     }
@@ -88,7 +103,7 @@ public class CustomRecycler<T>{
     private OnDragAndDrop<T> onDragAndDrop;
     private int dividerMargin;
     private OnSwiped<T> onSwiped;
-    private Pair<Boolean,Boolean> leftRightSwipe_pair;
+    private Pair<Boolean, Boolean> leftRightSwipe_pair;
     private ExpandableHelper expandableHelper;
 
 
@@ -102,7 +117,6 @@ public class CustomRecycler<T>{
     }
 
 
-
     public CustomRecycler setRecycler(RecyclerView recycler) {
         this.recycler = recycler;
         return this;
@@ -112,7 +126,7 @@ public class CustomRecycler<T>{
         return recycler;
     }
 
-    public CustomRecycler<T> setItemLayout(int layoutId) {
+    public CustomRecycler<T> setItemLayout(@LayoutRes int layoutId) {
         this.layoutId = layoutId;
         return this;
     }
@@ -133,7 +147,7 @@ public class CustomRecycler<T>{
         return objectList;
     }
 
-    public interface GetActiveObjectList<T>{
+    public interface GetActiveObjectList<T> {
         List<T> runGetActiveObjectList();
     }
 
@@ -146,8 +160,12 @@ public class CustomRecycler<T>{
 
     public CustomRecycler<T> setOrientation(ORIENTATION orientation) {
         switch (orientation) {
-            case VERTICAL: this.orientation = RecyclerView.VERTICAL; break;
-            case HORIZONTAL: this.orientation = RecyclerView.HORIZONTAL; break;
+            case VERTICAL:
+                this.orientation = RecyclerView.VERTICAL;
+                break;
+            case HORIZONTAL:
+                this.orientation = RecyclerView.HORIZONTAL;
+                break;
         }
         return this;
     }
@@ -284,6 +302,134 @@ public class CustomRecycler<T>{
                 mAdapter.notifyDataSetChanged();
                 onSwiped.runSwyped(objectList, direction, t);
             }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    View viewItem = viewHolder.itemView;
+                    new SwipeBackgroundHelper().paintDrawCommandToStart(c, viewItem, R.drawable.ic_delete_black_24dp, dX);
+                }
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+
+            class SwipeBackgroundHelper {
+                private static final String TAG = "SwipeBackgroundHelper";
+                private static final float CIRCLE_ACCELERATION = 0.5f;
+                private int OFFSET_PX = CustomUtility.dpToPx(16);
+                private double THRESHOLD = 0.5;
+                private Paint circlePaint;
+                private float CIRCLE_OFFSET_PX = CustomUtility.dpToPx(16);
+
+                {
+                    circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    circlePaint.setColor(Color.RED);
+                }
+
+//                private void drawBackground(Canvas canvas, View viewItem, Float dX, int color) {
+//                    Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+//                    backgroundPaint.setColor(color);
+//                    RectF backgroundRectangle = getBackGroundRectangle(viewItem, dX);
+//                    canvas.drawRect(backgroundRectangle, backgroundPaint);
+//                }
+
+                private void drawBackground(Canvas canvas, View viewItem, Float dX, Float threshold, DrawCommand drawCommand) {
+                    Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    backgroundPaint.setColor(drawCommand.backgroundColor);
+                    RectF backgroundRectangle = getBackGroundRectangle(viewItem, dX);
+                    float circleRadius = (Math.abs(dX / viewItem.getWidth()) - threshold) * viewItem.getWidth() * CIRCLE_ACCELERATION;
+
+                    canvas.clipRect(backgroundRectangle);
+                    canvas.drawColor(backgroundPaint.getColor());
+                    if (circleRadius > 0f) {
+                        float cx = getIntPosition(backgroundRectangle);//backgroundRectangle.left + drawCommand.icon.getIntrinsicWidth() / 2f + CIRCLE_OFFSET_PX;
+                        float cy = backgroundRectangle.top + viewItem.getHeight() / 2f;
+                        Log.d(TAG, "drawBackground: cx" + cx);
+
+                        canvas.drawCircle(cx, cy, circleRadius, circlePaint);
+                    }
+                }
+
+                private int getIntPosition(RectF backgroundRectangle) {
+                    float v = (backgroundRectangle.right + backgroundRectangle.left) / 2;
+                    if (v <  backgroundRectangle.left + OFFSET_PX)
+                        return (int) (backgroundRectangle.left + OFFSET_PX);
+                    else
+                        return (int) v;
+                }
+
+                private RectF getBackGroundRectangle(View viewItem, Float dX) {
+                    return new RectF(viewItem.getRight() + dX, viewItem.getTop(), viewItem.getRight(), viewItem.getBottom());
+                }
+
+                private int calculateTopMargin(Drawable icon, View viewItem) {
+                    return (viewItem.getHeight() - icon.getIntrinsicHeight()) / 2;
+                }
+
+                private Rect getStartContainerRectangle(View viewItem, int iconWidth, int topMargin, int sideOffset, Float dx) {
+                    int center = (viewItem.getRight() * 2 + dx.intValue()) / 2 ;
+                    if (center < viewItem.getRight() + dx.intValue() + sideOffset)
+                        center = viewItem.getRight() + dx.intValue() + sideOffset;
+                    center -= iconWidth / 2;
+                    Log.d(TAG, "getStartContainerRectangle: center" + center);
+//                    int leftBound = viewItem.getRight() + (dx.intValue() + sideOffset) / 2;
+                    int leftBound = center;
+                    int rightBound = center + iconWidth;
+                    int topBound = viewItem.getTop() + topMargin;
+                    int bottomBound = viewItem.getBottom() - topMargin;
+
+                    return new Rect(leftBound, topBound, rightBound, bottomBound);
+                }
+
+                private void drawIcon(Canvas canvas, View viewItem, Float dX, Drawable icon) {
+                    int topMargin = calculateTopMargin(icon, viewItem);
+                    icon.setBounds(getStartContainerRectangle(viewItem, icon.getIntrinsicWidth(), topMargin, OFFSET_PX, dX));
+                    icon.draw(canvas);
+                }
+
+                private void paintDrawCommand(DrawCommand drawCommand, Canvas canvas, Float dX, View viewItem) {
+                    drawBackground(canvas, viewItem, dX, 0f, drawCommand);
+                    drawIcon(canvas, viewItem, dX, drawCommand.icon);
+                }
+
+                @JvmStatic
+                void paintDrawCommandToStart(Canvas canvas, View viewItem, @DrawableRes int iconResId, Float dX) {
+                    DrawCommand drawCommand = createDrawCommand(viewItem, dX, iconResId);
+                    paintDrawCommand(drawCommand, canvas, dX, viewItem);
+                }
+
+                private DrawCommand createDrawCommand(View viewItem, Float dX, int iconResId) {
+                    Context context = viewItem.getContext();
+                    Drawable icon = ContextCompat.getDrawable(context, iconResId);
+                    icon = DrawableCompat.wrap(icon).mutate();
+                    icon.setColorFilter(new PorterDuffColorFilter(ContextCompat.getColor(context, R.color.colorDrawable), PorterDuff.Mode.SRC_IN));
+                    int backgroundColor = getBackgroundColor(R.color.colorTransparent, R.color.colorTransparent, dX, viewItem);
+                    return new DrawCommand(icon, backgroundColor);
+                }
+
+                private int getBackgroundColor(@ColorRes int firstColor, @ColorRes int secondColor, float dX, View viewItem) {
+                    if (willActionBeTriggered(dX, viewItem.getWidth()))
+                        return ContextCompat.getColor(viewItem.getContext(), firstColor);
+                    else
+                        return ContextCompat.getColor(viewItem.getContext(), secondColor);
+                }
+
+                private boolean willActionBeTriggered(float dX, int viewWidth) {
+                    return Math.abs(dX) >= viewWidth * THRESHOLD;
+                }
+
+                class DrawCommand {
+                    Drawable icon;
+                    int backgroundColor;
+
+                    public DrawCommand(Drawable icon, int backgroundColor) {
+                        this.icon = icon;
+                        this.backgroundColor = backgroundColor;
+                    }
+
+
+                }
+            }
+
         };
         ItemTouchHelper helper = new ItemTouchHelper(itemTouchHelperCallback);
         helper.attachToRecyclerView(recycler);
@@ -382,10 +528,10 @@ public class CustomRecycler<T>{
         public void onBindViewHolder(ViewHolder viewHolder, int position) {
             if (setItemContent == null) {
                 setItemContent = (itemView, t) -> {
-                    if (t instanceof  CharSequence)
+                    if (t instanceof CharSequence)
                         ((TextView) itemView.findViewById(R.id.listItem_standard_title)).setText((CharSequence) t);
                     else if (t instanceof Pair) {
-                        Pair<String,String> pair = (Pair<String, String>) t;
+                        Pair<String, String> pair = (Pair<String, String>) t;
                         ((TextView) itemView.findViewById(R.id.listItem_standard_title)).setText(pair.first);
                         TextView listItem_standard_subTitle = itemView.findViewById(R.id.listItem_standard_subTitle);
                         listItem_standard_subTitle.setText(pair.second);
@@ -423,8 +569,6 @@ public class CustomRecycler<T>{
 
     }
     //  <----- Adapter -----
-
-
 
 
     //  --------------- Expandable --------------->
@@ -466,6 +610,7 @@ public class CustomRecycler<T>{
     };
 
     private Map<CustomRecycler, Expandable> subRecyclerMap = new HashMap<>();
+
     public Expandable getExpandable(CustomRecycler customRecycler) {
         return subRecyclerMap.get(customRecycler);
     }
@@ -474,6 +619,7 @@ public class CustomRecycler<T>{
         this.expandableHelper = (ExpandableHelper) getExpandableHelper.runGetExpandableHelper(this);
         return this;
     }
+
     public interface GetExpandableHelper<T> {
         Object runGetExpandableHelper(CustomRecycler<T> customRecycler);
     }
@@ -493,7 +639,8 @@ public class CustomRecycler<T>{
         private CustomizeRecycler<E> customizeRecycler;
 
         public ExpandableHelper() {
-            setItemContent = (itemView, e) -> {};
+            setItemContent = (itemView, e) -> {
+            };
         }
 
         public ExpandableHelper(int contentLayoutId, SetItemContent<E> setItemContent) {
@@ -556,6 +703,7 @@ public class CustomRecycler<T>{
     public interface CustomizeRecycler<T> {
         void runCustomizeRecycler(CustomRecycler<T> subRecycler);
     }
+
     // ToDo:
     //  animationslänge (evl. auch komplett deaktivieren)
     public static class Expandable<T> {
@@ -627,17 +775,20 @@ public class CustomRecycler<T>{
         public List<Expandable<T>> toExpandableList(List<T> list) {
             return list.stream().map(t -> new CustomRecycler.Expandable<>(t.toString(), t)).collect(toList());
         }
+
         public List<Expandable<T>> toExpandableList(List<T> list, ToExpandable<T> toExpandable) {
             return list.stream().map(toExpandable::runToExpandable).collect(toList());
         }
+
         public interface ToExpandable<T> {
             Expandable<T> runToExpandable(T t);
         }
 
         public static class ToGroupExpandableList<Result, Item, Key> {
             Comparator<Expandable<List<Result>>> keyComparator;
+
             public List<Expandable<List<Result>>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
-                    , KeyToString<Key, Item> keyToString, ItemToResult<Item, Result> itemToResult){
+                    , KeyToString<Key, Item> keyToString, ItemToResult<Item, Result> itemToResult) {
                 Map<Key, List<Item>> group = list.stream().collect(Collectors.groupingBy(classifier));
 
                 List<Expandable<List<Result>>> expandableList = new ArrayList<>();
@@ -657,9 +808,11 @@ public class CustomRecycler<T>{
                 return this;
             }
         }
-        public interface KeyToString<T,M> {
+
+        public interface KeyToString<T, M> {
             String runKeyToString(T t, List<M> m);
         }
+
         public interface ItemToResult<Item, Result> {
             Result runItemToResult(Item item);
         }
@@ -685,7 +838,7 @@ public class CustomRecycler<T>{
 
         RecyclerView.LayoutManager layoutManager;
         if (rowOrColumnCount > 1)
-            layoutManager = new GridLayoutManager(context, rowOrColumnCount,orientation, false);
+            layoutManager = new GridLayoutManager(context, rowOrColumnCount, orientation, false);
         else
             layoutManager = new LinearLayoutManager(context, orientation, false);
         recycler.setLayoutManager(layoutManager);
@@ -739,7 +892,6 @@ public class CustomRecycler<T>{
         }
 
 
-
         mAdapter = new MyAdapter(objectList);
         recycler.setAdapter(mAdapter);
 
@@ -767,8 +919,7 @@ public class CustomRecycler<T>{
                         }
                     }
                 };
-            }
-            else {
+            } else {
                 dividerItemDecoration = new DividerItemDecoration(recycler.getContext(),
                         ((LinearLayoutManager) layoutManager).getOrientation());
                 dividerItemDecoration.setDrawable(ContextCompat.getDrawable(context, R.drawable.divider));
@@ -828,6 +979,7 @@ public class CustomRecycler<T>{
         scrollTo(index, true);
         return this;
     }
+
     public CustomRecycler<T> goTo(GoToFilter<T> goToFilter, String search) {
         final T[] currentObject = (T[]) new Object[1];
         CustomList<T> filterdObjectList = new CustomList<>();
@@ -859,24 +1011,24 @@ public class CustomRecycler<T>{
                 .setView(getLayoutId())
                 .setEdit(new CustomDialog.EditBuilder().setHint("Filter").setFireActionDirectly(search != null && !search.isEmpty()).setText(search != null ? search : "").allowEmpty()
                         .setOnAction((textInputHelper, textInputLayout, actionId, text1) -> {
-                    filterdObjectList.clear();
-                    filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(text1, t)).collect(toList()));
-                    if (filterdObjectList.isEmpty())
-                        Toast.makeText(context, "Kein Eintrag für diese Suche", Toast.LENGTH_SHORT).show();
-                    else if (filterdObjectList.size() == 1) {
-                        scrollTo(allObjectList.indexOf(filterdObjectList.get(0)), true);
-                        goToDialog.dismiss();
-                    } else {
-                        currentObject[0] = filterdObjectList.get(0);
-                        goToDialog.reloadView();
-                    }
-                }, Helpers.TextInputHelper.IME_ACTION.SEARCH))
+                            filterdObjectList.clear();
+                            filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(text1, t)).collect(toList()));
+                            if (filterdObjectList.isEmpty())
+                                Toast.makeText(context, "Kein Eintrag für diese Suche", Toast.LENGTH_SHORT).show();
+                            else if (filterdObjectList.size() == 1) {
+                                scrollTo(allObjectList.indexOf(filterdObjectList.get(0)), true);
+                                goToDialog.dismiss();
+                            } else {
+                                currentObject[0] = filterdObjectList.get(0);
+                                goToDialog.reloadView();
+                            }
+                        }, Helpers.TextInputHelper.IME_ACTION.SEARCH))
                 .setSetViewContent((customDialog1, view1, reload) -> {
                     view1.setBackground(null);
                     View layoutView = customDialog1.findViewById(R.id.dialog_custom_layout_view);
                     if (currentObject[0] == null)
                         layoutView.setVisibility(View.GONE);
-                    else{
+                    else {
                         setItemContent.runSetCellContent(layoutView, currentObject[0]);
                         layoutView.setVisibility(View.VISIBLE);
                     }
@@ -884,7 +1036,8 @@ public class CustomRecycler<T>{
                 .show();
         return this;
     }
-    public interface GoToFilter<T>{
+
+    public interface GoToFilter<T> {
         boolean runGoToFilter(String search, T t);
     }
     //  <--------------- GoTo ---------------

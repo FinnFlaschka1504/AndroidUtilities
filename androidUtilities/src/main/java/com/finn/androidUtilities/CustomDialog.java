@@ -12,6 +12,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.annotation.LayoutRes;
+
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -88,7 +90,7 @@ public class CustomDialog {
         return this;
     }
 
-    public CustomDialog setView(int layoutId) {
+    public CustomDialog setView(@LayoutRes int layoutId) {
         LayoutInflater li = LayoutInflater.from(context);
         this.view = li.inflate(layoutId, null);
         return this;

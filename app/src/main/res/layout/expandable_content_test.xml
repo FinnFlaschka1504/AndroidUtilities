@@ -5,6 +5,7 @@
     style="@style/TileStyle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/colorTransparent"
     android:orientation="vertical">
 
     <TextView
@@ -25,11 +26,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="TextView" />
-
-        <com.finn.androidUtilities.SquareLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:equalMode="matchMin" />
     </LinearLayout>
 
 </LinearLayout>

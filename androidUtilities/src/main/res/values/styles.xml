@@ -27,6 +27,33 @@
         <item name="android:padding">8dp</item>
     </style>
 
+    <style name="TileStyle.Fill" parent="TileStyle">
+        <item name="android:background">@drawable/rounded_background_fill</item>
+        <item name="android:paddingVertical">13dp</item>
+        <item name="android:paddingHorizontal">20dp</item>
+        <item name="android:layout_marginVertical">0dp</item>
+        <item name="android:layout_marginHorizontal">0dp</item>
+
+    </style>
+
+    <style name="TileStyle_Fill_Foreground">
+        <item name="android:background">@drawable/rounded_background</item>
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:foreground">@drawable/ripple</item>
+        <item name="android:layout_marginVertical">5dp</item>
+        <item name="android:layout_marginHorizontal">12dp</item>
+        <item name="android:elevation">3dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_margin">8dp</item>
+    </style>
+    <style name="TileStyle_Fill_Background">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center_vertical</item>
+<!--        <item name="android:layout_margin">0dp</item>-->
+    </style>
+
     <style name="ImageButtonStyle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

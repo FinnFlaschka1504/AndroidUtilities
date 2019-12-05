@@ -43,8 +43,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                     numberList.add(String.valueOf(i1 + 1));
                 }
                 expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), String.join("\n", numberList)));
-            }
-            else
+            } else
                 expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1)));
         }
 
@@ -66,17 +65,18 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
 
 //        testRecycler =
-                new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
+        new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
 //                .setItemLayout(R.layout.list_item_expandable)
 //                .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(s))
                 .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s) -> {
-                    itemView.setOnClickListener(v -> CustomDialog.Builder(this)
-                            .setTitle("SquareLayout")
-                            .setView(R.layout.square_test)
-                            .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.BACK)
-                            .show());
-                    ((TextView) itemView.findViewById(R.id.test)).setText(s);
-                })
+                            itemView.setOnClickListener(v -> CustomDialog.Builder(this)
+                                    .setTitle("SquareLayout")
+                                    .setView(R.layout.square_test)
+                                    .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.BACK)
+                                    .setDimensions(false, false)
+                                    .show());
+                            ((TextView) itemView.findViewById(R.id.test)).setText(s);
+                        })
 //                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>() //R.layout.expandable_content_test, (itemView, s, expanded) -> {
 //                    TextView test = itemView.findViewById(R.id.test);
 //                    test.setText(s != null ? s : "<Nix>");
@@ -93,9 +93,12 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                                Toast.makeText(this, expandable.getName() + ":" + s, Toast.LENGTH_SHORT).show();
 //                            }).enableDivider().removeLastDivider().disableCustomRipple();
 //                        })
-                        .enableExpandByDefault()
+                                .enableExpandByDefault()
                 )
                 .setObjectList(expandableList)
+                .enableSwiping((objectList, direction, stringExpandable) -> {
+                    String BREAKPOINT = null;
+                }, true, true)
                 .generate();
 
         CustomInternetHelper.initialize(this);

@@ -1,69 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/TileStyle"
+    style="@style/TileStyle_Fill_Background"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:foreground="@android:color/transparent"
-    android:orientation="vertical"
-    android:padding="0dp">
-
-    <FrameLayout
-        android:id="@+id/listItem_expandable_header"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:foreground="@drawable/ripple"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="5dp">
-
-        <TextView
-            android:id="@+id/listItem_expandable_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="25dp"
-            android:layout_marginLeft="8dp"
-            android:layout_weight="1"
-            android:text="Clicken"
-            android:textAlignment="center"
-            android:textSize="18sp" />
-
-        <ImageView
-            android:id="@+id/listItem_expandable_arrow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            app:srcCompat="@drawable/ic_arrow_down_to_up" />
-    </FrameLayout>
+    android:layout_height="wrap_content">
 
     <LinearLayout
-        android:id="@+id/listItem_expandable_expansionLayout"
+        style="@style/TileStyle_Fill_Foreground"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginHorizontal="5dp"
-        android:layout_marginBottom="5dp"
-        android:orientation="vertical"
-        android:visibility="gone"
-        tools:visibility="visible">
-
-        <View
-            android:id="@+id/listItem_expandable_divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginBottom="8dp"
-            android:background="?android:attr/listDivider" />
+        android:layout_height="wrap_content"
+        android:foreground="@android:color/transparent"
+        android:orientation="vertical">
 
         <FrameLayout
-            android:id="@+id/listItem_expandable_content"
+            android:id="@+id/listItem_expandable_header"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent"
+            android:foreground="@drawable/ripple"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="5dp">
+
             <TextView
+                android:id="@+id/listItem_expandable_name"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="test\ntest\ntest\ntest\ntest\ntest\n"/>
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="25dp"
+                android:layout_marginLeft="8dp"
+                android:layout_weight="1"
+                android:text="Clicken"
+                android:textAlignment="center"
+                android:textSize="18sp" />
+
+            <ImageView
+                android:id="@+id/listItem_expandable_arrow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                app:srcCompat="@drawable/ic_arrow_down_to_up" />
         </FrameLayout>
 
-    </LinearLayout>
+        <LinearLayout
+            android:id="@+id/listItem_expandable_expansionLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="5dp"
+            android:layout_marginBottom="5dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
 
-</LinearLayout>
+            <View
+                android:id="@+id/listItem_expandable_divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="8dp"
+                android:background="?android:attr/listDivider" />
+
+            <FrameLayout
+                android:id="@+id/listItem_expandable_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="test\ntest\ntest\ntest\ntest\ntest\n" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</FrameLayout>

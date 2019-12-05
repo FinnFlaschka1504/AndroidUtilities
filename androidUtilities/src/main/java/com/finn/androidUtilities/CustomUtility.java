@@ -34,9 +34,14 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import top.defaults.drawabletoolbox.DrawableBuilder;
 
@@ -176,6 +181,13 @@ public class CustomUtility {
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    public static Date removeMilliseconds(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
         cal.set(Calendar.MILLISECOND, 0);
         return cal.getTime();
     }
@@ -409,5 +421,26 @@ public class CustomUtility {
                 .build();
     }
     //  <--------------- DrawableBuilder ---------------
+
+
+    //  --------------- ConcatCollections --------------->
+    public interface GetCollections<T, V> {
+        Collection<V> runGetCollections(T t);
+    }
+
+    public static <T, V> List<V> concatenateCollections(Collection<T> tCollection, GetCollections<T, V> getCollections) {
+        List<Collection<V>> collectionList = new ArrayList<>();
+        tCollection.forEach(t -> collectionList.add(getCollections.runGetCollections(t)));
+        return collectionList.stream().flatMap(Collection::stream).collect(Collectors.toList());
+    }
+
+    public static <T> List<T> concatenateCollections(Collection<Collection<T>> collections) {
+        return collections.stream().flatMap(Collection::stream).collect(Collectors.toList());
+    }
+
+    public static <T> List<T> concatenateCollections(List<T>... collections) {
+        return Arrays.stream(collections).flatMap(Collection::stream).collect(Collectors.toList());
+    }
+    //  <--------------- ConcatCollections ---------------
 
 }
