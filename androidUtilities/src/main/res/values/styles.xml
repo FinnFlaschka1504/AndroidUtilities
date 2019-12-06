@@ -45,7 +45,7 @@
         <item name="android:layout_marginHorizontal">12dp</item>
         <item name="android:elevation">3dp</item>
         <item name="android:gravity">center_vertical</item>
-        <item name="android:layout_margin">8dp</item>
+        <item name="android:padding">8dp</item>
     </style>
     <style name="TileStyle_Fill_Background">
         <item name="android:layout_width">fill_parent</item>

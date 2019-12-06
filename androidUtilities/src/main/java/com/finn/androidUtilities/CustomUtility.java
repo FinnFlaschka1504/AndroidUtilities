@@ -361,6 +361,30 @@ public class CustomUtility {
     //  <--------------- Layout-Animation ---------------
 
 
+    //  --------------- getViews --------------->
+    public static <T extends View> ArrayList<T> getViewsByType(ViewGroup root, Class<T> tClass) {
+        final ArrayList<T> result = new ArrayList<>();
+        for (int i = 0; i < root.getChildCount(); i++) {
+            final View child = root.getChildAt(i);
+            if (child instanceof ViewGroup)
+                result.addAll(getViewsByType((ViewGroup) child, tClass));
+
+            if (tClass.isInstance(child))
+                result.add(tClass.cast(child));
+        }
+        return result;
+    }
+
+    public static <T extends View> void applyToAllViews(ViewGroup root, Class<T> tClass, ApplyToAll<T> applyToAll) {
+        getViewsByType(root, tClass).forEach(applyToAll::runApplyToAll);
+    }
+
+    public interface ApplyToAll<T extends View> {
+        void runApplyToAll(T t);
+    }
+    //  <--------------- getViews ---------------
+
+
     //  --------------- SquareView --------------->
     enum EQUAL_MODE {
         HEIGHT, WIDTH, MAX, MIN

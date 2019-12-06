@@ -2,31 +2,17 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/TileStyle"
+    style="@style/TileStyle_Fill_Background"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorTransparent"
     android:orientation="vertical">
 
     <TextView
         android:id="@+id/test"
+        style="@style/TileStyle_Fill_Foreground"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Mip\nMip\nMip\nMip\nMip\nMip\nMip\nMip\nMip\nMip\n" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:visibility="gone"
-        tools:visibility="visible">
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="TextView" />
-    </LinearLayout>
 
 </LinearLayout>
 <!--    android:text="Das \nist \nein \nlanger \nText \n\nDas \nist \nein \nlanger \nText \n\nDas \nist \nein \nlanger \nText \n\n" />-->

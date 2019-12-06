@@ -2,6 +2,7 @@ package com.finn.androidUtilitiesExample;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Pair;
 import android.view.View;
@@ -29,23 +30,25 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Test.test(this);
+//        Test.calcStart(9);
+//
+//        Test.test(this);
 
         List<String> testList = Arrays.asList("1", "2", "3");
         new CustomRecycler.Expandable<String>().toExpandableList(testList, s -> new CustomRecycler.Expandable<>(s, s));
 
 
-        List<CustomRecycler.Expandable<String>> expandableList = new ArrayList<>();
-        for (int i = 0; i < amount; i++) {
-            List<String> numberList = new ArrayList<>();
-            if (true /*i % 2 == 0*/) {
-                for (int i1 = 0; i1 < i + 1; i1++) {
-                    numberList.add(String.valueOf(i1 + 1));
-                }
-                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), String.join("\n", numberList)));
-            } else
-                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1)));
-        }
+//        List<CustomRecycler.Expandable<String>> expandableList = new ArrayList<>();
+//        for (int i = 0; i < amount; i++) {
+//            List<String> numberList = new ArrayList<>();
+//            if (true /*i % 2 == 0*/) {
+//                for (int i1 = 0; i1 < i + 1; i1++) {
+//                    numberList.add(String.valueOf(i1 + 1));
+//                }
+//                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), String.join("\n", numberList)));
+//            } else
+//                expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1)));
+//        }
 
 //        List<CustomRecycler.Expandable<List<String>>> expandableList = new ArrayList<>();
 //        for (int i = 0; i < amount; i++) {
@@ -58,26 +61,27 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //            expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), numberList));
 //        }
 
-//        List<Pair<String,String>> pairList = Arrays.asList(new Pair<>("A", "1"), new Pair<>("C", "2"), new Pair<>("A", "3"), new Pair<>("A", "4"), new Pair<>("B", "5"), new Pair<>("C", "6"), new Pair<>("D", "7"), new Pair<>("B", "8"), new Pair<>("A", "9"), new Pair<>("A", "10"), new Pair<>("D", "11"));
-//
-//        List<CustomRecycler.Expandable<List<String>>> expandableList = new CustomRecycler.Expandable.ToGroupExpandableList<String, Pair<String, String>, String>()
-//                .setSort((o1, o2) -> ((String) o1.getPayload()).compareTo(((String) o2.getPayload())) * -1)
-//                .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
+        List<Pair<String, String>> pairList = Arrays.asList(new Pair<>("A", "1"), new Pair<>("C", "2"), new Pair<>("A", "3"), new Pair<>("A", "4"), new Pair<>("B", "5"), new Pair<>("C", "6"), new Pair<>("D", "7"), new Pair<>("B", "8"), new Pair<>("A", "9"), new Pair<>("A", "10"), new Pair<>("D", "11"));
+
+        List<CustomRecycler.Expandable<String>> expandableList = new CustomRecycler.Expandable.ToGroupExpandableList<String, Pair<String, String>, String>()
+                .setSort((o1, o2) -> o1.getName().compareTo(o2.getName()) * -1)
+                .setSubSort((o1, o2) -> Integer.valueOf(o1).compareTo(Integer.valueOf(o2)) * -1)
+                .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
 
 //        testRecycler =
         new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
 //                .setItemLayout(R.layout.list_item_expandable)
 //                .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(s))
-                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s) -> {
-                            itemView.setOnClickListener(v -> CustomDialog.Builder(this)
-                                    .setTitle("SquareLayout")
-                                    .setView(R.layout.square_test)
-                                    .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.BACK)
-                                    .setDimensions(false, false)
-                                    .show());
-                            ((TextView) itemView.findViewById(R.id.test)).setText(s);
-                        })
-//                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>() //R.layout.expandable_content_test, (itemView, s, expanded) -> {
+//                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s) -> {
+//                            itemView.setOnClickListener(v -> CustomDialog.Builder(this)
+//                                    .setTitle("SquareLayout")
+//                                    .setView(R.layout.square_test)
+//                                    .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.BACK)
+//                                    .setDimensions(false, false)
+//                                    .show());
+//                            ((TextView) itemView.findViewById(R.id.test)).setText(s);
+//                        })
+                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>() //R.layout.expandable_content_test, (itemView, s, expanded) -> {
 //                    TextView test = itemView.findViewById(R.id.test);
 //                    test.setText(s != null ? s : "<Nix>");
 //                    if (expanded) {
@@ -87,18 +91,32 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //
 //                    }
 //                })
-//                        .customizeRecycler(subRecycler -> {
-//                            subRecycler.setOnClickListener((customRecycler2, itemView, s, index) -> {
-//                                CustomRecycler.Expandable expandable = customRecycler.getExpandable(customRecycler2);
-//                                Toast.makeText(this, expandable.getName() + ":" + s, Toast.LENGTH_SHORT).show();
-//                            }).enableDivider().removeLastDivider().disableCustomRipple();
-//                        })
+                                .customizeRecycler(subRecycler -> {
+                                    subRecycler
+                                            .setOnClickListener((customRecycler2, itemView, s, index) -> {
+                                                CustomRecycler.Expandable expandable = customRecycler.getExpandable(customRecycler2);
+                                                Toast.makeText(this, expandable.getName() + ":" + s, Toast.LENGTH_SHORT).show();
+                                            })
+//                                            .enableDivider()
+//                                            .removeLastDivider()
+//                                            .disableCustomRipple()
+                                            .setItemLayout(R.layout.expandable_content_test)
+                                            .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
+                                            .enableSwiping((objectList, direction, s) -> {
+                                                Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+                                            }, true, true)
+                                            .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
+                                                    .setFarEnoughColor_icon(getColor(R.color.colorAccent)).setNotFarEnoughColor_icon(Color.RED).setThreshold(0.4f)
+                                                    .setFarEnoughIconResId(R.drawable.ic_arrow_up).enableBouncyThreshold(2));
+                                })
                                 .enableExpandByDefault()
                 )
                 .setObjectList(expandableList)
-                .enableSwiping((objectList, direction, stringExpandable) -> {
-                    String BREAKPOINT = null;
-                }, true, true)
+//                .enableSwiping((objectList, direction, stringExpandable) -> {
+//                    String BREAKPOINT = null;
+//                }, true, true)
+//                .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
+//                        .setFarEnoughColor_icon(Color.YELLOW).setNotFarEnoughColor_icon(Color.RED).enableBouncyThreshold().setThreshold(0.3f))
                 .generate();
 
         CustomInternetHelper.initialize(this);

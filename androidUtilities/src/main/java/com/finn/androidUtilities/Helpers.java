@@ -510,7 +510,7 @@ public class Helpers {
     public static class SpannableStringHelper {
         public enum SPAN_TYPE {
             BOLD(new StyleSpan(Typeface.BOLD)), ITALIC(new StyleSpan(Typeface.ITALIC)), BOLD_ITALIC(new StyleSpan(Typeface.BOLD_ITALIC)), STRIKE_THROUGH(new StrikethroughSpan()),
-            UNDERLINED(new UnderlineSpan());
+            UNDERLINED(new UnderlineSpan()), NONE(null);
 
             Object what;
 

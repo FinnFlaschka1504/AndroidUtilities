@@ -52,8 +52,7 @@ import static java.util.stream.Collectors.toList;
 
 public class CustomRecycler<T> {
 
-    // ToDo: ItemTouchHelper https://www.youtube.com/watch?v=dvDTmJtGE_I
-    //  holder.layoutId.setTag
+    // ToDo: BouncyOverscroll https://github.com/chthai64/overscroll-bouncy-android
 
     public enum ORIENTATION {
         VERTICAL, HORIZONTAL
@@ -105,6 +104,7 @@ public class CustomRecycler<T> {
     private OnSwiped<T> onSwiped;
     private Pair<Boolean, Boolean> leftRightSwipe_pair;
     private ExpandableHelper expandableHelper;
+    private SwipeBackgroundHelper swipeBackgroundHelper;
 
 
     public CustomRecycler(AppCompatActivity context) {
@@ -297,7 +297,14 @@ public class CustomRecycler<T> {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int index = viewHolder.getAdapterPosition();
-
+                if (swipeBackgroundHelper != null && swipeBackgroundHelper.bouncyThreshold) {
+                    onSwiped.runSwyped(objectList, direction, objectList.get(index));
+                    if (!swipeBackgroundHelper.staySwiped) {
+                        mAdapter.notifyDataSetChanged();
+                    }
+                    return;
+                }
+//
                 T t = objectList.remove(index);
                 mAdapter.notifyDataSetChanged();
                 onSwiped.runSwyped(objectList, direction, t);
@@ -307,132 +314,284 @@ public class CustomRecycler<T> {
             public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
                     View viewItem = viewHolder.itemView;
-                    new SwipeBackgroundHelper().paintDrawCommandToStart(c, viewItem, R.drawable.ic_delete_black_24dp, dX);
+                    if (swipeBackgroundHelper != null) {
+                        swipeBackgroundHelper.setCanvas(c).setViewItem(viewItem).setdX(dX).draw();
+
+                        float maxSwipe = viewItem.getWidth() * swipeBackgroundHelper.threshold;
+                        if (swipeBackgroundHelper.bouncyThreshold && Math.abs(dX) >= maxSwipe) {
+                            float rest = viewItem.getWidth() - maxSwipe;
+                            float over = Math.abs(dX) - maxSwipe;
+
+                            dX = (float) (((1 - Math.exp(-0.7 * (over / rest))) / swipeBackgroundHelper.bouncyStrength) * rest + maxSwipe) * (dX < 0 ? -1 : 1);
+                        }
+                    }
                 }
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
             }
 
-            class SwipeBackgroundHelper {
-                private static final String TAG = "SwipeBackgroundHelper";
-                private static final float CIRCLE_ACCELERATION = 0.5f;
-                private int OFFSET_PX = CustomUtility.dpToPx(16);
-                private double THRESHOLD = 0.5;
-                private Paint circlePaint;
-                private float CIRCLE_OFFSET_PX = CustomUtility.dpToPx(16);
-
-                {
-                    circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-                    circlePaint.setColor(Color.RED);
+            @Override
+            public float getSwipeThreshold(@NonNull RecyclerView.ViewHolder viewHolder) {
+                if (swipeBackgroundHelper != null) {
+//                    if (swipeBackgroundHelper.bouncyThreshold)
+//                        return 2;
+                    return swipeBackgroundHelper.threshold;
                 }
-
-//                private void drawBackground(Canvas canvas, View viewItem, Float dX, int color) {
-//                    Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//                    backgroundPaint.setColor(color);
-//                    RectF backgroundRectangle = getBackGroundRectangle(viewItem, dX);
-//                    canvas.drawRect(backgroundRectangle, backgroundPaint);
-//                }
-
-                private void drawBackground(Canvas canvas, View viewItem, Float dX, Float threshold, DrawCommand drawCommand) {
-                    Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-                    backgroundPaint.setColor(drawCommand.backgroundColor);
-                    RectF backgroundRectangle = getBackGroundRectangle(viewItem, dX);
-                    float circleRadius = (Math.abs(dX / viewItem.getWidth()) - threshold) * viewItem.getWidth() * CIRCLE_ACCELERATION;
-
-                    canvas.clipRect(backgroundRectangle);
-                    canvas.drawColor(backgroundPaint.getColor());
-                    if (circleRadius > 0f) {
-                        float cx = getIntPosition(backgroundRectangle);//backgroundRectangle.left + drawCommand.icon.getIntrinsicWidth() / 2f + CIRCLE_OFFSET_PX;
-                        float cy = backgroundRectangle.top + viewItem.getHeight() / 2f;
-                        Log.d(TAG, "drawBackground: cx" + cx);
-
-                        canvas.drawCircle(cx, cy, circleRadius, circlePaint);
-                    }
-                }
-
-                private int getIntPosition(RectF backgroundRectangle) {
-                    float v = (backgroundRectangle.right + backgroundRectangle.left) / 2;
-                    if (v <  backgroundRectangle.left + OFFSET_PX)
-                        return (int) (backgroundRectangle.left + OFFSET_PX);
-                    else
-                        return (int) v;
-                }
-
-                private RectF getBackGroundRectangle(View viewItem, Float dX) {
-                    return new RectF(viewItem.getRight() + dX, viewItem.getTop(), viewItem.getRight(), viewItem.getBottom());
-                }
-
-                private int calculateTopMargin(Drawable icon, View viewItem) {
-                    return (viewItem.getHeight() - icon.getIntrinsicHeight()) / 2;
-                }
-
-                private Rect getStartContainerRectangle(View viewItem, int iconWidth, int topMargin, int sideOffset, Float dx) {
-                    int center = (viewItem.getRight() * 2 + dx.intValue()) / 2 ;
-                    if (center < viewItem.getRight() + dx.intValue() + sideOffset)
-                        center = viewItem.getRight() + dx.intValue() + sideOffset;
-                    center -= iconWidth / 2;
-                    Log.d(TAG, "getStartContainerRectangle: center" + center);
-//                    int leftBound = viewItem.getRight() + (dx.intValue() + sideOffset) / 2;
-                    int leftBound = center;
-                    int rightBound = center + iconWidth;
-                    int topBound = viewItem.getTop() + topMargin;
-                    int bottomBound = viewItem.getBottom() - topMargin;
-
-                    return new Rect(leftBound, topBound, rightBound, bottomBound);
-                }
-
-                private void drawIcon(Canvas canvas, View viewItem, Float dX, Drawable icon) {
-                    int topMargin = calculateTopMargin(icon, viewItem);
-                    icon.setBounds(getStartContainerRectangle(viewItem, icon.getIntrinsicWidth(), topMargin, OFFSET_PX, dX));
-                    icon.draw(canvas);
-                }
-
-                private void paintDrawCommand(DrawCommand drawCommand, Canvas canvas, Float dX, View viewItem) {
-                    drawBackground(canvas, viewItem, dX, 0f, drawCommand);
-                    drawIcon(canvas, viewItem, dX, drawCommand.icon);
-                }
-
-                @JvmStatic
-                void paintDrawCommandToStart(Canvas canvas, View viewItem, @DrawableRes int iconResId, Float dX) {
-                    DrawCommand drawCommand = createDrawCommand(viewItem, dX, iconResId);
-                    paintDrawCommand(drawCommand, canvas, dX, viewItem);
-                }
-
-                private DrawCommand createDrawCommand(View viewItem, Float dX, int iconResId) {
-                    Context context = viewItem.getContext();
-                    Drawable icon = ContextCompat.getDrawable(context, iconResId);
-                    icon = DrawableCompat.wrap(icon).mutate();
-                    icon.setColorFilter(new PorterDuffColorFilter(ContextCompat.getColor(context, R.color.colorDrawable), PorterDuff.Mode.SRC_IN));
-                    int backgroundColor = getBackgroundColor(R.color.colorTransparent, R.color.colorTransparent, dX, viewItem);
-                    return new DrawCommand(icon, backgroundColor);
-                }
-
-                private int getBackgroundColor(@ColorRes int firstColor, @ColorRes int secondColor, float dX, View viewItem) {
-                    if (willActionBeTriggered(dX, viewItem.getWidth()))
-                        return ContextCompat.getColor(viewItem.getContext(), firstColor);
-                    else
-                        return ContextCompat.getColor(viewItem.getContext(), secondColor);
-                }
-
-                private boolean willActionBeTriggered(float dX, int viewWidth) {
-                    return Math.abs(dX) >= viewWidth * THRESHOLD;
-                }
-
-                class DrawCommand {
-                    Drawable icon;
-                    int backgroundColor;
-
-                    public DrawCommand(Drawable icon, int backgroundColor) {
-                        this.icon = icon;
-                        this.backgroundColor = backgroundColor;
-                    }
-
-
-                }
+                return super.getSwipeThreshold(viewHolder);
             }
-
         };
         ItemTouchHelper helper = new ItemTouchHelper(itemTouchHelperCallback);
         helper.attachToRecyclerView(recycler);
+    }
+
+    public static class SwipeBackgroundHelper {
+        private static final String TAG = "SwipeBackgroundHelper";
+        private boolean bouncyThreshold;
+        private double bouncyStrength = 1;
+        private float threshold = 0.5f;
+        private Paint circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private Float marginStart = (float) CustomUtility.dpToPx(16);
+        private Float marginEnd = (float) CustomUtility.dpToPx(60);
+        private Float margin = marginStart + marginEnd;
+        private boolean staySwiped;
+        private OnClickListener onClickListener;
+
+        private Canvas canvas;
+        private View viewItem;
+        private float dX;
+        private int farEnoughColor_circle;
+        private int notFarEnoughColor_circle = Color.GRAY;
+        private int iconResId;
+        private int farEnoughIconResId;
+        private int notFarEnoughColor_icon;
+        private int farEnoughColor_icon;
+
+        public SwipeBackgroundHelper(@DrawableRes int iconResId, int farEnoughColor_circle) {
+            this.farEnoughColor_circle = farEnoughColor_circle;
+            this.iconResId = iconResId;
+        }
+
+        public SwipeBackgroundHelper(int iconResId) {
+            this.iconResId = iconResId;
+            farEnoughColor_circle = Color.TRANSPARENT;
+        }
+
+        public SwipeBackgroundHelper() {
+        }
+
+        //  --------------- NecessarySetters --------------->
+        public SwipeBackgroundHelper setCanvas(Canvas canvas) {
+            this.canvas = canvas;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setViewItem(View viewItem) {
+            this.viewItem = viewItem;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setdX(float dX) {
+            this.dX = dX;
+            return this;
+        }
+        //  <--------------- NecessarySetters ---------------
+
+        //  --------------- OptionalSetters --------------->
+        public SwipeBackgroundHelper setThreshold(float THRESHOLD) {
+            this.threshold = THRESHOLD;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setMarginStart(int marginStart_dp) {
+            this.marginStart = (float) CustomUtility.dpToPx(marginStart_dp);
+            margin = marginStart + marginEnd;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setMarginEnd(int marginEnd_dp) {
+            this.marginEnd = (float) CustomUtility.dpToPx(marginEnd_dp);
+            margin = marginStart + marginEnd;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setFarEnoughColor_circle(int farEnoughColor_circle) {
+            this.farEnoughColor_circle = farEnoughColor_circle;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setNotFarEnoughColor_circle(int notFarEnoughColor_circle) {
+            this.notFarEnoughColor_circle = notFarEnoughColor_circle;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setNotFarEnoughColor_icon(int notFarEnoughColor_icon) {
+            this.notFarEnoughColor_icon = notFarEnoughColor_icon;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setFarEnoughColor_icon(int farEnoughColor_icon) {
+            this.farEnoughColor_icon = farEnoughColor_icon;
+            return this;
+        }
+
+        public SwipeBackgroundHelper enableBouncyThreshold() {
+            this.bouncyThreshold = true;
+            return this;
+        }
+
+        public SwipeBackgroundHelper enableBouncyThreshold(double strength) {
+            this.bouncyThreshold = true;
+            bouncyStrength = strength;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setFarEnoughIconResId(@DrawableRes int farEnoughIconResId) {
+            this.farEnoughIconResId = farEnoughIconResId;
+            return this;
+        }
+
+        public SwipeBackgroundHelper enableStaySwiped() {
+            this.staySwiped = true;
+            return this;
+        }
+
+//        public SwipeBackgroundHelper setOnClickListener(OnClickListener onClickListener) {
+//            this.onClickListener = onClickListener;
+//            return this;
+//        }
+        //  <--------------- OptionalSetters ---------------
+
+
+        private void drawBackground(Canvas canvas, View viewItem, Float dX, DrawCommand drawCommand) {
+            Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            backgroundPaint.setColor(drawCommand.backgroundColor);
+            RectF backgroundRectangle = getBackGroundRectangle(viewItem, dX);
+            float circleRadius = getCircleRadius();
+
+            canvas.clipRect(backgroundRectangle);
+            canvas.drawColor(backgroundPaint.getColor());
+            if (circleRadius > 0f) {
+                float cx = getPosition(backgroundRectangle);
+                float cy = backgroundRectangle.top + viewItem.getHeight() / 2f;
+                circlePaint.setColor(isFarEnough() ? farEnoughColor_circle : notFarEnoughColor_circle);
+                canvas.drawCircle(cx, cy, circleRadius, circlePaint);
+            }
+        }
+
+        private float getCircleRadius() {
+            if (!isMarginReached())
+                return 0;
+            float draggedMoreThanMargin = Math.abs(dX) - margin;
+            float totalRoom = viewItem.getWidth() * threshold - margin;
+            float maxRadius = marginEnd - marginStart;
+            float radius =  (draggedMoreThanMargin / totalRoom) * maxRadius;
+            if (radius >= maxRadius)
+                return maxRadius;
+            return radius;
+        }
+
+
+        //  --------------- Position --------------->
+        private float getPosition(RectF backgroundRectangle) {
+            return getPosition(backgroundRectangle.left, backgroundRectangle.right);
+        }
+
+        private float getPosition(float left, float right) {
+            float v = right - left;
+            if (v < margin)
+                return left + marginStart;
+            else
+                return right - marginEnd;
+        }
+
+        private boolean isMarginReached() {
+            return Math.abs(dX) > margin;
+        }
+
+        private boolean isFarEnough() {
+            return Math.abs(dX) > viewItem.getWidth() * threshold;
+        }
+        //  <--------------- Position ---------------
+
+        private RectF getBackGroundRectangle(View viewItem, Float dX) {
+            return new RectF(viewItem.getRight() + dX, viewItem.getTop(), viewItem.getRight(), viewItem.getBottom());
+        }
+
+        private int calculateTopMargin(Drawable icon, View viewItem) {
+            return (viewItem.getHeight() - icon.getIntrinsicHeight()) / 2;
+        }
+
+        private Rect getStartContainerRectangle(View viewItem, int iconWidth, int topMargin, Float dx) {
+            int center = (int) getPosition(viewItem.getRight() + dx, viewItem.getRight());
+            center -= iconWidth / 2;
+
+            int leftBound = center;
+            int rightBound = center + iconWidth;
+            int topBound = viewItem.getTop() + topMargin;
+            int bottomBound = viewItem.getBottom() - topMargin;
+
+            return new Rect(leftBound, topBound, rightBound, bottomBound);
+        }
+
+        private void drawIcon(Canvas canvas, View viewItem, Float dX, Drawable icon) {
+            int topMargin = calculateTopMargin(icon, viewItem);
+            icon.setBounds(getStartContainerRectangle(viewItem, icon.getIntrinsicWidth(), topMargin, dX));
+            icon.draw(canvas);
+        }
+
+        private void paintDrawCommand(DrawCommand drawCommand, Canvas canvas, Float dX, View viewItem) {
+            drawBackground(canvas, viewItem, dX, drawCommand);
+            drawIcon(canvas, viewItem, dX, drawCommand.icon);
+        }
+
+        @JvmStatic
+        void draw() {
+            if (iconResId == 0)
+                return;
+
+            DrawCommand drawCommand = createDrawCommand(viewItem, dX);
+            paintDrawCommand(drawCommand, canvas, dX, viewItem);
+        }
+
+        private DrawCommand createDrawCommand(View viewItem, Float dX) {
+            Context context = viewItem.getContext();
+            if (farEnoughIconResId == 0)
+                farEnoughIconResId = iconResId;
+            Drawable icon = ContextCompat.getDrawable(context, isFarEnough() ? farEnoughIconResId : iconResId);
+            icon = DrawableCompat.wrap(icon).mutate();
+            if (notFarEnoughColor_icon == 0)
+                notFarEnoughColor_icon = ContextCompat.getColor(context, R.color.colorBackground);
+            if (farEnoughColor_icon == 0)
+                farEnoughColor_icon = notFarEnoughColor_icon;
+            icon.setColorFilter(new PorterDuffColorFilter(isFarEnough() ? farEnoughColor_icon : notFarEnoughColor_icon, PorterDuff.Mode.SRC_IN));
+            int backgroundColor = getBackgroundColor(R.color.colorTransparent, R.color.colorTransparent, dX, viewItem);
+            return new DrawCommand(icon, backgroundColor);
+        }
+
+        private int getBackgroundColor(@ColorRes int firstColor, @ColorRes int secondColor, float dX, View viewItem) {
+            if (willActionBeTriggered(dX, viewItem.getWidth()))
+                return ContextCompat.getColor(viewItem.getContext(), firstColor);
+            else
+                return ContextCompat.getColor(viewItem.getContext(), secondColor);
+        }
+
+        private boolean willActionBeTriggered(float dX, int viewWidth) {
+            return Math.abs(dX) >= viewWidth * threshold;
+        }
+
+        class DrawCommand {
+            Drawable icon;
+            int backgroundColor;
+
+            public DrawCommand(Drawable icon, int backgroundColor) {
+                this.icon = icon;
+                this.backgroundColor = backgroundColor;
+            }
+        }
+    }
+
+    public CustomRecycler<T> setSwipeBackgroundHelper(SwipeBackgroundHelper swipeBackgroundHelper) {
+        this.swipeBackgroundHelper = swipeBackgroundHelper;
+        return this;
     }
 
     public interface OnDragAndDrop<T> {
@@ -723,6 +882,11 @@ public class CustomRecycler<T> {
                 this.object = object;
         }
 
+        public Expandable(String name, List<T> list) {
+            this.name = name;
+            this.list = list;
+        }
+
         private String name;
         private boolean expended;
         private List<T> list = new ArrayList<>();
@@ -767,7 +931,7 @@ public class CustomRecycler<T> {
 
         //  --------------- Convenience --------------->
         public boolean canExpand() {
-            return object != null || !list.isEmpty();
+            return object != null || (list != null && !list.isEmpty());
         }
         //  <--------------- Convenience ---------------
 
@@ -785,13 +949,15 @@ public class CustomRecycler<T> {
         }
 
         public static class ToGroupExpandableList<Result, Item, Key> {
-            Comparator<Expandable<List<Result>>> keyComparator;
+            Comparator<Expandable<Result>> keyComparator;
+            Comparator<Result> subComparator;
 
-            public List<Expandable<List<Result>>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
+
+            public List<Expandable<Result>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
                     , KeyToString<Key, Item> keyToString, ItemToResult<Item, Result> itemToResult) {
                 Map<Key, List<Item>> group = list.stream().collect(Collectors.groupingBy(classifier));
 
-                List<Expandable<List<Result>>> expandableList = new ArrayList<>();
+                List<Expandable<Result>> expandableList = new ArrayList<>();
                 for (Map.Entry<Key, List<Item>> entry : group.entrySet()) {
                     expandableList.add(new Expandable<>(keyToString.runKeyToString(entry.getKey(), entry.getValue()), entry.getValue().stream().map(itemToResult::runItemToResult).collect(Collectors.toList()))
                             .setPayload(entry.getKey()));
@@ -800,10 +966,17 @@ public class CustomRecycler<T> {
                 if (keyComparator != null)
                     expandableList.sort(keyComparator);
 
+                if (subComparator != null)
+                    expandableList.forEach(listExpandable -> listExpandable.getList().sort(subComparator));
+
                 return expandableList;
             }
 
-            public ToGroupExpandableList<Result, Item, Key> setSort(Comparator<Expandable<List<Result>>> keyComparator) {
+            public ToGroupExpandableList<Result, Item, Key> setSubSort(Comparator<Result> subComparator) {
+                this.subComparator = subComparator;
+                return this;
+            }
+            public ToGroupExpandableList<Result, Item, Key> setSort(Comparator<Expandable<Result>> keyComparator) {
                 this.keyComparator = keyComparator;
                 return this;
             }
