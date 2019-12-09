@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -272,6 +273,12 @@ public class CustomUtility {
 
     }
 
+    public static <T> Pair<T,T> swap(T t1, T t2) {
+        T temp = t1;
+        t1 = t2;
+        t2 = temp;
+        return new Pair<>(t1, t2);
+    }
 
     //  --------------- Layout-Animation --------------->
     public static void expand(final View v) {

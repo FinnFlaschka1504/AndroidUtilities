@@ -11,7 +11,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -297,14 +296,14 @@ public class CustomRecycler<T> {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int index = viewHolder.getAdapterPosition();
-                if (swipeBackgroundHelper != null && swipeBackgroundHelper.bouncyThreshold) {
+                if (swipeBackgroundHelper != null && swipeBackgroundHelper.thresholdBouncy) {
                     onSwiped.runSwyped(objectList, direction, objectList.get(index));
                     if (!swipeBackgroundHelper.staySwiped) {
                         mAdapter.notifyDataSetChanged();
                     }
                     return;
                 }
-//
+
                 T t = objectList.remove(index);
                 mAdapter.notifyDataSetChanged();
                 onSwiped.runSwyped(objectList, direction, t);
@@ -318,7 +317,7 @@ public class CustomRecycler<T> {
                         swipeBackgroundHelper.setCanvas(c).setViewItem(viewItem).setdX(dX).draw();
 
                         float maxSwipe = viewItem.getWidth() * swipeBackgroundHelper.threshold;
-                        if (swipeBackgroundHelper.bouncyThreshold && Math.abs(dX) >= maxSwipe) {
+                        if (swipeBackgroundHelper.thresholdBouncy && Math.abs(dX) >= maxSwipe) {
                             float rest = viewItem.getWidth() - maxSwipe;
                             float over = Math.abs(dX) - maxSwipe;
 
@@ -332,8 +331,6 @@ public class CustomRecycler<T> {
             @Override
             public float getSwipeThreshold(@NonNull RecyclerView.ViewHolder viewHolder) {
                 if (swipeBackgroundHelper != null) {
-//                    if (swipeBackgroundHelper.bouncyThreshold)
-//                        return 2;
                     return swipeBackgroundHelper.threshold;
                 }
                 return super.getSwipeThreshold(viewHolder);
@@ -345,7 +342,7 @@ public class CustomRecycler<T> {
 
     public static class SwipeBackgroundHelper {
         private static final String TAG = "SwipeBackgroundHelper";
-        private boolean bouncyThreshold;
+        private boolean thresholdBouncy;
         private double bouncyStrength = 1;
         private float threshold = 0.5f;
         private Paint circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -354,23 +351,40 @@ public class CustomRecycler<T> {
         private Float margin = marginStart + marginEnd;
         private boolean staySwiped;
         private OnClickListener onClickListener;
+        private boolean swipedLeft;
 
         private Canvas canvas;
         private View viewItem;
         private float dX;
+
+
         private int farEnoughColor_circle;
         private int notFarEnoughColor_circle = Color.GRAY;
         private int iconResId;
         private int farEnoughIconResId;
         private int notFarEnoughColor_icon;
         private int farEnoughColor_icon;
+        private int temp_farEnoughColor_circle;
+        private int temp_notFarEnoughColor_circle = Color.GRAY;
+        private int temp_iconResId;
+        private int temp_farEnoughIconResId;
+        private int temp_notFarEnoughColor_icon;
+        private int temp_farEnoughColor_icon;
+        private boolean useDifferentResources;
+        private int farEnoughColor_circle_left;
+        private int notFarEnoughColor_circle_left = Color.GRAY;
+        private int iconResId_left;
+        private int farEnoughIconResId_left;
+        private int notFarEnoughColor_icon_left;
+        private int farEnoughColor_icon_left;
+
 
         public SwipeBackgroundHelper(@DrawableRes int iconResId, int farEnoughColor_circle) {
             this.farEnoughColor_circle = farEnoughColor_circle;
             this.iconResId = iconResId;
         }
 
-        public SwipeBackgroundHelper(int iconResId) {
+        public SwipeBackgroundHelper(@DrawableRes int iconResId) {
             this.iconResId = iconResId;
             farEnoughColor_circle = Color.TRANSPARENT;
         }
@@ -434,12 +448,12 @@ public class CustomRecycler<T> {
         }
 
         public SwipeBackgroundHelper enableBouncyThreshold() {
-            this.bouncyThreshold = true;
+            this.thresholdBouncy = true;
             return this;
         }
 
         public SwipeBackgroundHelper enableBouncyThreshold(double strength) {
-            this.bouncyThreshold = true;
+            this.thresholdBouncy = true;
             bouncyStrength = strength;
             return this;
         }
@@ -454,12 +468,81 @@ public class CustomRecycler<T> {
             return this;
         }
 
-//        public SwipeBackgroundHelper setOnClickListener(OnClickListener onClickListener) {
-//            this.onClickListener = onClickListener;
-//            return this;
-//        }
+        public SwipeBackgroundHelper setFarEnoughColor_circle_left(int farEnoughColor_circle_left) {
+            useDifferentResources = true;
+            this.farEnoughColor_circle_left = farEnoughColor_circle_left;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setNotFarEnoughColor_circle_left(int notFarEnoughColor_circle_left) {
+            useDifferentResources = true;
+            this.notFarEnoughColor_circle_left = notFarEnoughColor_circle_left;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setIconResId_left(@DrawableRes int iconResId_left) {
+            useDifferentResources = true;
+            this.iconResId_left = iconResId_left;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setFarEnoughIconResId_left(@DrawableRes int farEnoughIconResId_left) {
+            useDifferentResources = true;
+            this.farEnoughIconResId_left = farEnoughIconResId_left;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setNotFarEnoughColor_icon_left(int notFarEnoughColor_icon_left) {
+            useDifferentResources = true;
+            this.notFarEnoughColor_icon_left = notFarEnoughColor_icon_left;
+            return this;
+        }
+
+        public SwipeBackgroundHelper setFarEnoughColor_icon_left(int farEnoughColor_icon_left) {
+            useDifferentResources = true;
+            this.farEnoughColor_icon_left = farEnoughColor_icon_left;
+            return this;
+        }
         //  <--------------- OptionalSetters ---------------
 
+        private void setResources() {
+            if (iconResId_left == 0)
+                iconResId_left = iconResId;
+            if (farEnoughIconResId_left == 0)
+                farEnoughIconResId_left = farEnoughIconResId;
+            if (farEnoughColor_icon_left == 0)
+                farEnoughColor_icon_left = farEnoughColor_icon;
+            if (notFarEnoughColor_icon_left == 0)
+                notFarEnoughColor_icon_left = notFarEnoughColor_icon;
+            if (farEnoughColor_circle_left == 0)
+                farEnoughColor_circle_left = farEnoughColor_circle;
+            if (notFarEnoughColor_circle_left == 0)
+                notFarEnoughColor_circle_left = notFarEnoughColor_circle;
+
+            if (useDifferentResources && swipedLeft) {
+                temp_iconResId = iconResId_left;
+                temp_farEnoughIconResId = farEnoughIconResId_left;
+                temp_farEnoughColor_icon = farEnoughColor_icon_left;
+                temp_notFarEnoughColor_icon = notFarEnoughColor_icon_left;
+                temp_farEnoughColor_circle = farEnoughColor_circle_left;
+                temp_notFarEnoughColor_circle = notFarEnoughColor_circle_left;
+            }
+            else {
+                temp_iconResId = iconResId;
+                temp_farEnoughIconResId = farEnoughIconResId;
+                temp_farEnoughColor_icon = farEnoughColor_icon;
+                temp_notFarEnoughColor_icon = notFarEnoughColor_icon;
+                temp_farEnoughColor_circle = farEnoughColor_circle;
+                temp_notFarEnoughColor_circle = notFarEnoughColor_circle;
+            }
+            if (temp_farEnoughIconResId == 0)
+                temp_farEnoughIconResId = temp_iconResId;
+            if (temp_notFarEnoughColor_icon == 0)
+                temp_notFarEnoughColor_icon = ContextCompat.getColor(viewItem.getContext(), R.color.colorBackground);
+            if (temp_farEnoughColor_icon == 0)
+                temp_farEnoughColor_icon = temp_notFarEnoughColor_icon;
+            String BREAKPOINT = null;
+        }
 
         private void drawBackground(Canvas canvas, View viewItem, Float dX, DrawCommand drawCommand) {
             Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -472,7 +555,7 @@ public class CustomRecycler<T> {
             if (circleRadius > 0f) {
                 float cx = getPosition(backgroundRectangle);
                 float cy = backgroundRectangle.top + viewItem.getHeight() / 2f;
-                circlePaint.setColor(isFarEnough() ? farEnoughColor_circle : notFarEnoughColor_circle);
+                circlePaint.setColor(isFarEnough() ? temp_farEnoughColor_circle : temp_notFarEnoughColor_circle);
                 canvas.drawCircle(cx, cy, circleRadius, circlePaint);
             }
         }
@@ -498,9 +581,9 @@ public class CustomRecycler<T> {
         private float getPosition(float left, float right) {
             float v = right - left;
             if (v < margin)
-                return left + marginStart;
+                return swipedLeft ? left + marginStart : right - marginStart;
             else
-                return right - marginEnd;
+                return swipedLeft ?  right - marginEnd : left + marginEnd;
         }
 
         private boolean isMarginReached() {
@@ -513,7 +596,10 @@ public class CustomRecycler<T> {
         //  <--------------- Position ---------------
 
         private RectF getBackGroundRectangle(View viewItem, Float dX) {
-            return new RectF(viewItem.getRight() + dX, viewItem.getTop(), viewItem.getRight(), viewItem.getBottom());
+            if (swipedLeft)
+                return new RectF(viewItem.getRight() + dX, viewItem.getTop(), viewItem.getRight(), viewItem.getBottom());
+            else
+                return new RectF(viewItem.getLeft(), viewItem.getTop(), viewItem.getLeft() + dX, viewItem.getBottom());
         }
 
         private int calculateTopMargin(Drawable icon, View viewItem) {
@@ -521,9 +607,13 @@ public class CustomRecycler<T> {
         }
 
         private Rect getStartContainerRectangle(View viewItem, int iconWidth, int topMargin, Float dx) {
-            int center = (int) getPosition(viewItem.getRight() + dx, viewItem.getRight());
+            int center;
+            if (swipedLeft) {
+                center = (int) getPosition(viewItem.getRight() + dx, viewItem.getRight());
+            } else {
+                center = (int) getPosition(viewItem.getLeft(), viewItem.getLeft() + dx);
+            }
             center -= iconWidth / 2;
-
             int leftBound = center;
             int rightBound = center + iconWidth;
             int topBound = viewItem.getTop() + topMargin;
@@ -548,21 +638,17 @@ public class CustomRecycler<T> {
             if (iconResId == 0)
                 return;
 
+            swipedLeft = dX < 0;
+            setResources();
             DrawCommand drawCommand = createDrawCommand(viewItem, dX);
             paintDrawCommand(drawCommand, canvas, dX, viewItem);
         }
 
         private DrawCommand createDrawCommand(View viewItem, Float dX) {
             Context context = viewItem.getContext();
-            if (farEnoughIconResId == 0)
-                farEnoughIconResId = iconResId;
-            Drawable icon = ContextCompat.getDrawable(context, isFarEnough() ? farEnoughIconResId : iconResId);
+            Drawable icon = ContextCompat.getDrawable(context, isFarEnough() ? temp_farEnoughIconResId : temp_iconResId);
             icon = DrawableCompat.wrap(icon).mutate();
-            if (notFarEnoughColor_icon == 0)
-                notFarEnoughColor_icon = ContextCompat.getColor(context, R.color.colorBackground);
-            if (farEnoughColor_icon == 0)
-                farEnoughColor_icon = notFarEnoughColor_icon;
-            icon.setColorFilter(new PorterDuffColorFilter(isFarEnough() ? farEnoughColor_icon : notFarEnoughColor_icon, PorterDuff.Mode.SRC_IN));
+            icon.setColorFilter(new PorterDuffColorFilter(isFarEnough() ? temp_farEnoughColor_icon : temp_notFarEnoughColor_icon, PorterDuff.Mode.SRC_IN));
             int backgroundColor = getBackgroundColor(R.color.colorTransparent, R.color.colorTransparent, dX, viewItem);
             return new DrawCommand(icon, backgroundColor);
         }

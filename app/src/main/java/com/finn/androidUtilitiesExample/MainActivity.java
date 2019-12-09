@@ -13,6 +13,7 @@ import com.finn.androidUtilities.CustomDialog;
 import com.finn.androidUtilities.CustomInternetHelper;
 import com.finn.androidUtilities.CustomList;
 import com.finn.androidUtilities.CustomRecycler;
+import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
 import com.finn.androidUtilities.Test;
 
@@ -36,7 +37,6 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
         List<String> testList = Arrays.asList("1", "2", "3");
         new CustomRecycler.Expandable<String>().toExpandableList(testList, s -> new CustomRecycler.Expandable<>(s, s));
-
 
 //        List<CustomRecycler.Expandable<String>> expandableList = new ArrayList<>();
 //        for (int i = 0; i < amount; i++) {
@@ -103,11 +103,12 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                             .setItemLayout(R.layout.expandable_content_test)
                                             .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
                                             .enableSwiping((objectList, direction, s) -> {
-                                                Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(this, s + (direction == 16 ? " links" : " rechts"), Toast.LENGTH_SHORT).show();
                                             }, true, true)
                                             .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
                                                     .setFarEnoughColor_icon(getColor(R.color.colorAccent)).setNotFarEnoughColor_icon(Color.RED).setThreshold(0.4f)
-                                                    .setFarEnoughIconResId(R.drawable.ic_arrow_up).enableBouncyThreshold(2));
+                                                    .setFarEnoughIconResId(R.drawable.ic_arrow_up).enableBouncyThreshold(2).setFarEnoughColor_circle_left(Color.BLUE)
+                                                    .setIconResId_left(R.drawable.ic_arrow_down));
                                 })
                                 .enableExpandByDefault()
                 )
