@@ -106,7 +106,9 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                                     .setDynamicResources((swipeBackgroundHelper, s) -> {
                                                         swipeBackgroundHelper
                                                                 .setFarEnoughColor_icon(getColor(R.color.colorAccent)).setNotFarEnoughColor_icon(Color.RED).setThreshold(0.4f)
-                                                                .setFarEnoughIconResId(R.drawable.ic_arrow_up).enableThresholdBouncy(2).setFarEnoughColor_circle_left(Color.BLUE)
+                                                                .setFarEnoughIconResId(R.drawable.ic_arrow_up)
+                                                                .enableBouncyThreshold(2, false, true)
+                                                                .setFarEnoughColor_circle_left(Color.BLUE)
                                                                 .setIconResId_left(R.drawable.ic_arrow_down);
 
                                                         if (s.contains("1"))
@@ -122,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                    String BREAKPOINT = null;
 //                }, true, true)
 //                .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
-//                        .setFarEnoughColor_icon(Color.YELLOW).setNotFarEnoughColor_icon(Color.RED).enableThresholdBouncy().setThreshold(0.3f))
+//                        .setFarEnoughColor_icon(Color.YELLOW).setNotFarEnoughColor_icon(Color.RED).enableBouncyThreshold().setThreshold(0.3f))
                 .generate();
 
         CustomInternetHelper.initialize(this);

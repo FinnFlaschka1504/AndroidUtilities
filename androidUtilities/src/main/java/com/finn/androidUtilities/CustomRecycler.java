@@ -302,7 +302,7 @@ public class CustomRecycler<T> {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int index = viewHolder.getAdapterPosition();
-                if (swipeBackgroundHelper != null && swipeBackgroundHelper.thresholdBouncy) {
+                if (swipeBackgroundHelper != null && swipeBackgroundHelper.thresholdBouncy && ((direction == 16 && swipeBackgroundHelper.bouncyDirection.first) || (direction == 32 && swipeBackgroundHelper.bouncyDirection.second))) {
                     onSwiped.runSwyped(objectList, direction, objectList.get(index));
                     if (!swipeBackgroundHelper.staySwiped) {
                         mAdapter.notifyDataSetChanged();
@@ -323,7 +323,7 @@ public class CustomRecycler<T> {
                         swipeBackgroundHelper.setCanvas(c).setViewItem(viewItem).setdX(dX).setObject(objectList.get(viewHolder.getAdapterPosition())).draw();
 
                         float maxSwipe = viewItem.getWidth() * swipeBackgroundHelper.threshold;
-                        if (swipeBackgroundHelper.thresholdBouncy && Math.abs(dX) >= maxSwipe) {
+                        if (swipeBackgroundHelper.thresholdBouncy && Math.abs(dX) >= maxSwipe && ((dX < 0 && swipeBackgroundHelper.bouncyDirection.first) || (dX >= 0 && swipeBackgroundHelper.bouncyDirection.second))) {
                             float rest = viewItem.getWidth() - maxSwipe;
                             float over = Math.abs(dX) - maxSwipe;
 
@@ -350,6 +350,7 @@ public class CustomRecycler<T> {
         private static final String TAG = "SwipeBackgroundHelper";
         private boolean thresholdBouncy;
         private double bouncyStrength = 1;
+        private Pair<Boolean,Boolean> bouncyDirection = new Pair<>(true, true);
         private float threshold = 0.5f;
         private Paint circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private Float marginStart = (float) CustomUtility.dpToPx(16);
@@ -466,18 +467,25 @@ public class CustomRecycler<T> {
             return this;
         }
 
-        public SwipeBackgroundHelper<T> enableThresholdBouncy() {
+        public SwipeBackgroundHelper<T> enableBouncyThreshold() {
             this.thresholdBouncy = true;
             return this;
         }
 
-        public SwipeBackgroundHelper<T> enableThresholdBouncy(double strength) {
+        public SwipeBackgroundHelper<T> enableBouncyThreshold(double strength) {
             this.thresholdBouncy = true;
             bouncyStrength = strength;
             return this;
         }
 
-        public SwipeBackgroundHelper<T> setFarEnoughIconResId(@DrawableRes int farEnoughIconResId) {
+        public SwipeBackgroundHelper<T> enableBouncyThreshold(double strength, boolean left, boolean right) {
+            this.thresholdBouncy = true;
+            bouncyStrength = strength;
+            bouncyDirection = new Pair<>(left, right);
+            return this;
+        }
+
+            public SwipeBackgroundHelper<T> setFarEnoughIconResId(@DrawableRes int farEnoughIconResId) {
             this.farEnoughIconResId = farEnoughIconResId;
             return this;
         }
