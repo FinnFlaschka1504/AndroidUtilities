@@ -114,7 +114,8 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                                     })
                                             );
                                 })
-                                .enableExpandByDefault()
+//                                .enableExpandByDefault()
+                                .setExpandMatching(expandable -> expandable.getList().stream().anyMatch(s -> s.contains("1")))
                 )
                 .setObjectList(expandableList)
 //                .enableSwiping((objectList, direction, stringExpandable) -> {

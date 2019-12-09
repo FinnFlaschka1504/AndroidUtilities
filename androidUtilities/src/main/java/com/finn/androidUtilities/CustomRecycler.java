@@ -256,6 +256,12 @@ public class CustomRecycler<T> {
         return this;
     }
 
+    public CustomRecycler<T> setDividerMargin_inDp(int dividerMargin_inDp) {
+        this.dividerMargin = CustomUtility.dpToPx(dividerMargin_inDp);
+        return this;
+    }
+
+    //  --------------- Drag & Swipe --------------->
     public CustomRecycler<T> enableDragAndDrop(OnDragAndDrop<T> onDragAndDrop) {
         this.onDragAndDrop = onDragAndDrop;
         return this;
@@ -435,7 +441,7 @@ public class CustomRecycler<T> {
             return this;
         }
 
-        public SwipeBackgroundHelper<T> setIconResId(int iconResId) {
+        public SwipeBackgroundHelper<T> setIconResId(@DrawableRes int iconResId) {
             this.iconResId = iconResId;
             return this;
         }
@@ -693,7 +699,7 @@ public class CustomRecycler<T> {
                 this.backgroundColor = backgroundColor;
             }
         }
-        
+
         public interface DynamicResources<T> {
             void runDynamicResources(SwipeBackgroundHelper<T> swipeBackgroundHelper, T t);
         }
@@ -711,11 +717,7 @@ public class CustomRecycler<T> {
     public interface OnSwiped<T> {
         void runSwyped(List<T> objectList, int direction, T t);
     }
-
-    public CustomRecycler<T> setDividerMargin_inDp(int dividerMargin_inDp) {
-        this.dividerMargin = CustomUtility.dpToPx(dividerMargin_inDp);
-        return this;
-    }
+    //  <--------------- Drag & Swipe ---------------
 
 
     //  ----- Adapter ----->
@@ -906,6 +908,7 @@ public class CustomRecycler<T> {
         private SetItemContent<E> setItemContent;
         private SetExpandableItemContent<E> setExpandableItemContent;
         private CustomizeRecycler<E> customizeRecycler;
+        private ExpandMatching<E> expandMatching;
 
         public ExpandableHelper() {
             setItemContent = (itemView, e) -> {
@@ -967,10 +970,19 @@ public class CustomRecycler<T> {
             this.expandByDefault = true;
             return this;
         }
+
+        public ExpandableHelper<E> setExpandMatching(ExpandMatching<E> expandMatching) {
+            this.expandMatching = expandMatching;
+            return this;
+        }
     }
 
     public interface CustomizeRecycler<T> {
         void runCustomizeRecycler(CustomRecycler<T> subRecycler);
+    }
+
+    public interface ExpandMatching<E> {
+        boolean runExpandMatching(Expandable<E> expandable);
     }
 
     // ToDo:
@@ -1130,14 +1142,18 @@ public class CustomRecycler<T> {
         if (expandableHelper != null) {
             expandableHelper.setExpandableList(objectList);
             for (Object o : expandableHelper.getExpandableList()) {
-                Expandable expandable = (Expandable) o;
+                Expandable<T> expandable = (Expandable) o;
                 if (!expandableHelper.showArrow_default)
                     expandable.showArrow = false;
                 else
                     expandable.showArrow = expandable.canExpand();
 
-                if (expandableHelper.expandByDefault && expandable.canExpand())
-                    expandable.setExpended(true);
+                if (expandable.canExpand()) {
+                    if (expandableHelper.expandMatching != null)
+                        expandable.setExpended(expandableHelper.expandMatching.runExpandMatching(expandable));
+                    else if (expandableHelper.expandByDefault)
+                        expandable.setExpended(true);
+                }
             }
             if (expandableHelper.setItemContent != null) {
                 layoutId = R.layout.list_item_expandable;
