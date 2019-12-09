@@ -435,6 +435,11 @@ public class CustomRecycler<T> {
             return this;
         }
 
+        public SwipeBackgroundHelper<T> setIconResId(int iconResId) {
+            this.iconResId = iconResId;
+            return this;
+        }
+
         public SwipeBackgroundHelper<T> setFarEnoughColor_circle(int farEnoughColor_circle) {
             this.farEnoughColor_circle = farEnoughColor_circle;
             return this;
@@ -455,12 +460,12 @@ public class CustomRecycler<T> {
             return this;
         }
 
-        public SwipeBackgroundHelper<T> enableBouncyThreshold() {
+        public SwipeBackgroundHelper<T> enableThresholdBouncy() {
             this.thresholdBouncy = true;
             return this;
         }
 
-        public SwipeBackgroundHelper<T> enableBouncyThreshold(double strength) {
+        public SwipeBackgroundHelper<T> enableThresholdBouncy(double strength) {
             this.thresholdBouncy = true;
             bouncyStrength = strength;
             return this;
