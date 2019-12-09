@@ -105,10 +105,17 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                             .enableSwiping((objectList, direction, s) -> {
                                                 Toast.makeText(this, s + (direction == 16 ? " links" : " rechts"), Toast.LENGTH_SHORT).show();
                                             }, true, true)
-                                            .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
-                                                    .setFarEnoughColor_icon(getColor(R.color.colorAccent)).setNotFarEnoughColor_icon(Color.RED).setThreshold(0.4f)
-                                                    .setFarEnoughIconResId(R.drawable.ic_arrow_up).enableBouncyThreshold(2).setFarEnoughColor_circle_left(Color.BLUE)
-                                                    .setIconResId_left(R.drawable.ic_arrow_down));
+                                            .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper<String>(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
+                                                    .setDynamicResources((swipeBackgroundHelper, s) -> {
+                                                        swipeBackgroundHelper
+                                                                .setFarEnoughColor_icon(getColor(R.color.colorAccent)).setNotFarEnoughColor_icon(Color.RED).setThreshold(0.4f)
+                                                                .setFarEnoughIconResId(R.drawable.ic_arrow_up).enableBouncyThreshold(2).setFarEnoughColor_circle_left(Color.BLUE)
+                                                                .setIconResId_left(R.drawable.ic_arrow_down);
+
+                                                        if (s.contains("1"))
+                                                            swipeBackgroundHelper.setFarEnoughColor_circle_left(Color.YELLOW);
+                                                    })
+                                            );
                                 })
                                 .enableExpandByDefault()
                 )

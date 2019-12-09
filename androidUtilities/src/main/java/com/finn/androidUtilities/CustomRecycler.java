@@ -103,7 +103,7 @@ public class CustomRecycler<T> {
     private OnSwiped<T> onSwiped;
     private Pair<Boolean, Boolean> leftRightSwipe_pair;
     private ExpandableHelper expandableHelper;
-    private SwipeBackgroundHelper swipeBackgroundHelper;
+    private SwipeBackgroundHelper<T> swipeBackgroundHelper;
 
 
     public CustomRecycler(AppCompatActivity context) {
@@ -314,7 +314,7 @@ public class CustomRecycler<T> {
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
                     View viewItem = viewHolder.itemView;
                     if (swipeBackgroundHelper != null) {
-                        swipeBackgroundHelper.setCanvas(c).setViewItem(viewItem).setdX(dX).draw();
+                        swipeBackgroundHelper.setCanvas(c).setViewItem(viewItem).setdX(dX).setObject(objectList.get(viewHolder.getAdapterPosition())).draw();
 
                         float maxSwipe = viewItem.getWidth() * swipeBackgroundHelper.threshold;
                         if (swipeBackgroundHelper.thresholdBouncy && Math.abs(dX) >= maxSwipe) {
@@ -340,7 +340,7 @@ public class CustomRecycler<T> {
         helper.attachToRecyclerView(recycler);
     }
 
-    public static class SwipeBackgroundHelper {
+    public static class SwipeBackgroundHelper<T> {
         private static final String TAG = "SwipeBackgroundHelper";
         private boolean thresholdBouncy;
         private double bouncyStrength = 1;
@@ -356,6 +356,7 @@ public class CustomRecycler<T> {
         private Canvas canvas;
         private View viewItem;
         private float dX;
+        private T object;
 
 
         private int farEnoughColor_circle;
@@ -364,6 +365,7 @@ public class CustomRecycler<T> {
         private int farEnoughIconResId;
         private int notFarEnoughColor_icon;
         private int farEnoughColor_icon;
+        private DynamicResources<T> dynamicResources;
         private int temp_farEnoughColor_circle;
         private int temp_notFarEnoughColor_circle = Color.GRAY;
         private int temp_iconResId;
@@ -393,114 +395,125 @@ public class CustomRecycler<T> {
         }
 
         //  --------------- NecessarySetters --------------->
-        public SwipeBackgroundHelper setCanvas(Canvas canvas) {
+        public SwipeBackgroundHelper<T> setCanvas(Canvas canvas) {
             this.canvas = canvas;
             return this;
         }
 
-        public SwipeBackgroundHelper setViewItem(View viewItem) {
+        public SwipeBackgroundHelper<T> setViewItem(View viewItem) {
             this.viewItem = viewItem;
             return this;
         }
 
-        public SwipeBackgroundHelper setdX(float dX) {
+        public SwipeBackgroundHelper<T> setdX(float dX) {
             this.dX = dX;
             return this;
         }
+
+        public SwipeBackgroundHelper<T> setObject (T object) {
+            this.object = object;
+            return this;
+        }
+
         //  <--------------- NecessarySetters ---------------
 
         //  --------------- OptionalSetters --------------->
-        public SwipeBackgroundHelper setThreshold(float THRESHOLD) {
+        public SwipeBackgroundHelper<T> setThreshold(float THRESHOLD) {
             this.threshold = THRESHOLD;
             return this;
         }
 
-        public SwipeBackgroundHelper setMarginStart(int marginStart_dp) {
+        public SwipeBackgroundHelper<T> setMarginStart(int marginStart_dp) {
             this.marginStart = (float) CustomUtility.dpToPx(marginStart_dp);
             margin = marginStart + marginEnd;
             return this;
         }
 
-        public SwipeBackgroundHelper setMarginEnd(int marginEnd_dp) {
+        public SwipeBackgroundHelper<T> setMarginEnd(int marginEnd_dp) {
             this.marginEnd = (float) CustomUtility.dpToPx(marginEnd_dp);
             margin = marginStart + marginEnd;
             return this;
         }
 
-        public SwipeBackgroundHelper setFarEnoughColor_circle(int farEnoughColor_circle) {
+        public SwipeBackgroundHelper<T> setFarEnoughColor_circle(int farEnoughColor_circle) {
             this.farEnoughColor_circle = farEnoughColor_circle;
             return this;
         }
 
-        public SwipeBackgroundHelper setNotFarEnoughColor_circle(int notFarEnoughColor_circle) {
+        public SwipeBackgroundHelper<T> setNotFarEnoughColor_circle(int notFarEnoughColor_circle) {
             this.notFarEnoughColor_circle = notFarEnoughColor_circle;
             return this;
         }
 
-        public SwipeBackgroundHelper setNotFarEnoughColor_icon(int notFarEnoughColor_icon) {
+        public SwipeBackgroundHelper<T> setNotFarEnoughColor_icon(int notFarEnoughColor_icon) {
             this.notFarEnoughColor_icon = notFarEnoughColor_icon;
             return this;
         }
 
-        public SwipeBackgroundHelper setFarEnoughColor_icon(int farEnoughColor_icon) {
+        public SwipeBackgroundHelper<T> setFarEnoughColor_icon(int farEnoughColor_icon) {
             this.farEnoughColor_icon = farEnoughColor_icon;
             return this;
         }
 
-        public SwipeBackgroundHelper enableBouncyThreshold() {
+        public SwipeBackgroundHelper<T> enableBouncyThreshold() {
             this.thresholdBouncy = true;
             return this;
         }
 
-        public SwipeBackgroundHelper enableBouncyThreshold(double strength) {
+        public SwipeBackgroundHelper<T> enableBouncyThreshold(double strength) {
             this.thresholdBouncy = true;
             bouncyStrength = strength;
             return this;
         }
 
-        public SwipeBackgroundHelper setFarEnoughIconResId(@DrawableRes int farEnoughIconResId) {
+        public SwipeBackgroundHelper<T> setFarEnoughIconResId(@DrawableRes int farEnoughIconResId) {
             this.farEnoughIconResId = farEnoughIconResId;
             return this;
         }
 
-        public SwipeBackgroundHelper enableStaySwiped() {
+        public SwipeBackgroundHelper<T> enableStaySwiped() {
             this.staySwiped = true;
             return this;
         }
 
-        public SwipeBackgroundHelper setFarEnoughColor_circle_left(int farEnoughColor_circle_left) {
+        public SwipeBackgroundHelper<T> setFarEnoughColor_circle_left(int farEnoughColor_circle_left) {
             useDifferentResources = true;
             this.farEnoughColor_circle_left = farEnoughColor_circle_left;
             return this;
         }
 
-        public SwipeBackgroundHelper setNotFarEnoughColor_circle_left(int notFarEnoughColor_circle_left) {
+        public SwipeBackgroundHelper<T> setNotFarEnoughColor_circle_left(int notFarEnoughColor_circle_left) {
             useDifferentResources = true;
             this.notFarEnoughColor_circle_left = notFarEnoughColor_circle_left;
             return this;
         }
 
-        public SwipeBackgroundHelper setIconResId_left(@DrawableRes int iconResId_left) {
+        public SwipeBackgroundHelper<T> setIconResId_left(@DrawableRes int iconResId_left) {
             useDifferentResources = true;
             this.iconResId_left = iconResId_left;
             return this;
         }
 
-        public SwipeBackgroundHelper setFarEnoughIconResId_left(@DrawableRes int farEnoughIconResId_left) {
+        public SwipeBackgroundHelper<T> setFarEnoughIconResId_left(@DrawableRes int farEnoughIconResId_left) {
             useDifferentResources = true;
             this.farEnoughIconResId_left = farEnoughIconResId_left;
             return this;
         }
 
-        public SwipeBackgroundHelper setNotFarEnoughColor_icon_left(int notFarEnoughColor_icon_left) {
+        public SwipeBackgroundHelper<T> setNotFarEnoughColor_icon_left(int notFarEnoughColor_icon_left) {
             useDifferentResources = true;
             this.notFarEnoughColor_icon_left = notFarEnoughColor_icon_left;
             return this;
         }
 
-        public SwipeBackgroundHelper setFarEnoughColor_icon_left(int farEnoughColor_icon_left) {
+        public SwipeBackgroundHelper<T> setFarEnoughColor_icon_left(int farEnoughColor_icon_left) {
             useDifferentResources = true;
             this.farEnoughColor_icon_left = farEnoughColor_icon_left;
+            return this;
+        }
+
+        public SwipeBackgroundHelper<T> setDynamicResources(DynamicResources<T> dynamicResources) {
+            this.dynamicResources = dynamicResources;
             return this;
         }
         //  <--------------- OptionalSetters ---------------
@@ -639,6 +652,8 @@ public class CustomRecycler<T> {
                 return;
 
             swipedLeft = dX < 0;
+            if (dynamicResources != null)
+                dynamicResources.runDynamicResources(this, object);
             setResources();
             DrawCommand drawCommand = createDrawCommand(viewItem, dX);
             paintDrawCommand(drawCommand, canvas, dX, viewItem);
@@ -673,9 +688,13 @@ public class CustomRecycler<T> {
                 this.backgroundColor = backgroundColor;
             }
         }
+        
+        public interface DynamicResources<T> {
+            void runDynamicResources(SwipeBackgroundHelper<T> swipeBackgroundHelper, T t);
+        }
     }
 
-    public CustomRecycler<T> setSwipeBackgroundHelper(SwipeBackgroundHelper swipeBackgroundHelper) {
+    public CustomRecycler<T> setSwipeBackgroundHelper(SwipeBackgroundHelper<T> swipeBackgroundHelper) {
         this.swipeBackgroundHelper = swipeBackgroundHelper;
         return this;
     }
