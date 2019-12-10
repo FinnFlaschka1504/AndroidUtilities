@@ -100,14 +100,18 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                             .setItemLayout(R.layout.expandable_content_test)
                                             .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
                                             .enableSwiping((objectList, direction, s) -> {
+
                                                 Toast.makeText(this, s + (direction == 16 ? " links" : " rechts"), Toast.LENGTH_SHORT).show();
+                                                CustomList.replace(objectList, s, s1 -> String.valueOf(Integer.parseInt(s) + 1));
+//                                                objectList.replaceAll(s1 -> s.equals(s1) ? String.valueOf(Integer.parseInt(s) + 1) : s1);
+//                                                subRecycler.reload();
                                             }, true, true)
                                             .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper<String>(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
                                                     .setDynamicResources((swipeBackgroundHelper, s) -> {
                                                         swipeBackgroundHelper
                                                                 .setFarEnoughColor_icon(getColor(R.color.colorAccent)).setNotFarEnoughColor_icon(Color.RED).setThreshold(0.4f)
                                                                 .setFarEnoughIconResId(R.drawable.ic_arrow_up)
-                                                                .enableBouncyThreshold(2, false, true)
+                                                                .enableBouncyThreshold(2, true, false)
                                                                 .setFarEnoughColor_circle_left(Color.BLUE)
                                                                 .setIconResId_left(R.drawable.ic_arrow_down);
 

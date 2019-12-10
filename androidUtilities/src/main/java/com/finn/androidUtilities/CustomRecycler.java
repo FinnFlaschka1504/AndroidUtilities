@@ -305,7 +305,10 @@ public class CustomRecycler<T> {
                 if (swipeBackgroundHelper != null && swipeBackgroundHelper.thresholdBouncy && ((direction == 16 && swipeBackgroundHelper.bouncyDirection.first) || (direction == 32 && swipeBackgroundHelper.bouncyDirection.second))) {
                     onSwiped.runSwyped(objectList, direction, objectList.get(index));
                     if (!swipeBackgroundHelper.staySwiped) {
-                        mAdapter.notifyDataSetChanged();
+                        if (swipeBackgroundHelper.smoothBounce)
+                            mAdapter.notifyItemChanged(index);
+                        else
+                            mAdapter.notifyDataSetChanged();
                     }
                     return;
                 }
@@ -351,6 +354,7 @@ public class CustomRecycler<T> {
         private boolean thresholdBouncy;
         private double bouncyStrength = 1;
         private Pair<Boolean,Boolean> bouncyDirection = new Pair<>(true, true);
+        private boolean smoothBounce;
         private float threshold = 0.5f;
         private Paint circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private Float marginStart = (float) CustomUtility.dpToPx(16);
@@ -533,6 +537,11 @@ public class CustomRecycler<T> {
 
         public SwipeBackgroundHelper<T> setDynamicResources(DynamicResources<T> dynamicResources) {
             this.dynamicResources = dynamicResources;
+            return this;
+        }
+
+        public SwipeBackgroundHelper<T> enableSmoothBounce() {
+            this.smoothBounce = true;
             return this;
         }
         //  <--------------- OptionalSetters ---------------

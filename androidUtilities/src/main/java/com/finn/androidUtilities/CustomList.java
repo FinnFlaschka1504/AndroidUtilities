@@ -49,11 +49,12 @@ public class CustomList<E> extends ArrayList<E> {
             return super.get(index);
     }
 
-    public CustomList add(E... e) {
+    public CustomList<E> add(E... e) {
         Collections.addAll(this, e);
         return this;
     }
 
+    //  ------------------------- Checks ------------------------->
     public boolean isFirst(E e) {
         if (e == null || isEmpty())
             return false;
@@ -68,8 +69,8 @@ public class CustomList<E> extends ArrayList<E> {
 
     public boolean isLast(int i) {
         return i == size() - 1;
-//        return get(i).equals(getLast());
     }
+    //  <------------------------- Checks -------------------------
 
     //  --------------- Recycle --------------->
     public E next(E e) {
@@ -139,6 +140,10 @@ public class CustomList<E> extends ArrayList<E> {
     //  <--------------- Generate ---------------
 
     //  ----- Stream ----->
+    public static <E,R> CustomList<R> map(List<E> list, Function<? super E, ? extends R> mapper) {
+        return list.stream().map(mapper).collect(Collectors.toCollection(CustomList::new));
+    }
+
     public <R> CustomList<R> map(Function<? super E, ? extends R> mapper) {
         return stream().map(mapper).collect(Collectors.toCollection(CustomList::new));
     }
@@ -154,4 +159,20 @@ public class CustomList<E> extends ArrayList<E> {
         return new ArrayList<>(this);
     }
     //  <--------------- To ... ---------------
+
+
+    //  -------------------- Replace -------------------->
+    public static <T> void replace(List<T> list, T t, ReplaceWith<T> replaceWith){
+        list.replaceAll(t2 -> t2 == t ? replaceWith.runReplaceWith(t2) : t2);
+    }
+
+    public static <T> void replace(List<T> list, int index, ReplaceWith<T> replaceWith){
+        replace(list, list.get(index), replaceWith);
+    }
+
+
+    public interface ReplaceWith<T> {
+        T runReplaceWith(T t);
+    }
+    //  <-------------------- Replace --------------------
 }

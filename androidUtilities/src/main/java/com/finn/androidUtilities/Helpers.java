@@ -19,9 +19,11 @@ import androidx.annotation.NonNull;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Helpers {
@@ -544,4 +546,213 @@ public class Helpers {
         }
     }
     //  <--------------- SpannableString ---------------
+
+    //  ------------------------- SortHelper ------------------------->
+    public static class SortHelper<T> {
+        private List<T> list;
+        private List<Sorter> sorterList = new ArrayList<>();
+        private boolean allReversed;
+
+        public SortHelper(List<T> list) {
+            this.list = list;
+        }
+
+        public Sorter<T> addSorter(Object type, Comparator<T> comparator) {
+            return addSorter(comparator).setType(type);
+        }
+
+        public Sorter<T> addSorter(Object type) {
+            return addSorter().setType(type);
+        }
+
+        public Sorter<T> addSorter() {
+            Sorter<T> sorter = new Sorter<T>();
+            sorter.parent = this;
+            sorterList.add(sorter);
+            return sorter;
+        }
+
+        public Sorter<T> addSorter(Comparator<T> comparator) {
+            return addSorter().addCondition(comparator);
+        }
+
+
+        //  ------------------------- Sort ------------------------->
+        public List<T> sort(Object type) {
+            Optional<Sorter> optionalSorter = sorterList.stream().filter(sorter -> sorter.type.equals(type)).findFirst();
+            return optionalSorter.map(sorter -> sorter.sort_private(list)).orElseGet(() -> list);
+        }
+
+        public List<T> sort_new(Object type) {
+            Optional<Sorter> optionalSorter = sorterList.stream().filter(sorter -> sorter.type.equals(type)).findFirst();
+            return optionalSorter.map(sorter -> sorter.sort_private(new ArrayList<T>(list))).orElseGet(() -> new ArrayList<>(list));
+        }
+
+        public interface GetSortType {
+            Object runGetSortType();
+        }
+
+        public List<T> sort(GetSortType getSortType) {
+            return sort(getSortType.runGetSortType());
+        }
+
+        public List<T> sort_new(GetSortType getSortType) {
+            return sort_new(getSortType.runGetSortType());
+        }
+        //  <------------------------- Sort -------------------------
+
+        public SortHelper<T> setAllReversed(boolean reversed) {
+            allReversed = reversed;
+            return this;
+        }
+        public class Sorter<E> {
+            private SortHelper<T> parent;
+            private boolean reversed;
+            private boolean reverseDefaultComparable;
+            private boolean reverseParentClass;
+            private boolean nullToBottom = true;
+            private List<Comparator<E>> comparatorList = new ArrayList<>();
+            private Object type;
+            private ChangeType<T, E> changeType1 = t -> (E) t;
+            private ChangeType<T, E> changeType2 = t -> (E) t;
+
+            //  ------------------------- Sort ------------------------->
+            public List<T> sort() {
+                return sort_private(list);
+            }
+
+            public List<T> sort_new() {
+                return sort_private(new ArrayList<>(list));
+            }
+
+            private List<T> sort_private(List<T> list) {
+                if (allReversed)
+                    sorterList.forEach(sorter -> sorter.reversed = true);
+
+                list.sort((o1, o2) -> {
+                    int result = 0;
+
+                    E newO1 = changeType1.runChangeType(o1);
+                    E newO2 = changeType2.runChangeType(o2);
+
+                    for (Comparator<E> comparator : comparatorList) {
+                        if (newO1 == null && newO2 == null && o1 instanceof ParentClass && o2 instanceof ParentClass)
+                            result = ((ParentClass) o1).getName().compareTo(((ParentClass) o2).getName());
+                        else if (newO1 == null)
+                            result = reversed ^ !nullToBottom ? -1 : 1;
+                        else if (newO2 == null)
+                            result = reversed ^ !nullToBottom ? 1 : -1;
+                        else
+                            result = comparator.compare(newO1, newO2);
+
+                        if (result != 0)
+                            break;
+                    }
+
+                    if (result == 0) {
+                        if (newO1 == null && newO2 == null && o1 instanceof ParentClass && o2 instanceof ParentClass)
+                            result = ((ParentClass) o1).getName().compareTo(((ParentClass) o2).getName());
+                        else if (newO1 == null)
+                            result = reversed ^ !nullToBottom ? -1 : 1;
+                        else if (newO2 == null)
+                            result = reversed ^ !nullToBottom ? 1 : -1;
+                    }
+
+                    if (result == 0 && newO1 instanceof Comparable && newO2 instanceof Comparable) {
+                        result = ((Comparable<E>) newO1).compareTo(newO2) * (reversed ^ reverseDefaultComparable ? -1 : 1);
+                    }
+                    if (result == 0 && newO1 instanceof ParentClass && newO2 instanceof ParentClass) {
+                        result = ((ParentClass) newO1).getName().compareTo(((ParentClass) newO2).getName()) * (reversed ^ reverseParentClass ? -1 : 1);
+                    }
+                    if (result == 0 && o1 instanceof Comparable && o2 instanceof Comparable) {
+                        result = ((Comparable<T>) o1).compareTo(o2) * (reversed ^ reverseDefaultComparable ? -1 : 1);
+                    }
+                    if (result == 0 && o1 instanceof ParentClass && o2 instanceof ParentClass) {
+                        result = ((ParentClass) o1).getName().compareTo(((ParentClass) o2).getName()) * (reversed ^ reverseParentClass ? -1 : 1);
+                    }
+
+                    return result;
+                });
+
+                return list;
+            }
+            //  <------------------------- Sort -------------------------
+
+            public Sorter<E> addCondition(Comparator<E> comparator) {
+                comparatorList.add(comparator);
+                return this;
+            }
+
+            public Sorter<E> enableReversed() {
+                this.reversed = true;
+                return this;
+            }
+
+            public Sorter<E> enableReverseDefaultComparable() {
+                this.reverseDefaultComparable = true;
+                return this;
+            }
+
+            public Sorter<E> enableReverseParentClass() {
+                this.reverseParentClass = true;
+                return this;
+            }
+
+            public Sorter<E> disableNullToBottom() {
+                this.nullToBottom = false;
+                return this;
+            }
+
+            public Sorter<E> setType(Object type) {
+                this.type = type;
+                return this;
+            }
+
+            public Sorter<T> addSorter(Object type) {
+                return parent.addSorter(type);
+            }
+
+            public Sorter<T> addSorter(Comparator<T> comparator) {
+                return parent.addSorter(comparator);
+            }
+
+            public Sorter<T> addSorter(Object type, Comparator<T> comparator) {
+                return parent.addSorter(type, comparator);
+            }
+
+            public SortHelper<T> finish() {
+                return parent;
+            }
+
+            public <N> Sorter<N> changeType(ChangeType<T, N> changeType1, ChangeType<T, N> changeType2) {
+                Sorter<N> nSorter = clone();
+                nSorter.changeType1 = changeType1;
+                nSorter.changeType2 = changeType2;
+                return nSorter;
+            }
+
+            public <N> Sorter<N> changeType(ChangeType<T, N> changeType1) {
+                Sorter<N> nSorter = clone();
+                nSorter.changeType1 = changeType1;
+                nSorter.changeType2 = changeType1;
+                return nSorter;
+            }
+
+            @NonNull
+            @Override
+            protected Sorter clone() {
+                try {
+                    return (Sorter) super.clone();
+                } catch (CloneNotSupportedException e) {
+                    return this;
+                }
+            }
+        }
+
+        public interface ChangeType<T, N> {
+            N runChangeType(T t);
+        }
+
+    }
+    //  <------------------------- SortHelper -------------------------
 }
