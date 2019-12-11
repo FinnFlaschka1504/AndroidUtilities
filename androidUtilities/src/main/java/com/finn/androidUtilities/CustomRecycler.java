@@ -1296,7 +1296,10 @@ public class CustomRecycler<T> {
         return this;
     }
 
-    public CustomRecycler<T> goTo(GoToFilter<T> goToFilter, String search) {
+    public Pair<CustomRecycler<T>, CustomDialog> goTo(GoToFilter<T> goToFilter, String search) {
+        return goTo(goToFilter, null,search);
+    }
+    public Pair<CustomRecycler<T>, CustomDialog> goTo(GoToFilter<T> goToFilter, ElementToString<T> elementToString, String search) {
         final T[] currentObject = (T[]) new Object[1];
         CustomList<T> filterdObjectList = new CustomList<>();
         List<T> allObjectList = getObjectList();
@@ -1308,7 +1311,7 @@ public class CustomRecycler<T> {
                 Toast.makeText(context, "Kein Eintrag für diese Suche", Toast.LENGTH_SHORT).show();
             else if (filterdObjectList.size() == 1) {
                 scrollTo(allObjectList.indexOf(filterdObjectList.get(0)), true);
-                return this;
+                return new Pair<>(this, null);
             }
         }
 
@@ -1316,14 +1319,19 @@ public class CustomRecycler<T> {
         goToDialog
                 .setTitle("Gehe Zu")
                 .addButton("Zurück", customDialog1 -> {
+                    if (filterdObjectList.isEmpty())
+                        return;
                     currentObject[0] = filterdObjectList.previous(currentObject[0]);
                     customDialog1.reloadView();
                 }, false)
                 .addButton("Weiter", customDialog1 -> {
+                    if (filterdObjectList.isEmpty())
+                        return;
                     currentObject[0] = filterdObjectList.next(currentObject[0]);
                     customDialog1.reloadView();
                 }, false)
                 .addButton(CustomDialog.BUTTON_TYPE.GO_TO_BUTTON, customDialog1 -> scrollTo(allObjectList.indexOf(currentObject[0]), true))
+                .enableTitleBackButton()
                 .setView(getLayoutId())
                 .setEdit(new CustomDialog.EditBuilder().setHint("Filter").setFireActionDirectly(search != null && !search.isEmpty()).setText(search != null ? search : "").allowEmpty()
                         .setOnAction((textInputHelper, textInputLayout, actionId, text1) -> {
@@ -1338,7 +1346,29 @@ public class CustomRecycler<T> {
                                 currentObject[0] = filterdObjectList.get(0);
                                 goToDialog.reloadView();
                             }
-                        }, Helpers.TextInputHelper.IME_ACTION.SEARCH))
+                        }, Helpers.TextInputHelper.IME_ACTION.SEARCH)
+                        .setDropDownList(() -> {
+                            if (getObjectList().isEmpty() || elementToString == null)
+                                return null;
+
+//                            if (elementToString != null) {
+                                return objectList.stream().map(elementToString::runElementToString).collect(toList());
+//                            }
+//                            else {
+//                                T t = getObjectList().get(0);
+//
+//                                if (t instanceof String)
+//                                    return (List<String>) getObjectList();
+//                                else if (t instanceof Expandable)
+//                                    return ((List<Expandable>) getObjectList()).stream().map(Expandable::getName).collect(toList());
+//                                else
+//                                    return null;
+//                            }
+                        }, (parent, view, position, id) -> {
+                            scrollTo(position, true);
+                            goToDialog.dismiss();
+                        })
+                )
                 .setSetViewContent((customDialog1, view1, reload) -> {
                     view1.setBackground(null);
                     View layoutView = customDialog1.findViewById(R.id.dialog_custom_layout_view);
@@ -1350,11 +1380,15 @@ public class CustomRecycler<T> {
                     }
                 })
                 .show();
-        return this;
+        return new Pair<>(this, goToDialog);
     }
 
     public interface GoToFilter<T> {
         boolean runGoToFilter(String search, T t);
+    }
+
+    public interface ElementToString<T> {
+        String runElementToString(T t);
     }
     //  <--------------- GoTo ---------------
 

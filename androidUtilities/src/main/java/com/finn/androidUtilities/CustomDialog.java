@@ -7,19 +7,25 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.LayoutRes;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 import org.apmem.tools.layouts.FlowLayout;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class CustomDialog {
 
@@ -55,6 +61,10 @@ public class CustomDialog {
     private boolean stackButtons;
     private boolean expandButtons;
     private boolean firstTime = true;
+    private boolean removeLastDivider;
+    private boolean titleBackButton;
+    private List<OnDialogCallback> onDismissListenerList = new ArrayList<>();
+    private List<OnDialogCallback> onShowListenerList = new ArrayList<>();
 
     private SetViewContent setViewContent;
 
@@ -151,11 +161,21 @@ public class CustomDialog {
         return this;
     }
 
+    public CustomDialog addOnDialogDismiss(OnDialogCallback onDialogDismiss) {
+        onDismissListenerList.add(onDialogDismiss);
+        dialog.setOnDismissListener(dialog1 -> onDismissListenerList.forEach(onDialogCallback -> onDialogCallback.runOnDialogCallback(this)));
+        return this;
+    }
     public CustomDialog setOnDialogDismiss(OnDialogCallback onDialogDismiss) {
         dialog.setOnDismissListener(dialog1 -> onDialogDismiss.runOnDialogCallback(this));
         return this;
     }
 
+    public CustomDialog addOnDialogShown(OnDialogCallback onDialogShown) {
+        onShowListenerList.add(onDialogShown);
+        dialog.setOnShowListener(dialog1 -> onShowListenerList.forEach(onDialogCallback -> onDialogCallback.runOnDialogCallback(this)));
+        return this;
+    }
     public CustomDialog setOnDialogShown(OnDialogCallback onDialogShown) {
         dialog.setOnShowListener(dialog1 -> onDialogShown.runOnDialogCallback(this));
         return this;
@@ -181,6 +201,15 @@ public class CustomDialog {
         return this;
     }
 
+    public CustomDialog enableRemoveLastDivider() {
+        this.removeLastDivider = true;
+        return this;
+    }
+
+    public CustomDialog enableTitleBackButton() {
+        this.titleBackButton = true;
+        return this;
+    }
     //  <----- Getters & Setters -----
 
 
@@ -214,6 +243,9 @@ public class CustomDialog {
         private String regEx = "";
         private boolean fireActionDirectly;
         private Pair<Helpers.TextInputHelper.OnAction, Helpers.TextInputHelper.IME_ACTION[]> onActionActionPair;
+        private List<String> dropDownList = new ArrayList<>();
+        private boolean showDropdownDirectly = true;
+        private AdapterView.OnItemClickListener onItemClickListener;
 
         private Helpers.TextInputHelper.INPUT_TYPE inputType = Helpers.TextInputHelper.INPUT_TYPE.CAP_SENTENCES;
         Helpers.TextInputHelper.TextValidation textValidation;
@@ -285,6 +317,28 @@ public class CustomDialog {
         public Pair<Helpers.TextInputHelper.OnAction, Helpers.TextInputHelper.IME_ACTION[]> getOnActionActionPair() {
             return onActionActionPair;
         }
+
+
+        //       -------------------- DropDown -------------------->
+        public EditBuilder disableShowDropdownDirectly() {
+            this.showDropdownDirectly = false;
+            return this;
+        }
+
+        public EditBuilder setDropDownList(GetDropdownList getDropdownList, AdapterView.OnItemClickListener onItemClickListener) {
+            this.onItemClickListener = onItemClickListener;
+            this.dropDownList = getDropdownList.runGetDropdownList();
+            return this;
+        }
+
+        public EditBuilder setDropDownList(GetDropdownList dropDownList) {
+            return setDropDownList(dropDownList, null);
+        }
+
+        public interface GetDropdownList {
+            List<String> runGetDropdownList();
+        }
+        //       <-------------------- DropDown --------------------
     }
 
     public static class TextBuilder{
@@ -303,7 +357,7 @@ public class CustomDialog {
     }
 
     public String getEditText() {
-        TextInputEditText editText = dialog.findViewById(R.id.dialog_custom_edit);
+        AutoCompleteTextView editText = dialog.findViewById(R.id.dialog_custom_edit);
         if (editText == null)
             return null;
         else
@@ -326,6 +380,12 @@ public class CustomDialog {
                 .filter(buttonHelper -> buttonHelper.id == id)
                 .findFirst();
         return optional.orElse(null);
+    }
+
+    public CustomList<View> getDividers() {
+        return CustomUtility.getViewsByType(getDialog().findViewById(R.id.dialog_custom_root), View.class, true)
+                .stream().filter(view1 -> ((LinearLayout) view1.getParent()).getVisibility() == View.VISIBLE).collect(Collectors.toCollection(CustomList::new));
+
     }
     //  <----- Convenience -----
 
@@ -609,6 +669,18 @@ public class CustomDialog {
         setDialogLayoutParameters(dialog, dimensions.first, dimensions.second);
         dialog.show();
 
+        if (removeLastDivider || buttonHelperList.isEmpty())
+            getDividers().getLast().setVisibility(View.GONE);
+
+        if (titleBackButton) {
+            ImageView dialog_custom_title_backButton = dialog.findViewById(R.id.dialog_custom_title_backButton);
+            dialog_custom_title_backButton.setOnClickListener(v -> dismiss());
+            dialog_custom_title_backButton.setVisibility(View.VISIBLE);
+            TextView dialog_custom_title = dialog.findViewById(R.id.dialog_custom_title);
+
+            CustomUtility.setMargins(dialog_custom_title, 60, -1, 60, -1);
+        }
+
         firstTime = false;
         return this;
     }
@@ -624,7 +696,7 @@ public class CustomDialog {
 
     private void applyEdit() {
         TextInputLayout textInputLayout = dialog.findViewById(R.id.dialog_custom_edit_editLayout);
-        TextInputEditText textInputEditText = dialog.findViewById(R.id.dialog_custom_edit);
+        AutoCompleteTextView autoCompleteTextView = dialog.findViewById(R.id.dialog_custom_edit);
 
         Button button = null;
         Optional<ButtonHelper> optional = buttonHelperList.stream()
@@ -643,19 +715,19 @@ public class CustomDialog {
 
         if (editBuilder != null) {
             if (editBuilder.showKeyboard) {
-                textInputEditText.requestFocus();
+                autoCompleteTextView.requestFocus();
                 CustomUtility.changeWindowKeyboard(dialog.getWindow(), true);
             }
 
             if (!editBuilder.text.isEmpty())
-                textInputEditText.setText(editBuilder.text);
+                autoCompleteTextView.setText(editBuilder.text);
 
             textInputLayout.setHint(editBuilder.hint);
 
             if (editBuilder.selectAll)
-                textInputEditText.selectAll();
+                autoCompleteTextView.selectAll();
             else
-                textInputEditText.setSelection(editBuilder.text.length());
+                autoCompleteTextView.setSelection(editBuilder.text.length());
 
             if (!editBuilder.regEx.isEmpty())
                 textInputHelper.setValidation(textInputLayout, editBuilder.regEx);
@@ -668,7 +740,7 @@ public class CustomDialog {
             if (editBuilder.allowEmpty)
                 textInputHelper.allowEmpty(textInputLayout);
         } else {
-            textInputEditText.requestFocus();
+            autoCompleteTextView.requestFocus();
             CustomUtility.changeWindowKeyboard(dialog.getWindow(), true);
         }
 
@@ -689,6 +761,15 @@ public class CustomDialog {
 
         if (editBuilder.fireActionDirectly)
             editBuilder.onActionActionPair.first.runOnAction(textInputHelper, textInputLayout, -1, textInputHelper.getText(textInputLayout));
+
+        if (editBuilder.dropDownList != null && !editBuilder.dropDownList.isEmpty()) {
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1, editBuilder.dropDownList);
+            autoCompleteTextView.setAdapter(adapter);
+            if (editBuilder.onItemClickListener != null)
+                autoCompleteTextView.setOnItemClickListener(editBuilder.onItemClickListener);
+            if (editBuilder.showDropdownDirectly)
+                addOnDialogShown(customDialog -> autoCompleteTextView.showDropDown());
+        }
     }
 
     static void setDialogLayoutParameters(Dialog dialog, boolean width, boolean height) {

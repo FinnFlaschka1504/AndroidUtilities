@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Pair;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,14 +14,17 @@ import com.finn.androidUtilities.CustomDialog;
 import com.finn.androidUtilities.CustomInternetHelper;
 import com.finn.androidUtilities.CustomList;
 import com.finn.androidUtilities.CustomRecycler;
+import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
 
-    private CustomRecycler<CustomRecycler.Expandable<List<String>>> testRecycler;
+    private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
 
     @Override
@@ -66,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
 
 //        testRecycler =
-        new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
+        testRecycler = new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
 //                .setItemLayout(R.layout.list_item_expandable)
 //                .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(s))
 //                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s) -> {
@@ -151,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
     }
 
     public void goTo(View view) {
-        testRecycler.goTo((search, o) -> o.equals(search), null);
+        testRecycler.goTo((search, expandable) -> expandable.getName().equals(search), CustomRecycler.Expandable::getName, null);
     }
 
     @Override

@@ -80,6 +80,8 @@ public class CustomList<E> extends ArrayList<E> {
             return get(indexOf(e) + 1);
     }
     public E previous(E e) {
+        if (isEmpty())
+            return null;
 //        if (get(0).equals(e))
 //            return getLast();
 //        else

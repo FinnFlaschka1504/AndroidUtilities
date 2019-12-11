@@ -3,13 +3,11 @@ package com.finn.androidUtilities;
 import android.animation.ValueAnimator;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.net.wifi.WifiManager;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
@@ -26,15 +24,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.snackbar.Snackbar;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -251,10 +242,14 @@ public class CustomUtility {
         return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
     }
 
-    public static void setMargins (View v, int links, int oben, int rechts, int unten) {
+    public static void setMargins (View v, int left, int top, int right, int bottom) {
         if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            p.setMargins(dpToPx(links), dpToPx(oben), dpToPx(rechts), dpToPx(unten));
+            p.setMargins(
+                    left == -1 ? p.leftMargin : dpToPx(left),
+                    top == -1 ? p.topMargin : dpToPx(top),
+                    right == -1 ? p.rightMargin : dpToPx(right),
+                    bottom == -1 ? p.bottomMargin : dpToPx(bottom));
             v.requestLayout();
         }
     }
@@ -370,13 +365,19 @@ public class CustomUtility {
 
     //  --------------- getViews --------------->
     public static <T extends View> ArrayList<T> getViewsByType(ViewGroup root, Class<T> tClass) {
+        return getViewsByType(root, tClass, false);
+    }
+
+    public static <T extends View> ArrayList<T> getViewsByType(ViewGroup root, Class<T> tClass, boolean exactly) {
         final ArrayList<T> result = new ArrayList<>();
         for (int i = 0; i < root.getChildCount(); i++) {
             final View child = root.getChildAt(i);
             if (child instanceof ViewGroup)
-                result.addAll(getViewsByType((ViewGroup) child, tClass));
+                result.addAll(getViewsByType((ViewGroup) child, tClass, exactly));
 
-            if (tClass.isInstance(child))
+            if (!exactly && tClass.isInstance(child))
+                result.add(tClass.cast(child));
+            else if (exactly && tClass.getName().equals(child.getClass().getName()))
                 result.add(tClass.cast(child));
         }
         return result;
