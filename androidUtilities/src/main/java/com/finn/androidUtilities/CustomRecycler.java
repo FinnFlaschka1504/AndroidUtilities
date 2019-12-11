@@ -1318,19 +1318,19 @@ public class CustomRecycler<T> {
         CustomDialog goToDialog = CustomDialog.Builder(context);
         goToDialog
                 .setTitle("Gehe Zu")
-                .addButton("Zurück", customDialog1 -> {
-                    if (filterdObjectList.isEmpty())
-                        return;
-                    currentObject[0] = filterdObjectList.previous(currentObject[0]);
-                    customDialog1.reloadView();
-                }, false)
-                .addButton("Weiter", customDialog1 -> {
-                    if (filterdObjectList.isEmpty())
-                        return;
-                    currentObject[0] = filterdObjectList.next(currentObject[0]);
-                    customDialog1.reloadView();
-                }, false)
-                .addButton(CustomDialog.BUTTON_TYPE.GO_TO_BUTTON, customDialog1 -> scrollTo(allObjectList.indexOf(currentObject[0]), true))
+//                .addButton("Zurück", customDialog1 -> {
+//                    if (filterdObjectList.isEmpty())
+//                        return;
+//                    currentObject[0] = filterdObjectList.previous(currentObject[0]);
+//                    customDialog1.reloadView();
+//                }, false)
+//                .addButton("Weiter", customDialog1 -> {
+//                    if (filterdObjectList.isEmpty())
+//                        return;
+//                    currentObject[0] = filterdObjectList.next(currentObject[0]);
+//                    customDialog1.reloadView();
+//                }, false)
+//                .addButton(CustomDialog.BUTTON_TYPE.GO_TO_BUTTON, customDialog1 -> scrollTo(allObjectList.indexOf(currentObject[0]), true))
                 .enableTitleBackButton()
                 .setView(getLayoutId())
                 .setEdit(new CustomDialog.EditBuilder().setHint("Filter").setFireActionDirectly(search != null && !search.isEmpty()).setText(search != null ? search : "").allowEmpty()
