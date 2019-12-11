@@ -116,7 +116,7 @@ public class CustomRecycler<T> {
     }
 
 
-    public CustomRecycler setRecycler(RecyclerView recycler) {
+    public CustomRecycler<T> setRecycler(RecyclerView recycler) {
         this.recycler = recycler;
         return this;
     }
@@ -259,6 +259,10 @@ public class CustomRecycler<T> {
     public CustomRecycler<T> setDividerMargin_inDp(int dividerMargin_inDp) {
         this.dividerMargin = CustomUtility.dpToPx(dividerMargin_inDp);
         return this;
+    }
+
+    public MyAdapter getAdapter() {
+        return mAdapter;
     }
 
     //  --------------- Drag & Swipe --------------->

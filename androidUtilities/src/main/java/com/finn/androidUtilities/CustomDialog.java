@@ -670,8 +670,6 @@ public class CustomDialog {
         setDialogLayoutParameters(dialog, dimensions.first, dimensions.second);
         dialog.show();
 
-        ViewGroup dialog_custom_root = dialog.findViewById(R.id.dialog_custom_root);
-
         if (removeLastDivider || buttonHelperList.isEmpty())
             getDividers().getLast().setVisibility(View.GONE);
 
