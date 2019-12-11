@@ -383,7 +383,8 @@ public class CustomDialog {
     }
 
     public CustomList<View> getDividers() {
-        return CustomUtility.getViewsByType(getDialog().findViewById(R.id.dialog_custom_root), View.class, true)
+        ViewGroup dialog_custom_root = getDialog().findViewById(R.id.dialog_custom_root);
+        return CustomUtility.getViewsByType(dialog_custom_root, View.class, true)
                 .stream().filter(view1 -> ((LinearLayout) view1.getParent()).getVisibility() == View.VISIBLE).collect(Collectors.toCollection(CustomList::new));
 
     }
