@@ -2,10 +2,13 @@ package com.finn.androidUtilities;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -65,6 +68,10 @@ public class CustomDialog {
     private boolean titleBackButton;
     private List<OnDialogCallback> onDismissListenerList = new ArrayList<>();
     private List<OnDialogCallback> onShowListenerList = new ArrayList<>();
+    private boolean removeBackground;
+    private boolean removeMargin;
+    private Drawable backgroundDrawable;
+    private boolean coloredActionButtons;
 
     private SetViewContent setViewContent;
 
@@ -210,6 +217,12 @@ public class CustomDialog {
         this.titleBackButton = true;
         return this;
     }
+
+    public CustomDialog enableColoredActionButtons() {
+        this.coloredActionButtons = true;
+        return this;
+    }
+
     //  <----- Getters & Setters -----
 
 
@@ -370,7 +383,7 @@ public class CustomDialog {
 
     public ButtonHelper getActionButton() {
         Optional<ButtonHelper> optional = buttonHelperList.stream()
-                .filter(buttonHelper -> (buttonHelper.buttonType == BUTTON_TYPE.OK_BUTTON || buttonHelper.buttonType == BUTTON_TYPE.SAVE_BUTTON || buttonHelper.buttonType == BUTTON_TYPE.YES_BUTTON))
+                .filter(ButtonHelper::isActionButton)
                 .findFirst();
         return optional.orElse(null);
     }
@@ -387,6 +400,16 @@ public class CustomDialog {
         return CustomUtility.getViewsByType(dialog_custom_root, View.class, true)
                 .stream().filter(view1 -> ((LinearLayout) view1.getParent()).getVisibility() == View.VISIBLE).collect(Collectors.toCollection(CustomList::new));
 
+    }
+
+    public CustomDialog removeBackground() {
+        removeBackground = true;
+        return this;
+    }
+    public CustomDialog removeBackground_and_margin() {
+        removeBackground = true;
+        removeMargin = true;
+        return this;
     }
     //  <----- Convenience -----
 
@@ -407,9 +430,12 @@ public class CustomDialog {
             this.buttonType = buttonType;
             label = buttonType.label;
             dismiss = true;
-            button = new Button(context);
-            button.setBackground(dialog.findViewById(R.id.dialog_custom_Button1).getBackground().getConstantState().newDrawable());
-            button.setTextColor(((Button)dialog.findViewById(R.id.dialog_custom_Button1)).getTextColors());
+            if (coloredActionButtons && isActionButton())
+                button = new Button(context, null, 0, R.style.ActionButtonStyle);
+            else
+                button = new Button(context, null, 0, R.style.ColoredBorderlessButtonStyle);
+//            button.setBackground(dialog.findViewById(R.id.dialog_custom_Button1).getBackground().getConstantState().newDrawable());
+//            button.setTextColor(((Button)dialog.findViewById(R.id.dialog_custom_Button1)).getTextColors());
         }
 
         public ButtonHelper(String label, BUTTON_TYPE buttonType, OnClick onClick, Integer id, boolean dismiss) {
@@ -418,13 +444,19 @@ public class CustomDialog {
             this.buttonType = buttonType;
             this.onClick = onClick;
             this.dismiss = dismiss;
-//            gravityLeft = true;
         }
 
         public Button generateButton() {
-            Button button = new Button(context);
-            button.setBackground(dialog.findViewById(R.id.dialog_custom_Button1).getBackground().getConstantState().newDrawable());
-            button.setTextColor(((Button)dialog.findViewById(R.id.dialog_custom_Button1)).getTextColors());
+            Button button;
+            if (coloredActionButtons && isActionButton())
+                button = new Button(context, null, 0, R.style.ActionButtonStyle);
+            else
+                button = new Button(context, null, 0, R.style.ColoredBorderlessButtonStyle);
+
+//            button = new Button(context);
+//            button.setBackground(dialog.findViewById(R.id.dialog_custom_Button1).getBackground().getConstantState().newDrawable());
+//            button.setTextColor(((Button)dialog.findViewById(R.id.dialog_custom_Button1)).getTextColors());
+
             if (stackButtons || expandButtons) {
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
                 button.setLayoutParams(params);
@@ -490,6 +522,10 @@ public class CustomDialog {
 
         public Button getButton() {
             return button;
+        }
+
+        public boolean isActionButton() {
+            return (buttonType == BUTTON_TYPE.OK_BUTTON ||buttonType == BUTTON_TYPE.SAVE_BUTTON || buttonType == BUTTON_TYPE.YES_BUTTON);
         }
     }
 
@@ -680,6 +716,22 @@ public class CustomDialog {
             TextView dialog_custom_title = dialog.findViewById(R.id.dialog_custom_title);
 
             CustomUtility.setMargins(dialog_custom_title, 60, -1, 60, -1);
+        }
+
+        if (removeBackground) {
+            Window window = dialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+                if (!removeMargin)
+                    CustomUtility.setMargins(dialog.findViewById(R.id.dialog_custom_root),16);
+            }
+        }
+
+        if (backgroundDrawable != null) {
+            Window window = dialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawable(backgroundDrawable);
+            }
         }
 
         firstTime = false;

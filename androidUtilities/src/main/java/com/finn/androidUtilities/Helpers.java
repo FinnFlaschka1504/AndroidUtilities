@@ -4,6 +4,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
@@ -524,6 +525,7 @@ public class Helpers {
                 return what;
             }
         }
+
         private SpannableStringBuilder builder = new SpannableStringBuilder();
 
         public SpannableStringHelper append(String text) {
@@ -544,6 +546,40 @@ public class Helpers {
         public SpannableStringBuilder get() {
             return builder;
         }
+
+
+        //  --------------- Quick... --------------->
+        private Object quickWhat;
+
+        public SpannableStringHelper setQuickWhat(Object quickWhat) {
+            this.quickWhat = quickWhat;
+            return this;
+        }
+
+        public SpannableString quick(String text) {
+            SpannableString spannableString = new SpannableString(text);
+            spannableString.setSpan(quickWhat, 0, text.length(), 0);
+            return spannableString;
+        }
+
+        public SpannableString quick(String text, Object what) {
+            SpannableString spannableString = new SpannableString(text);
+            spannableString.setSpan(what, 0, text.length(), 0);
+            return spannableString;
+        }
+
+        public SpannableString quickBold(String text) {
+            SpannableString spannableString = new SpannableString(text);
+            spannableString.setSpan(SPAN_TYPE.BOLD.getWhat(), 0, text.length(), 0);
+            return spannableString;
+        }
+
+        public SpannableString quickStrikeThrough(String text) {
+            SpannableString spannableString = new SpannableString(text);
+            spannableString.setSpan(SPAN_TYPE.STRIKE_THROUGH.getWhat(), 0, text.length(), 0);
+            return spannableString;
+        }
+        //  <--------------- Quick... ---------------
     }
     //  <--------------- SpannableString ---------------
 
@@ -553,8 +589,16 @@ public class Helpers {
         private List<Sorter> sorterList = new ArrayList<>();
         private boolean allReversed;
 
+        public SortHelper() {
+        }
+
         public SortHelper(List<T> list) {
             this.list = list;
+        }
+
+        public SortHelper<T> setList(List<T> list) {
+            this.list = list;
+            return this;
         }
 
         public Sorter<T> addSorter(Object type, Comparator<T> comparator) {
@@ -605,6 +649,7 @@ public class Helpers {
             allReversed = reversed;
             return this;
         }
+
         public class Sorter<E> {
             private SortHelper<T> parent;
             private boolean reversed;
@@ -722,6 +767,10 @@ public class Helpers {
 
             public SortHelper<T> finish() {
                 return parent;
+            }
+
+            public List<T> finish_and_sort(Object type) {
+                return parent.sort(type);
             }
 
             public <N> Sorter<N> changeType(ChangeType<T, N> changeType1, ChangeType<T, N> changeType2) {

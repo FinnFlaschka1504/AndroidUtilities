@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Pair;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,13 +13,10 @@ import com.finn.androidUtilities.CustomDialog;
 import com.finn.androidUtilities.CustomInternetHelper;
 import com.finn.androidUtilities.CustomList;
 import com.finn.androidUtilities.CustomRecycler;
-import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
 
@@ -122,7 +118,8 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                                         if (s.contains("1"))
                                                             swipeBackgroundHelper.setFarEnoughColor_circle_left(Color.YELLOW);
                                                     })
-                                            );
+                                            )
+                                            .setOrientation(CustomRecycler.ORIENTATION.HORIZONTAL)  ;
                                 })
 //                                .enableExpandByDefault()
                                 .setExpandMatching(expandable -> expandable.getList().stream().anyMatch(s -> s.contains("1")))
@@ -147,10 +144,14 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setTitle("Anzahl Festlegen")
                 .setText("Wie viele Elemente sollen angezeigt werden?")
                 .setEdit(new CustomDialog.EditBuilder().setHint("Anzahl").setText(String.valueOf(amount)).setInputType(Helpers.TextInputHelper.INPUT_TYPE.NUMBER))
+                .addButton(CustomDialog.BUTTON_TYPE.CANCEL_BUTTON)
                 .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
                     amount = Integer.parseInt(customDialog.getEditText());
 //                    testRecycler.reload(generateObjectList());
                 })
+                .addButton(CustomDialog.BUTTON_TYPE.YES_BUTTON)
+//                .removeBackground()
+                .enableColoredActionButtons()
                 .show();
     }
 

@@ -242,6 +242,27 @@ public class CustomUtility {
         return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
     }
 
+    public static void setMargins (View v, int margin) {
+        if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            margin = dpToPx(margin);
+            p.setMargins(margin, margin, margin, margin);
+            v.requestLayout();
+        }
+    }
+
+    public static void setMargins (View v, int horizontal, int vertical) {
+        if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            p.setMargins(
+                    horizontal == -1 ? p.leftMargin : dpToPx(horizontal),
+                    vertical == -1 ? p.topMargin : dpToPx(vertical),
+                    horizontal == -1 ? p.rightMargin : dpToPx(horizontal),
+                    vertical == -1 ? p.bottomMargin : dpToPx(vertical));
+            v.requestLayout();
+        }
+    }
+
     public static void setMargins (View v, int left, int top, int right, int bottom) {
         if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();

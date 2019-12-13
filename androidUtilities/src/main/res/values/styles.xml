@@ -27,15 +27,6 @@
         <item name="android:padding">8dp</item>
     </style>
 
-    <style name="TileStyle.Fill" parent="TileStyle">
-        <item name="android:background">@drawable/rounded_background_fill</item>
-        <item name="android:paddingVertical">13dp</item>
-        <item name="android:paddingHorizontal">20dp</item>
-        <item name="android:layout_marginVertical">0dp</item>
-        <item name="android:layout_marginHorizontal">0dp</item>
-
-    </style>
-
     <style name="TileStyle_Fill_Foreground">
         <item name="android:background">@drawable/rounded_background</item>
         <item name="android:layout_width">fill_parent</item>
@@ -62,4 +53,14 @@
         <item name="android:clickable">true</item>
     </style>
 
+    <style name="ActionButtonStyle" parent="@style/Widget.AppCompat.Button.Colored">
+<!--        &lt;!&ndash; text color for the button &ndash;&gt;-->
+<!--        <item name="android:textColor">#ffffff</item>-->
+<!--        &lt;!&ndash; Background tint for the button &ndash;&gt;-->
+<!--        <item name="backgroundTint">@color/colorPrimaryDark</item>-->
+    </style>
+
+    <style name="ColoredBorderlessButtonStyle" parent="Widget.AppCompat.Button.Borderless.Colored">
+
+    </style>
 </resources>

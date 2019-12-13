@@ -936,12 +936,12 @@ public class CustomRecycler<T> {
             };
         }
 
-        public ExpandableHelper(int contentLayoutId, SetItemContent<E> setItemContent) {
+        public ExpandableHelper(@LayoutRes int contentLayoutId, SetItemContent<E> setItemContent) {
             this.contentLayoutId = contentLayoutId;
             this.setItemContent = setItemContent;
         }
 
-        public ExpandableHelper(int contentLayoutId, SetExpandableItemContent<E> setExpandableItemContent) {
+        public ExpandableHelper(@LayoutRes int contentLayoutId, SetExpandableItemContent<E> setExpandableItemContent) {
             this.contentLayoutId = contentLayoutId;
             this.setExpandableItemContent = setExpandableItemContent;
         }
