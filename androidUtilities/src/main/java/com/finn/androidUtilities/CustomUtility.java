@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
@@ -63,6 +64,80 @@ public class CustomUtility {
             e.printStackTrace();
         }
         return false;
+    }
+
+
+
+    public static void isOnline(Runnable onTrue, Runnable onFalse){
+        new PingTask<Pair<Runnable, Runnable>>().execute(new Pair<>(onTrue, onFalse));
+    }
+
+    public static void isOnline(OnResult onResult){
+        new PingTask<OnResult>().execute(onResult);
+    }
+
+    public static void isOnline(Runnable onTrue, Runnable onFalse, Context context){
+        Runnable interceptOnFalse = () -> {
+            Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
+            onFalse.run();
+        };
+        new PingTask<Pair<Runnable, Runnable>>().execute(new Pair<>(onTrue, interceptOnFalse));
+    }
+
+    public static void isOnline(OnResult onResult, Context context){
+        OnResult interceptOnResult = status -> {
+            if (!status)
+                Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
+            onResult.runOnResult(status);
+        };
+        new PingTask<OnResult>().execute(interceptOnResult);
+    }
+
+    public interface OnResult {
+        void runOnResult(boolean status);
+    }
+
+    private static class PingTask<T> extends AsyncTask<T, Integer, Boolean> {
+        private OnResult onResult;
+        private Runnable onTrue;
+        private Runnable onFalse;
+
+        @Override
+        protected Boolean doInBackground(T... ts) {
+            if (ts.length == 0)
+                return null;
+
+            T t = ts[0];
+            if (t instanceof OnResult)
+                this.onResult = (OnResult) t;
+            else if (t instanceof Pair) {
+                onTrue = ((Pair<Runnable, Runnable>) t).first;
+                onFalse = ((Pair<Runnable, Runnable>) t).second;
+            }
+
+
+            Runtime runtime = Runtime.getRuntime();
+            try {
+                Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
+                int exitValue = ipProcess.waitFor();
+
+
+//                Thread.sleep(5000);
+//                return false;
+                return (exitValue == 0);
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+            return false;
+
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            if (onResult != null) onResult.runOnResult(aBoolean);
+            if (aBoolean && onTrue != null) onTrue.run();
+            if (!aBoolean && onFalse != null) onFalse.run();
+        }
     }
     //  <--------------- isOnline ---------------
 

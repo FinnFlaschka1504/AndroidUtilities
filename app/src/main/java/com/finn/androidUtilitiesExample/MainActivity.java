@@ -13,6 +13,7 @@ import com.finn.androidUtilities.CustomDialog;
 import com.finn.androidUtilities.CustomInternetHelper;
 import com.finn.androidUtilities.CustomList;
 import com.finn.androidUtilities.CustomRecycler;
+import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
 
 import java.util.Arrays;
@@ -118,8 +119,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                                         if (s.contains("1"))
                                                             swipeBackgroundHelper.setFarEnoughColor_circle_left(Color.YELLOW);
                                                     })
-                                            )
-                                            .setOrientation(CustomRecycler.ORIENTATION.HORIZONTAL)  ;
+                                            );
                                 })
 //                                .enableExpandByDefault()
                                 .setExpandMatching(expandable -> expandable.getList().stream().anyMatch(s -> s.contains("1")))
@@ -133,6 +133,27 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .generate();
 
         CustomInternetHelper.initialize(this);
+
+//        CustomUtility.isOnline(status -> {
+//            CustomDialog.Builder(this)
+//                    .setTitle(Boolean.toString(status))
+//                    .setDimensions(false, false)
+//                    .show();
+//        }, this);
+
+        CustomUtility.isOnline(() -> {
+            CustomDialog.Builder(this)
+                    .setTitle(Boolean.toString(true))
+                    .setDimensions(false, false)
+                    .show();
+
+        }, () -> {
+            CustomDialog.Builder(this)
+                    .setTitle(Boolean.toString(false))
+                    .setDimensions(false, false)
+                    .show();
+
+        }, this);
     }
 
     private CustomList<String> generateObjectList() {
