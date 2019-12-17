@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Pair;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 
 import com.google.android.material.textfield.TextInputLayout;
@@ -72,6 +74,8 @@ public class CustomDialog {
     private boolean removeMargin;
     private Drawable backgroundDrawable;
     private boolean coloredActionButtons;
+    private OnBackPressedListener onBackPressedListener;
+
 
     private SetViewContent setViewContent;
 
@@ -223,6 +227,10 @@ public class CustomDialog {
         return this;
     }
 
+    public CustomDialog setOnBackPressedListener(OnBackPressedListener onBackPressedListener) {
+        this.onBackPressedListener = onBackPressedListener;
+        return this;
+    }
     //  <----- Getters & Setters -----
 
 
@@ -241,6 +249,10 @@ public class CustomDialog {
 
     public interface GoToFilter<T>{
         boolean runGoToFilter(String search, T t);
+    }
+
+    public interface OnBackPressedListener {
+        boolean runOnBackPressedListener(CustomDialog customDialog);
     }
     //  <----- Interfaces -----
 
@@ -365,7 +377,7 @@ public class CustomDialog {
     return this;
 }
 
-    public <T extends View> T findViewById(int id) {
+    public <T extends View> T findViewById(@IdRes int id) {
         return dialog.findViewById(id);
     }
 
@@ -425,6 +437,7 @@ public class CustomDialog {
         private boolean alignLeft;
         private boolean disabled;
         private boolean hidden;
+        private boolean colored;
 
         public ButtonHelper(BUTTON_TYPE buttonType) {
             this.buttonType = buttonType;
@@ -448,14 +461,10 @@ public class CustomDialog {
 
         public Button generateButton() {
             Button button;
-            if (coloredActionButtons && isActionButton())
+            if ((coloredActionButtons && isActionButton()) || colored)
                 button = new Button(context, null, 0, R.style.ActionButtonStyle);
             else
                 button = new Button(context, null, 0, R.style.ColoredBorderlessButtonStyle);
-
-//            button = new Button(context);
-//            button.setBackground(dialog.findViewById(R.id.dialog_custom_Button1).getBackground().getConstantState().newDrawable());
-//            button.setTextColor(((Button)dialog.findViewById(R.id.dialog_custom_Button1)).getTextColors());
 
             if (stackButtons || expandButtons) {
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
@@ -568,6 +577,10 @@ public class CustomDialog {
         return this;
     }
 
+    public CustomDialog colorLastAddedButton(){
+        buttonHelperList.getLast().colored = true;
+        return this;
+    }
     public CustomDialog hideLastAddedButton(){
         buttonHelperList.getLast().hidden = true;
         return this;
@@ -704,7 +717,6 @@ public class CustomDialog {
             setViewContent.runSetViewContent(this, view, false);
 
         setDialogLayoutParameters(dialog, dimensions.first, dimensions.second);
-        dialog.show();
 
         if (removeLastDivider || buttonHelperList.isEmpty())
             getDividers().getLast().setVisibility(View.GONE);
@@ -734,7 +746,19 @@ public class CustomDialog {
             }
         }
 
+        if (onBackPressedListener != null) {
+            dialog
+                    .setOnKeyListener((dialog, keyCode, event) -> {
+                        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
+                            return onBackPressedListener.runOnBackPressedListener(this);
+                        }
+                        return false;
+                    });
+        }
+
+
         firstTime = false;
+        dialog.show();
         return this;
     }
 

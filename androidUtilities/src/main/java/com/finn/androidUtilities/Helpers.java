@@ -11,6 +11,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -388,7 +389,7 @@ public class Helpers {
             textInputLayout.getEditText().setOnEditorActionListener((v, actionId, event) -> {
                 boolean handled = false;
                 if (actions.length == 0) {
-                    if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    if (actionId == EditorInfo.IME_ACTION_DONE || event.getAction() == KeyEvent.ACTION_DOWN || event.getAction() == KeyEvent.KEYCODE_ENTER) {
                         onAction.runOnAction(this, textInputLayout, actionId, textInputLayout.getEditText().getText().toString());
                         handled = true;
                     }

@@ -9,9 +9,11 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -23,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
@@ -32,8 +35,11 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import top.defaults.drawabletoolbox.DrawableBuilder;
@@ -66,41 +72,62 @@ public class CustomUtility {
         return false;
     }
 
+    // ---
 
-
-    public static void isOnline(Runnable onTrue, Runnable onFalse){
-        new PingTask<Pair<Runnable, Runnable>>().execute(new Pair<>(onTrue, onFalse));
+    public static PingTask isOnline(Runnable onTrue, Runnable onFalse){
+        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+        task.execute(new Pair<>(onTrue, onFalse));
+        return task;
     }
 
-    public static void isOnline(OnResult onResult){
-        new PingTask<OnResult>().execute(onResult);
+    public static PingTask isOnline(OnResult onResult){
+        PingTask<OnResult> task = new PingTask<>();
+        task.execute(onResult);
+        return task;
     }
 
-    public static void isOnline(Runnable onTrue, Runnable onFalse, Context context){
+    public static PingTask isOnline(Context context, Runnable onTrue, Runnable onFalse){
         Runnable interceptOnFalse = () -> {
             Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
             onFalse.run();
         };
-        new PingTask<Pair<Runnable, Runnable>>().execute(new Pair<>(onTrue, interceptOnFalse));
+        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+        task.execute(new Pair<>(onTrue, interceptOnFalse));
+        checkStatus(task, context);
+        return task;
     }
 
-    public static void isOnline(OnResult onResult, Context context){
+    public static PingTask isOnline(Context context, OnResult onResult){
         OnResult interceptOnResult = status -> {
             if (!status)
                 Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
             onResult.runOnResult(status);
         };
-        new PingTask<OnResult>().execute(interceptOnResult);
+        PingTask<OnResult> task = new PingTask<>();
+        task.execute(interceptOnResult);
+        checkStatus(task, context);
+        return task;
+    }
+
+    private static void checkStatus(PingTask pingTask, Context context) {
+        new Handler().postDelayed(() -> 
+        {
+            if (pingTask.isRunning())
+                Toast.makeText(context, "Einen Moment bitte..", Toast.LENGTH_SHORT).show();
+        }, 1000);
     }
 
     public interface OnResult {
         void runOnResult(boolean status);
     }
 
-    private static class PingTask<T> extends AsyncTask<T, Integer, Boolean> {
+    public static class PingTask<T> extends AsyncTask<T, Integer, Boolean> {
         private OnResult onResult;
         private Runnable onTrue;
         private Runnable onFalse;
+        private static Pair<Boolean,Integer> simulate;
+        private MenuItem menuItem;
+        private static Map<Object, PingTask> taskMap = new HashMap<>();
 
         @Override
         protected Boolean doInBackground(T... ts) {
@@ -122,9 +149,15 @@ public class CustomUtility {
                 int exitValue = ipProcess.waitFor();
 
 
-//                Thread.sleep(5000);
-//                return false;
-                return (exitValue == 0);
+                if (simulate != null) {
+                    Thread.sleep(simulate.second);
+                    if (simulate.first != null)
+                        return simulate.first;
+                    else
+                        return (exitValue == 0);
+                }
+                else
+                    return (exitValue == 0);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -137,6 +170,35 @@ public class CustomUtility {
             if (onResult != null) onResult.runOnResult(aBoolean);
             if (aBoolean && onTrue != null) onTrue.run();
             if (!aBoolean && onFalse != null) onFalse.run();
+            if (menuItem != null) menuItem.setEnabled(true);
+            if (taskMap.containsValue(this))
+                new HashSet<>(taskMap.entrySet()).stream().filter(entry -> entry.getValue().equals(this)).forEach(entry -> taskMap.remove(entry.getKey()));
+        }
+
+        public static void simulate(@Nullable Boolean returnValue, int delay) {
+            simulate = new Pair<>(returnValue, delay);
+        }
+
+        public void suspendOnClick(View view) {
+            interceptOnClick(view, view1 -> isRunning());
+        }
+
+        public boolean isRunning() {
+            return getStatus() != Status.FINISHED;
+        }
+
+        public void suspendMenuItem(MenuItem menuItem) {
+            this.menuItem = menuItem;
+            this.menuItem.setEnabled(false);
+        }
+
+        public void markAsPending(Object o) {
+            taskMap.put(o, this);
+        }
+
+        public static boolean isPending(Object o){
+            PingTask task = taskMap.get(o);
+            return task != null && task.isRunning();
         }
     }
     //  <--------------- isOnline ---------------
@@ -240,6 +302,11 @@ public class CustomUtility {
 }
     //  <----- Filter -----
 
+    //  ------------------------- Checks ------------------------->
+    public static boolean isUrl(String text){
+        return text.matches("(?i)^(?:(?:https?|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#]\\S*)?$");
+    }
+    //  <------------------------- Checks -------------------------
 
     //  --------------- Time --------------->
     public static Date removeTime(Date date) {

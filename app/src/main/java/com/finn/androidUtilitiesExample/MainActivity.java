@@ -2,9 +2,12 @@ package com.finn.androidUtilitiesExample;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Pair;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -134,26 +137,21 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
         CustomInternetHelper.initialize(this);
 
-//        CustomUtility.isOnline(status -> {
+
+//        CustomUtility.PingTask.simulate(false, 5000);
+//        CustomUtility.isOnline(() -> {
 //            CustomDialog.Builder(this)
-//                    .setTitle(Boolean.toString(status))
+//                    .setTitle(Boolean.toString(true))
 //                    .setDimensions(false, false)
 //                    .show();
+//
+//        }, () -> {
+//            CustomDialog.Builder(this)
+//                    .setTitle(Boolean.toString(false))
+//                    .setDimensions(false, false)
+//                    .show();
+//
 //        }, this);
-
-        CustomUtility.isOnline(() -> {
-            CustomDialog.Builder(this)
-                    .setTitle(Boolean.toString(true))
-                    .setDimensions(false, false)
-                    .show();
-
-        }, () -> {
-            CustomDialog.Builder(this)
-                    .setTitle(Boolean.toString(false))
-                    .setDimensions(false, false)
-                    .show();
-
-        }, this);
     }
 
     private CustomList<String> generateObjectList() {
@@ -161,19 +159,24 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
     }
 
     public void showAmountDialog(View view) {
-        CustomDialog.Builder(this)
-                .setTitle("Anzahl Festlegen")
-                .setText("Wie viele Elemente sollen angezeigt werden?")
-                .setEdit(new CustomDialog.EditBuilder().setHint("Anzahl").setText(String.valueOf(amount)).setInputType(Helpers.TextInputHelper.INPUT_TYPE.NUMBER))
-                .addButton(CustomDialog.BUTTON_TYPE.CANCEL_BUTTON)
-                .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
-                    amount = Integer.parseInt(customDialog.getEditText());
+        View.OnClickListener onClickListener = CustomUtility.getOnClickListener(view);
+
+        CustomUtility.isOnline(this, null, () -> {
+            CustomDialog.Builder(this)
+                    .setTitle("Anzahl Festlegen")
+                    .setText("Wie viele Elemente sollen angezeigt werden?")
+                    .setEdit(new CustomDialog.EditBuilder().setHint("Anzahl").setText(String.valueOf(amount)).setInputType(Helpers.TextInputHelper.INPUT_TYPE.NUMBER))
+                    .addButton(CustomDialog.BUTTON_TYPE.CANCEL_BUTTON)
+                    .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
+                        amount = Integer.parseInt(customDialog.getEditText());
 //                    testRecycler.reload(generateObjectList());
-                })
-                .addButton(CustomDialog.BUTTON_TYPE.YES_BUTTON)
-//                .removeBackground()
-                .enableColoredActionButtons()
-                .show();
+                    })
+//                    .removeBackground()
+//                    .colorLastAddedButton()
+                    .enableColoredActionButtons()
+                    .show();
+        }).suspendOnClick(view);
+
     }
 
     public void goTo(View view) {
@@ -196,4 +199,26 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         Toast.makeText(this, "Offline", Toast.LENGTH_SHORT).show();
         CustomInternetHelper.showActivateInternetDialog(this);
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar_main_test, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (CustomUtility.PingTask.isPending(item))
+            return false;
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.toolbar_main_internetTest:
+                CustomUtility.isOnline(this, status -> {
+                    Toast.makeText(this, String.valueOf(status), Toast.LENGTH_SHORT).show();
+                }).markAsPending(item); // .suspendMenuItem(item);
+                break;
+        }
+        return true;
+    }
+
 }
