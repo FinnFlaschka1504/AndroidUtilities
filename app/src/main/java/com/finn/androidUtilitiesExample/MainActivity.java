@@ -20,6 +20,7 @@ import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
@@ -159,12 +160,10 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
     }
 
     public void showAmountDialog(View view) {
-        View.OnClickListener onClickListener = CustomUtility.getOnClickListener(view);
-
-        CustomUtility.isOnline(this, null, () -> {
+        CustomUtility.isOnline(this, () -> {
             CustomDialog.Builder(this)
-                    .setTitle("Anzahl Festlegen")
-                    .setText("Wie viele Elemente sollen angezeigt werden?")
+                    .setTitle(new CustomDialog.TextBuilder("Anzahl Festlegen").setColor(Color.BLUE))
+                    .setText(new CustomDialog.TextBuilder("Wie viele Elemente sollen angezeigt werden?").setColor(Color.MAGENTA))
                     .setEdit(new CustomDialog.EditBuilder().setHint("Anzahl").setText(String.valueOf(amount)).setInputType(Helpers.TextInputHelper.INPUT_TYPE.NUMBER))
                     .addButton(CustomDialog.BUTTON_TYPE.CANCEL_BUTTON)
                     .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {

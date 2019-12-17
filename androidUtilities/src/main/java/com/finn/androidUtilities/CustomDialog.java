@@ -1,5 +1,6 @@
 package com.finn.androidUtilities;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -53,7 +55,9 @@ public class CustomDialog {
     private Dialog dialog;
     private Context context;
     private CharSequence title;
+    private TextBuilder title_builder;
     private CharSequence text;
+    private TextBuilder text_builder;
     private View view;
     private BUTTON_CONFIGURATION buttonConfiguration = BUTTON_CONFIGURATION.CUSTOM;
     private Pair<Boolean, Boolean> dimensions = new Pair<>(true, false);
@@ -75,6 +79,7 @@ public class CustomDialog {
     private Drawable backgroundDrawable;
     private boolean coloredActionButtons;
     private OnBackPressedListener onBackPressedListener;
+
 
 
     private SetViewContent setViewContent;
@@ -106,8 +111,18 @@ public class CustomDialog {
         return this;
     }
 
+    public CustomDialog setTitle(TextBuilder title_builder) {
+        this.title_builder = title_builder;
+        return this;
+    }
+
     public CustomDialog setText(CharSequence text) {
         this.text = text;
+        return this;
+    }
+
+    public CustomDialog setText(TextBuilder text_builder) {
+        this.text_builder = text_builder;
         return this;
     }
 
@@ -367,6 +382,70 @@ public class CustomDialog {
     }
 
     public static class TextBuilder{
+        private String text;
+        private int color = -1;
+        private int size = -1;
+        private int style = -1;
+        private int alignment = -1;
+
+        public TextBuilder(String text) {
+            this.text = text;
+        }
+
+        //  ------------------------- Getters & Setters ------------------------->
+        public String getText() {
+            return text;
+        }
+
+        public TextBuilder setText(String text) {
+            this.text = text;
+            return this;
+        }
+
+        public int getColor() {
+            return color;
+        }
+
+        public TextBuilder setColor(int color) {
+            this.color = color;
+            return this;
+        }
+
+        public int getSize() {
+            return size;
+        }
+
+        public TextBuilder setSize(int size) {
+            this.size = size;
+            return this;
+        }
+
+        public int getStyle() {
+            return style;
+        }
+//
+//        public TextBuilder setStyle(int style) {
+//            this.style = style;
+//            return this;
+//        }
+//
+//        public int getAlignment() {
+//            return alignment;
+//        }
+//
+//        public TextBuilder setAlignment(int alignment) {
+//            this.alignment = alignment;
+//            return this;
+//        }
+        //  <------------------------- Getters & Setters -------------------------
+
+
+        //  ------------------------- Convenience ------------------------->
+        public TextBuilder useDarkTitle (Context context) {
+            color = context.getColor(R.color.colorPrimaryDark);
+            return this;
+        }
+        //  <------------------------- Convenience -------------------------
     }
     //  <----- Builder -----
 
@@ -616,10 +695,16 @@ public class CustomDialog {
         if (title != null) {
             ((TextView) dialog.findViewById(R.id.dialog_custom_title)).setText(this.title);
             dialog.findViewById(R.id.dialog_custom_title_layout).setVisibility(View.VISIBLE);
+        } else if (title_builder != null) {
+            applyText(dialog.findViewById(R.id.dialog_custom_title), title_builder);
+            dialog.findViewById(R.id.dialog_custom_title_layout).setVisibility(View.VISIBLE);
         }
 
         if (text != null) {
             ((TextView) dialog.findViewById(R.id.dialog_custom_text)).setText(this.text);
+            dialog.findViewById(R.id.dialog_custom_text_layout).setVisibility(View.VISIBLE);
+        } else if (text_builder != null) {
+            applyText(dialog.findViewById(R.id.dialog_custom_text), text_builder);
             dialog.findViewById(R.id.dialog_custom_text_layout).setVisibility(View.VISIBLE);
         }
 
@@ -771,6 +856,8 @@ public class CustomDialog {
     }
     //  <----- Actions -----
 
+
+    //  ------------------------- Apply ------------------------->
     private void applyEdit() {
         TextInputLayout textInputLayout = dialog.findViewById(R.id.dialog_custom_edit_editLayout);
         AutoCompleteTextView autoCompleteTextView = dialog.findViewById(R.id.dialog_custom_edit);
@@ -848,6 +935,19 @@ public class CustomDialog {
                 addOnDialogShown(customDialog -> autoCompleteTextView.showDropDown());
         }
     }
+
+    private void applyText(TextView textView, TextBuilder builder) {
+        if ((builder.text != null))
+            textView.setText(builder.text);
+        if ((builder.color != -1))
+            textView.setTextColor(builder.color);
+        if ((builder.size != -1))
+            textView.setTextSize(builder.size);
+//        if ((builder.alignment != -1))
+//            textView.setTextAlignment(builder.alignment);
+
+    }
+    //  <------------------------- Apply -------------------------
 
     static void setDialogLayoutParameters(Dialog dialog, boolean width, boolean height) {
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
