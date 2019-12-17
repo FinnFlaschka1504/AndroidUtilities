@@ -25,9 +25,9 @@ public class CustomList<E> extends ArrayList<E> {
         super(initialCapacity);
     }
 
-    public CustomList(Object[] objects) {
+    public CustomList(E[] objects) {
         if (objects != null)
-            addAll((List<E>) Arrays.asList(objects));
+            addAll(Arrays.asList(objects));
     }
 //  <----- Constructors -----
 
@@ -177,4 +177,19 @@ public class CustomList<E> extends ArrayList<E> {
         T runReplaceWith(T t);
     }
     //  <-------------------- Replace --------------------
+
+
+    //  ------------------------- remove ------------------------->
+    public E removeLast() {
+        if (isEmpty())
+            return null;
+        return remove(size() - 1);
+    }
+
+    public E removeFirst() {
+        if (isEmpty())
+            return null;
+        return remove(0);
+    }
+    //  <------------------------- remove -------------------------
 }

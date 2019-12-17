@@ -74,6 +74,17 @@ public class CustomUtility {
 
     // ---
 
+    public static PingTask isOnline(Runnable onTrue){
+        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+        task.execute(new Pair<>(onTrue, null));
+        return task;
+    }
+
+    public static PingTask isNotOnline(Runnable onFalse){
+        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+        task.execute(new Pair<>(null, onFalse));
+        return task;
+    }
     public static PingTask isOnline(Runnable onTrue, Runnable onFalse){
         PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
         task.execute(new Pair<>(onTrue, onFalse));
@@ -93,6 +104,27 @@ public class CustomUtility {
         };
         PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
         task.execute(new Pair<>(onTrue, interceptOnFalse));
+        checkStatus(task, context);
+        return task;
+    }
+
+    public static PingTask isOnline(Context context, Runnable onTrue){
+        Runnable interceptOnFalse = () -> {
+            Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
+        };
+        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+        task.execute(new Pair<>(onTrue, interceptOnFalse));
+        checkStatus(task, context);
+        return task;
+    }
+
+    public static PingTask isNotOnline(Context context, Runnable onFalse){
+        Runnable interceptOnFalse = () -> {
+            Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
+            onFalse.run();
+        };
+        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+        task.execute(new Pair<>(null, interceptOnFalse));
         checkStatus(task, context);
         return task;
     }
