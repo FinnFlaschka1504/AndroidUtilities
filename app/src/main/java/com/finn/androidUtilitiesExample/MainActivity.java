@@ -96,8 +96,13 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                 .customizeRecycler(subRecycler -> {
                                     subRecycler
                                             .setOnClickListener((customRecycler2, itemView, s, index) -> {
-                                                CustomRecycler.Expandable expandable = customRecycler.getExpandable(customRecycler2);
-                                                Toast.makeText(this, expandable.getName() + ":" + s, Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(this, String.valueOf(CustomUtility.PingTask.hasPending()), Toast.LENGTH_SHORT).show();
+//                                                if (CustomUtility.PingTask.isPending(s))
+//                                                    return;
+                                                CustomUtility.isOnline(this, () -> {
+                                                    CustomRecycler.Expandable expandable = customRecycler.getExpandable(customRecycler2);
+                                                    Toast.makeText(this, expandable.getName() + ":" + s, Toast.LENGTH_SHORT).show();
+                                                });
                                             })
 //                                            .enableDivider()
 //                                            .removeLastDivider()
@@ -139,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         CustomInternetHelper.initialize(this);
 
 
-//        CustomUtility.PingTask.simulate(false, 5000);
+        CustomUtility.PingTask.simulate(true, 3000);
 //        CustomUtility.isOnline(() -> {
 //            CustomDialog.Builder(this)
 //                    .setTitle(Boolean.toString(true))

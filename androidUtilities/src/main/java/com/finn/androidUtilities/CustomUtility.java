@@ -74,75 +74,116 @@ public class CustomUtility {
 
     // ---
 
-    public static PingTask isOnline(Runnable onTrue){
-        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
-        task.execute(new Pair<>(onTrue, null));
-        return task;
+    public static PingTask isOnline(Runnable onTrue) {
+        if (!PingTask.hasPending()) {
+            PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+            task.execute(new Pair<>(onTrue, null));
+            return task;
+        } else {
+            PingTask.addRequest(new Triple<>(null, onTrue, null));
+            return PingTask.getCurrentTask();
+        }
     }
 
-    public static PingTask isNotOnline(Runnable onFalse){
-        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
-        task.execute(new Pair<>(null, onFalse));
-        return task;
-    }
-    public static PingTask isOnline(Runnable onTrue, Runnable onFalse){
-        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
-        task.execute(new Pair<>(onTrue, onFalse));
-        return task;
-    }
-
-    public static PingTask isOnline(OnResult onResult){
-        PingTask<OnResult> task = new PingTask<>();
-        task.execute(onResult);
-        return task;
+    public static PingTask isNotOnline(Runnable onFalse) {
+        if (!PingTask.hasPending()) {
+            PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+            task.execute(new Pair<>(null, onFalse));
+            return task;
+        } else {
+            PingTask.addRequest(new Triple<>(null, null, onFalse));
+            return PingTask.getCurrentTask();
+        }
     }
 
-    public static PingTask isOnline(Context context, Runnable onTrue, Runnable onFalse){
+    public static PingTask isOnline(Runnable onTrue, Runnable onFalse) {
+        if (!PingTask.hasPending()) {
+            PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+            task.execute(new Pair<>(onTrue, onFalse));
+            return task;
+        } else {
+            PingTask.addRequest(new Triple<>(null, onTrue, onFalse));
+            return PingTask.getCurrentTask();
+        }
+    }
+
+    public static PingTask isOnline(OnResult onResult) {
+        if (!PingTask.hasPending()) {
+            PingTask<OnResult> task = new PingTask<>();
+            task.execute(onResult);
+            return task;
+        } else {
+            PingTask.addRequest(new Triple<>(onResult, null, null));
+            return PingTask.getCurrentTask();
+        }
+    }
+
+    public static PingTask isOnline(Context context, Runnable onTrue, Runnable onFalse) {
         Runnable interceptOnFalse = () -> {
             Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
             onFalse.run();
         };
-        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
-        task.execute(new Pair<>(onTrue, interceptOnFalse));
-        checkStatus(task, context);
-        return task;
+        if (!PingTask.hasPending()) {
+            PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+            task.execute(new Pair<>(onTrue, interceptOnFalse));
+            checkStatus(task, context);
+            return task;
+        } else {
+            PingTask.addRequest(new Triple<>(null, onTrue, interceptOnFalse));
+            return PingTask.getCurrentTask();
+        }
     }
 
-    public static PingTask isOnline(Context context, Runnable onTrue){
+    public static PingTask isOnline(Context context, Runnable onTrue) {
         Runnable interceptOnFalse = () -> {
             Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
         };
-        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
-        task.execute(new Pair<>(onTrue, interceptOnFalse));
-        checkStatus(task, context);
-        return task;
+        if (!PingTask.hasPending()) {
+            PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+            task.execute(new Pair<>(onTrue, interceptOnFalse));
+            checkStatus(task, context);
+            return task;
+        } else {
+            PingTask.addRequest(new Triple<>(null, onTrue, interceptOnFalse));
+            return PingTask.getCurrentTask();
+        }
     }
 
-    public static PingTask isNotOnline(Context context, Runnable onFalse){
+    public static PingTask isNotOnline(Context context, Runnable onFalse) {
         Runnable interceptOnFalse = () -> {
             Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
             onFalse.run();
         };
-        PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
-        task.execute(new Pair<>(null, interceptOnFalse));
-        checkStatus(task, context);
-        return task;
+        if (!PingTask.hasPending()) {
+            PingTask<Pair<Runnable, Runnable>> task = new PingTask<>();
+            task.execute(new Pair<>(null, interceptOnFalse));
+            checkStatus(task, context);
+            return task;
+        } else {
+            PingTask.addRequest(new Triple<>(null, null, interceptOnFalse));
+            return PingTask.getCurrentTask();
+        }
     }
 
-    public static PingTask isOnline(Context context, OnResult onResult){
+    public static PingTask isOnline(Context context, OnResult onResult) {
         OnResult interceptOnResult = status -> {
             if (!status)
                 Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
             onResult.runOnResult(status);
         };
-        PingTask<OnResult> task = new PingTask<>();
-        task.execute(interceptOnResult);
-        checkStatus(task, context);
-        return task;
+        if (!PingTask.hasPending()) {
+            PingTask<OnResult> task = new PingTask<>();
+            task.execute(interceptOnResult);
+            checkStatus(task, context);
+            return task;
+        } else {
+            PingTask.addRequest(new Triple<>(interceptOnResult, null, null));
+            return PingTask.getCurrentTask();
+        }
     }
 
     private static void checkStatus(PingTask pingTask, Context context) {
-        new Handler().postDelayed(() -> 
+        new Handler().postDelayed(() ->
         {
             if (pingTask.isRunning())
                 Toast.makeText(context, "Einen Moment bitte..", Toast.LENGTH_SHORT).show();
@@ -154,24 +195,32 @@ public class CustomUtility {
     }
 
     public static class PingTask<T> extends AsyncTask<T, Integer, Boolean> {
+        private static PingTask currentTask;
         private OnResult onResult;
         private Runnable onTrue;
         private Runnable onFalse;
-        private static Pair<Boolean,Integer> simulate;
+        private static Pair<Boolean, Integer> simulate;
         private MenuItem menuItem;
         private static Map<Object, PingTask> taskMap = new HashMap<>();
+        private static List<Triple<OnResult, Runnable, Runnable>> requestList = new ArrayList<>();
+        private static int pendingRequests;
 
         @Override
         protected Boolean doInBackground(T... ts) {
             if (ts.length == 0)
                 return null;
 
+            pendingRequests++;
+            currentTask = this;
+
             T t = ts[0];
-            if (t instanceof OnResult)
+            if (t instanceof OnResult) {
                 this.onResult = (OnResult) t;
-            else if (t instanceof Pair) {
+                requestList.add(new Triple<>(onResult, null, null));
+            } else if (t instanceof Pair) {
                 onTrue = ((Pair<Runnable, Runnable>) t).first;
                 onFalse = ((Pair<Runnable, Runnable>) t).second;
+                requestList.add(new Triple<>(null, onTrue, onFalse));
             }
 
 
@@ -187,8 +236,7 @@ public class CustomUtility {
                         return simulate.first;
                     else
                         return (exitValue == 0);
-                }
-                else
+                } else
                     return (exitValue == 0);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
@@ -199,9 +247,19 @@ public class CustomUtility {
 
         @Override
         protected void onPostExecute(Boolean aBoolean) {
-            if (onResult != null) onResult.runOnResult(aBoolean);
-            if (aBoolean && onTrue != null) onTrue.run();
-            if (!aBoolean && onFalse != null) onFalse.run();
+            pendingRequests--;
+
+            for (Triple<OnResult, Runnable, Runnable> triple : requestList) {
+                if (triple.first != null) triple.first.runOnResult(aBoolean);
+                if (aBoolean && triple.second != null) triple.second.run();
+                if (!aBoolean && triple.third != null) triple.third.run();
+            }
+
+            requestList.clear();
+
+//            if (onResult != null) onResult.runOnResult(aBoolean);
+//            if (aBoolean && onTrue != null) onTrue.run();
+//            if (!aBoolean && onFalse != null) onFalse.run();
             if (menuItem != null) menuItem.setEnabled(true);
             if (taskMap.containsValue(this))
                 new HashSet<>(taskMap.entrySet()).stream().filter(entry -> entry.getValue().equals(this)).forEach(entry -> taskMap.remove(entry.getKey()));
@@ -219,6 +277,10 @@ public class CustomUtility {
             return getStatus() != Status.FINISHED;
         }
 
+        public static boolean hasPending() {
+            return pendingRequests > 0;
+        }
+
         public void suspendMenuItem(MenuItem menuItem) {
             this.menuItem = menuItem;
             this.menuItem.setEnabled(false);
@@ -228,9 +290,17 @@ public class CustomUtility {
             taskMap.put(o, this);
         }
 
-        public static boolean isPending(Object o){
+        public static boolean isPending(Object o) {
             PingTask task = taskMap.get(o);
             return task != null && task.isRunning();
+        }
+
+        public static PingTask getCurrentTask() {
+            return currentTask;
+        }
+
+        public static void addRequest(Triple<OnResult, Runnable, Runnable> quadruple) {
+            requestList.add(quadruple);
         }
     }
     //  <--------------- isOnline ---------------
@@ -279,9 +349,9 @@ public class CustomUtility {
         if (amount == 0)
             return "N/A";
         if (amount % 1 == 0)
-            return String.format(Locale.GERMANY,"%.0f €", amount);
+            return String.format(Locale.GERMANY, "%.0f €", amount);
         else
-            return String.format(Locale.GERMANY,"%.2f €", amount);
+            return String.format(Locale.GERMANY, "%.2f €", amount);
     }
 
 
@@ -323,19 +393,19 @@ public class CustomUtility {
         });
     }
 
-    interface InterceptOnClick{
+    interface InterceptOnClick {
         boolean runInterceptOnClick(View view);
     }
     //  <--------------- OnClickListener ---------------
 
     //  ----- Filter ----->
     private static boolean contains(String all, String sub) {
-    return all.toLowerCase().contains(sub.toLowerCase());
-}
+        return all.toLowerCase().contains(sub.toLowerCase());
+    }
     //  <----- Filter -----
 
     //  ------------------------- Checks ------------------------->
-    public static boolean isUrl(String text){
+    public static boolean isUrl(String text) {
         return text.matches("(?i)^(?:(?:https?|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#]\\S*)?$");
     }
     //  <------------------------- Checks -------------------------
@@ -372,15 +442,16 @@ public class CustomUtility {
     public static Toast centeredToast(Context context, String text) {
         Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
         TextView v = toast.getView().findViewById(android.R.id.message);
-        if( v != null) v.setGravity(Gravity.CENTER);
+        if (v != null) v.setGravity(Gravity.CENTER);
         return toast;
     }
+
     public static void showCenteredToast(Context context, String text) {
         centeredToast(context, text).show();
     }
     //  <--------------- Toast ---------------
 
-    public static class Triple<A,B,C> {
+    public static class Triple<A, B, C> {
         public A first;
         public B second;
         public C third;
@@ -392,7 +463,7 @@ public class CustomUtility {
         }
     }
 
-    public static class Quadruple<A,B,C,D> {
+    public static class Quadruple<A, B, C, D> {
         public A first;
         public B second;
         public C third;
@@ -416,7 +487,7 @@ public class CustomUtility {
         return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
     }
 
-    public static void setMargins (View v, int margin) {
+    public static void setMargins(View v, int margin) {
         if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
             margin = dpToPx(margin);
@@ -425,7 +496,7 @@ public class CustomUtility {
         }
     }
 
-    public static void setMargins (View v, int horizontal, int vertical) {
+    public static void setMargins(View v, int horizontal, int vertical) {
         if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
             p.setMargins(
@@ -437,7 +508,7 @@ public class CustomUtility {
         }
     }
 
-    public static void setMargins (View v, int left, int top, int right, int bottom) {
+    public static void setMargins(View v, int left, int top, int right, int bottom) {
         if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
             p.setMargins(
@@ -463,7 +534,7 @@ public class CustomUtility {
 
     }
 
-    public static <T> Pair<T,T> swap(T t1, T t2) {
+    public static <T> Pair<T, T> swap(T t1, T t2) {
         T temp = t1;
         t1 = t2;
         t2 = temp;
@@ -479,13 +550,12 @@ public class CustomUtility {
 
         v.getLayoutParams().height = 1;
         v.setVisibility(View.VISIBLE);
-        Animation a = new Animation()
-        {
+        Animation a = new Animation() {
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
                 v.getLayoutParams().height = interpolatedTime == 1
                         ? LinearLayout.LayoutParams.WRAP_CONTENT
-                        : (int)(targetHeight * interpolatedTime);
+                        : (int) (targetHeight * interpolatedTime);
                 v.requestLayout();
             }
 
@@ -502,15 +572,14 @@ public class CustomUtility {
     public static void collapse(final View v) {
         final int initialHeight = v.getMeasuredHeight();
 
-        Animation a = new Animation()
-        {
+        Animation a = new Animation() {
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
-                if(interpolatedTime == 1){
+                if (interpolatedTime == 1) {
                     v.setVisibility(View.GONE);
                     v.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
-                }else{
-                    v.getLayoutParams().height = initialHeight - (int)(initialHeight * interpolatedTime);
+                } else {
+                    v.getLayoutParams().height = initialHeight - (int) (initialHeight * interpolatedTime);
                     v.requestLayout();
                 }
             }
@@ -525,7 +594,7 @@ public class CustomUtility {
         v.startAnimation(a);
     }
 
-    public static void changeHeight(final View v, ChangeLayout changeLayout){
+    public static void changeHeight(final View v, ChangeLayout changeLayout) {
         int matchParentMeasureSpec = View.MeasureSpec.makeMeasureSpec(((View) v.getParent()).getWidth(), View.MeasureSpec.EXACTLY);
         int wrapContentMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         v.measure(matchParentMeasureSpec, wrapContentMeasureSpec);
@@ -552,6 +621,7 @@ public class CustomUtility {
 
         valueAnimator.setDuration(300).start();
     }
+
     public interface ChangeLayout {
         void runChangeLayout(View view);
     }
@@ -593,10 +663,11 @@ public class CustomUtility {
         HEIGHT, WIDTH, MAX, MIN
     }
 
-    public static void squareView(View view){
+    public static void squareView(View view) {
         squareView(view, EQUAL_MODE.MAX);
     }
-    public static void squareView(View view, EQUAL_MODE equalMode){
+
+    public static void squareView(View view, EQUAL_MODE equalMode) {
         ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
         int matchParentMeasureSpec = View.MeasureSpec.makeMeasureSpec(((View) view.getParent()).getWidth(), View.MeasureSpec.EXACTLY);
         int wrapContentMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
@@ -641,6 +712,7 @@ public class CustomUtility {
         return drawableBuilder
                 .build();
     }
+
     public static Drawable drawableBuilder_oval(int color) {
         return new DrawableBuilder()
                 .oval()
