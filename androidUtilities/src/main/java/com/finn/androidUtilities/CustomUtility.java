@@ -346,8 +346,6 @@ public class CustomUtility {
     }
 
     public static String formatToEuro(double amount) {
-        if (amount == 0)
-            return "N/A";
         if (amount % 1 == 0)
             return String.format(Locale.GERMANY, "%.0f €", amount);
         else
@@ -742,4 +740,26 @@ public class CustomUtility {
     }
     //  <--------------- ConcatCollections ---------------
 
+
+    //  ------------------------- ifNotNull ------------------------->
+    public static <E> boolean ifNotNull(E e, ExecuteIfNotNull<E> executeIfNotNull){
+        if (e == null)
+            return false;
+        executeIfNotNull.runExecuteIfNotNull(e);
+        return true;
+    }
+
+    public static <E> boolean ifNotNull(E e, ExecuteIfNotNull<E> executeIfNotNull, Runnable executeIfNull){
+        if (e == null) {
+            executeIfNull.run();
+            return false;
+        }
+        executeIfNotNull.runExecuteIfNotNull(e);
+        return true;
+    }
+
+    public interface ExecuteIfNotNull<E> {
+        void runExecuteIfNotNull(E e);
+    }
+    //  <------------------------- ifNotNull -------------------------
 }

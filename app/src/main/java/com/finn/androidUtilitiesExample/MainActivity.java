@@ -2,7 +2,6 @@ package com.finn.androidUtilitiesExample;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Pair;
@@ -18,9 +17,9 @@ import com.finn.androidUtilities.CustomList;
 import com.finn.androidUtilities.CustomRecycler;
 import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
+import com.finn.androidUtilities.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
@@ -108,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                                            .removeLastDivider()
 //                                            .disableCustomRipple()
                                             .setItemLayout(R.layout.expandable_content_test)
-                                            .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
+                                            .setSetItemContent((customRecycler1, itemView, s) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
                                             .enableSwiping((objectList, direction, s) -> {
 
                                                 Toast.makeText(this, s + (direction == 16 ? " links" : " rechts"), Toast.LENGTH_SHORT).show();
@@ -145,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
 
         CustomUtility.PingTask.simulate(true, 3000);
+
 //        CustomUtility.isOnline(() -> {
 //            CustomDialog.Builder(this)
 //                    .setTitle(Boolean.toString(true))

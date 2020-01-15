@@ -104,6 +104,7 @@ public class CustomRecycler<T> {
     private Pair<Boolean, Boolean> leftRightSwipe_pair;
     private ExpandableHelper expandableHelper;
     private SwipeBackgroundHelper<T> swipeBackgroundHelper;
+    private OnReload<T> onReload;
 
 
     public CustomRecycler(AppCompatActivity context) {
@@ -147,12 +148,12 @@ public class CustomRecycler<T> {
     }
 
     public interface GetActiveObjectList<T> {
-        List<T> runGetActiveObjectList();
+        List<T> runGetActiveObjectList(CustomRecycler<T> customRecycler);
     }
 
     public CustomRecycler<T> setGetActiveObjectList(GetActiveObjectList<T> getActiveObjectList) {
         this.getActiveObjectList = getActiveObjectList;
-        objectList.addAll(getActiveObjectList.runGetActiveObjectList());
+        objectList.addAll(getActiveObjectList.runGetActiveObjectList(this));
         useActiveObjectList = true;
         return this;
     }
@@ -225,7 +226,7 @@ public class CustomRecycler<T> {
     }
 
     public interface SetItemContent<E> {
-        void runSetCellContent(View itemView, E e);
+        void runSetCellContent(CustomRecycler<E> customRecycler, View itemView, E e);
     }
 
     public CustomRecycler<T> setSetItemContent(SetItemContent<T> setItemContent) {
@@ -263,6 +264,15 @@ public class CustomRecycler<T> {
 
     public MyAdapter getAdapter() {
         return mAdapter;
+    }
+
+    public interface OnReload<T> {
+        void runOnReload(CustomRecycler<T> customRecycler);
+    }
+
+    public CustomRecycler<T> setOnReload(OnReload<T> onReload) {
+        this.onReload = onReload;
+        return this;
     }
 
     //  --------------- Drag & Swipe --------------->
@@ -819,7 +829,7 @@ public class CustomRecycler<T> {
         @Override
         public void onBindViewHolder(ViewHolder viewHolder, int position) {
             if (setItemContent == null) {
-                setItemContent = (itemView, t) -> {
+                setItemContent = (customRecycler, itemView, t) -> {
                     if (t instanceof CharSequence)
                         ((TextView) itemView.findViewById(R.id.listItem_standard_title)).setText((CharSequence) t);
                     else if (t instanceof Pair) {
@@ -832,7 +842,7 @@ public class CustomRecycler<T> {
                     }
                 };
             }
-            setItemContent.runSetCellContent(viewHolder.itemView, dataSet.get(position));
+            setItemContent.runSetCellContent(CustomRecycler.this, viewHolder.itemView, dataSet.get(position));
         }
 
         @Override
@@ -932,7 +942,7 @@ public class CustomRecycler<T> {
         private ExpandMatching<E> expandMatching;
 
         public ExpandableHelper() {
-            setItemContent = (itemView, e) -> {
+            setItemContent = (customRecycler, itemView, e) -> {
             };
         }
 
@@ -1178,7 +1188,7 @@ public class CustomRecycler<T> {
             }
             if (expandableHelper.setItemContent != null) {
                 layoutId = R.layout.list_item_expandable;
-                setSetItemContent((itemView, t) -> {
+                setSetItemContent((customRecycler, itemView, t) -> {
                     Expandable<T> expandable = (Expandable<T>) t;
                     ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(expandable.getName());
                     itemView.findViewById(R.id.listItem_expandable_arrow).setVisibility(expandable.showArrow ? View.VISIBLE : View.GONE);
@@ -1196,7 +1206,7 @@ public class CustomRecycler<T> {
                         listItem_expandable_content.addView(v);
                     }
                     if (expandableHelper.setItemContent != null && expandable.canExpand())
-                        expandableHelper.setItemContent.runSetCellContent(itemView, expandable.getObject());
+                        expandableHelper.setItemContent.runSetCellContent(CustomRecycler.this, itemView, expandable.getObject());
 
                     itemView.findViewById(R.id.listItem_expandable_expansionLayout).setVisibility(expandable.isExpended() ? View.VISIBLE : View.GONE);
                     ((ImageView) itemView.findViewById(expandableHelper.getArrowId()))
@@ -1206,7 +1216,7 @@ public class CustomRecycler<T> {
 //                onClickListener = (OnClickListener<T>) expandableOnClickListener;
             } else if (expandableHelper.setExpandableItemContent != null) {
                 layoutId = expandableHelper.contentLayoutId;
-                setSetItemContent((itemView, t) -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(itemView, ((Expandable) t).getObject(), ((Expandable) t).isExpended()));
+                setSetItemContent((customRecycler, itemView, t) -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(itemView, ((Expandable) t).getObject(), ((Expandable) t).isExpended()));
                 onClickListener = (OnClickListener<T>) expandableOnClickListener_change;
             }
         }
@@ -1259,9 +1269,11 @@ public class CustomRecycler<T> {
     public CustomRecycler<T> reload() {
         if (useActiveObjectList) {
             objectList.clear();
-            objectList.addAll(getActiveObjectList.runGetActiveObjectList());
+            objectList.addAll(getActiveObjectList.runGetActiveObjectList(this));
         }
         mAdapter.notifyDataSetChanged();
+        if (onReload != null)
+            onReload.runOnReload(this);
         return this;
     }
 
@@ -1269,15 +1281,19 @@ public class CustomRecycler<T> {
         this.objectList.clear();
         this.objectList.addAll(objectList);
         mAdapter.notifyDataSetChanged();
+        if (onReload != null)
+            onReload.runOnReload(this);
         return this;
     }
 
     public RecyclerView update(Integer... index) {
         if (useActiveObjectList) {
             objectList.clear();
-            objectList.addAll(getActiveObjectList.runGetActiveObjectList());
+            objectList.addAll(getActiveObjectList.runGetActiveObjectList(this));
         }
         Arrays.asList(index).forEach(mAdapter::notifyItemChanged);
+        if (onReload != null)
+            onReload.runOnReload(this);
         return recycler;
     }
 
@@ -1286,6 +1302,8 @@ public class CustomRecycler<T> {
         mAdapter = new MyAdapter(objectList);
         this.recycler.setAdapter(mAdapter);
         generateRecyclerView();
+        if (onReload != null)
+            onReload.runOnReload(this);
         return recycler;
     }
     //  <----- Generate -----
@@ -1379,7 +1397,7 @@ public class CustomRecycler<T> {
                     if (currentObject[0] == null)
                         layoutView.setVisibility(View.GONE);
                     else {
-                        setItemContent.runSetCellContent(layoutView, currentObject[0]);
+                        setItemContent.runSetCellContent(CustomRecycler.this, layoutView, currentObject[0]);
                         layoutView.setVisibility(View.VISIBLE);
                     }
                 })

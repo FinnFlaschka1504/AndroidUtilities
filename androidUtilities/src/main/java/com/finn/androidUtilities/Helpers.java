@@ -557,28 +557,34 @@ public class Helpers {
             return this;
         }
 
-        public SpannableString quick(String text) {
-            SpannableString spannableString = new SpannableString(text);
-            spannableString.setSpan(quickWhat, 0, text.length(), 0);
-            return spannableString;
+        public SpannableStringBuilder quick(String text) {
+            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
+            spannableStringBuilder.setSpan(quickWhat, 0, text.length(), 0);
+            return spannableStringBuilder;
         }
 
-        public SpannableString quick(String text, Object what) {
-            SpannableString spannableString = new SpannableString(text);
-            spannableString.setSpan(what, 0, text.length(), 0);
-            return spannableString;
+        public SpannableStringBuilder quick(String text, Object what) {
+            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
+            spannableStringBuilder.setSpan(what, 0, text.length(), 0);
+            return spannableStringBuilder;
         }
 
-        public SpannableString quickBold(String text) {
-            SpannableString spannableString = new SpannableString(text);
+        public SpannableStringBuilder quickBold(String text) {
+            SpannableStringBuilder spannableString = new SpannableStringBuilder(text);
             spannableString.setSpan(SPAN_TYPE.BOLD.getWhat(), 0, text.length(), 0);
             return spannableString;
         }
 
-        public SpannableString quickStrikeThrough(String text) {
-            SpannableString spannableString = new SpannableString(text);
-            spannableString.setSpan(SPAN_TYPE.STRIKE_THROUGH.getWhat(), 0, text.length(), 0);
-            return spannableString;
+        public SpannableStringBuilder quickItalic(String text) {
+            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
+            spannableStringBuilder.setSpan(SPAN_TYPE.ITALIC.getWhat(), 0, text.length(), 0);
+            return spannableStringBuilder;
+        }
+
+        public SpannableStringBuilder quickStrikeThrough(String text) {
+            SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
+            spannableStringBuilder.setSpan(SPAN_TYPE.STRIKE_THROUGH.getWhat(), 0, text.length(), 0);
+            return spannableStringBuilder;
         }
         //  <--------------- Quick... ---------------
     }

@@ -104,7 +104,7 @@ public class CustomMenu {
                 .setObjectList(menus)
                 .enableDivider()
                 .hideOverscroll()
-                .setSetItemContent((itemView, item) -> {
+                .setSetItemContent((customRecycler, itemView, item) -> {
                     ((TextView) itemView.findViewById(R.id.popup_standardList_text)).setText(item.getName());
                     if (onClickListener == null && item.getChild() != null) {
                         View popup_standardList_sub = itemView.findViewById(R.id.popup_standardList_sub);

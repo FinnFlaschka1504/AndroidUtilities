@@ -1,15 +1,18 @@
 package com.finn.androidUtilities;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CustomList<E> extends ArrayList<E> {
 
@@ -31,10 +34,18 @@ public class CustomList<E> extends ArrayList<E> {
     }
 //  <----- Constructors -----
 
+
+    //  ------------------------- Random ------------------------->
     public E getRandom() {
         return get((int) (Math.random() * size()));
     }
 
+    public E removeRandom(){
+        return remove((int) (Math.random() * size()));
+    }
+    //  <------------------------- Random -------------------------
+
+    //  ------------------------- get... ------------------------->
     public E getLast() {
         if (isEmpty())
             return null;
@@ -48,6 +59,19 @@ public class CustomList<E> extends ArrayList<E> {
         else
             return super.get(index);
     }
+
+    public E getSmallest() {
+        if (isEmpty() || !(get(0) instanceof Comparable))
+            return null;
+        return stream().min((o1, o2) -> ((Comparable<E>) o1).compareTo(o2)).orElse(null);
+    }
+
+    public E getBiggest() {
+        if (isEmpty() || !(get(0) instanceof Comparable))
+            return null;
+        return stream().max((o1, o2) -> ((Comparable<E>) o1).compareTo(o2)).orElse(null);
+    }
+    //  <------------------------- get... -------------------------
 
     public CustomList<E> add(E... e) {
         Collections.addAll(this, e);
@@ -153,7 +177,19 @@ public class CustomList<E> extends ArrayList<E> {
     public CustomList<E> filter(Predicate<? super E> mapper) {
         return stream().filter(mapper).collect(Collectors.toCollection(CustomList::new));
     }
-    //  <----- Stream -----
+
+    public CustomList<E> sorted(@Nullable Comparator<? super E> c) {
+        super.sort(c);
+        return this;
+    }
+
+    public CustomList<E> distinct() {
+        Stream<E> distinct = stream().distinct();
+        clear();
+        addAll(distinct.collect(Collectors.toCollection(CustomList::new)));
+        return this;
+    }
+//  <----- Stream -----
 
 
     //  --------------- To ... --------------->
