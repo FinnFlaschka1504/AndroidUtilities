@@ -907,7 +907,7 @@ public class CustomRecycler<T> {
         if (!expandable.canExpand())
             return;
         boolean expanded = expandable.isExpended();
-        CustomUtility.changeHeight(itemView, view -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(view, expandable.getObject(), !expandable.isExpended()));
+        CustomUtility.changeHeight(itemView, view -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(this, view, expandable.getObject(), !expandable.isExpended()));
         expandable.setExpended(!expanded);
     };
 
@@ -927,7 +927,7 @@ public class CustomRecycler<T> {
     }
 
     public interface SetExpandableItemContent<E> {
-        void runSetExpandableItemContent(View itemView, E e, boolean expanded);
+        void runSetExpandableItemContent(CustomRecycler<E> customRecycler, View itemView, E e, boolean expanded);
     }
 
     public class ExpandableHelper<E> {
@@ -1216,7 +1216,7 @@ public class CustomRecycler<T> {
 //                onClickListener = (OnClickListener<T>) expandableOnClickListener;
             } else if (expandableHelper.setExpandableItemContent != null) {
                 layoutId = expandableHelper.contentLayoutId;
-                setSetItemContent((customRecycler, itemView, t) -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(itemView, ((Expandable) t).getObject(), ((Expandable) t).isExpended()));
+                setSetItemContent((customRecycler, itemView, t) -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(this, itemView, ((Expandable) t).getObject(), ((Expandable) t).isExpended()));
                 onClickListener = (OnClickListener<T>) expandableOnClickListener_change;
             }
         }
