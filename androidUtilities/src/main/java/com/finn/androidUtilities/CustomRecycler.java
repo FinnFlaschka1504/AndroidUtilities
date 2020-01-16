@@ -104,7 +104,8 @@ public class CustomRecycler<T> {
     private Pair<Boolean, Boolean> leftRightSwipe_pair;
     private ExpandableHelper expandableHelper;
     private SwipeBackgroundHelper<T> swipeBackgroundHelper;
-    private OnReload<T> onReload;
+    private CustomRecyclerInterface<T> onReload;
+    private CustomRecyclerInterface<T> onGenerate;
 
 
     public CustomRecycler(AppCompatActivity context) {
@@ -266,12 +267,17 @@ public class CustomRecycler<T> {
         return mAdapter;
     }
 
-    public interface OnReload<T> {
-        void runOnReload(CustomRecycler<T> customRecycler);
+    public interface CustomRecyclerInterface<T> {
+        void run(CustomRecycler<T> customRecycler);
     }
 
-    public CustomRecycler<T> setOnReload(OnReload<T> onReload) {
+    public CustomRecycler<T> setOnReload(CustomRecyclerInterface<T> onReload) {
         this.onReload = onReload;
+        return this;
+    }
+
+    public CustomRecycler<T> setOnGenerate(CustomRecyclerInterface<T> onGenerate) {
+        this.onGenerate = onGenerate;
         return this;
     }
 
@@ -1263,6 +1269,8 @@ public class CustomRecycler<T> {
         if (onDragAndDrop != null || onSwiped != null)
             applyTouchActions();
 
+        if (onGenerate != null)
+            onGenerate.run(this);
         return recycler;
     }
 
@@ -1273,7 +1281,7 @@ public class CustomRecycler<T> {
         }
         mAdapter.notifyDataSetChanged();
         if (onReload != null)
-            onReload.runOnReload(this);
+            onReload.run(this);
         return this;
     }
 
@@ -1282,7 +1290,7 @@ public class CustomRecycler<T> {
         this.objectList.addAll(objectList);
         mAdapter.notifyDataSetChanged();
         if (onReload != null)
-            onReload.runOnReload(this);
+            onReload.run(this);
         return this;
     }
 
@@ -1293,7 +1301,7 @@ public class CustomRecycler<T> {
         }
         Arrays.asList(index).forEach(mAdapter::notifyItemChanged);
         if (onReload != null)
-            onReload.runOnReload(this);
+            onReload.run(this);
         return recycler;
     }
 
@@ -1303,7 +1311,7 @@ public class CustomRecycler<T> {
         this.recycler.setAdapter(mAdapter);
         generateRecyclerView();
         if (onReload != null)
-            onReload.runOnReload(this);
+            onReload.run(this);
         return recycler;
     }
     //  <----- Generate -----
