@@ -138,6 +138,9 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                }, true, true)
 //                .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
 //                        .setFarEnoughColor_icon(Color.YELLOW).setNotFarEnoughColor_icon(Color.RED).enableBouncyThreshold().setThreshold(0.3f))
+                .setOnGenerate(customRecycler -> {
+                    customRecycler.getRecycler().getHeight();
+                })
                 .generate();
 
         CustomInternetHelper.initialize(this);

@@ -16,6 +16,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -1269,8 +1270,19 @@ public class CustomRecycler<T> {
         if (onDragAndDrop != null || onSwiped != null)
             applyTouchActions();
 
-        if (onGenerate != null)
-            onGenerate.run(this);
+        if (onGenerate != null) {
+            recycler.getViewTreeObserver()
+                    .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            //At this point the layout is complete and the
+                            //dimensions of recyclerView and any child views are known.
+                            //Remove listener after changed RecyclerView's height to prevent infinite loop
+                            onGenerate.run(CustomRecycler.this);
+                            recycler.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        }
+                    });
+        }
         return recycler;
     }
 
