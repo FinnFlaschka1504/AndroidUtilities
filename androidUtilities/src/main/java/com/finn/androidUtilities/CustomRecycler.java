@@ -374,7 +374,7 @@ public class CustomRecycler<T> {
         private static final String TAG = "SwipeBackgroundHelper";
         private boolean thresholdBouncy;
         private double bouncyStrength = 1;
-        private Pair<Boolean,Boolean> bouncyDirection = new Pair<>(true, true);
+        private Pair<Boolean, Boolean> bouncyDirection = new Pair<>(true, true);
         private boolean smoothBounce;
         private float threshold = 0.5f;
         private Paint circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -442,7 +442,7 @@ public class CustomRecycler<T> {
             return this;
         }
 
-        public SwipeBackgroundHelper<T> setObject (T object) {
+        public SwipeBackgroundHelper<T> setObject(T object) {
             this.object = object;
             return this;
         }
@@ -510,7 +510,7 @@ public class CustomRecycler<T> {
             return this;
         }
 
-            public SwipeBackgroundHelper<T> setFarEnoughIconResId(@DrawableRes int farEnoughIconResId) {
+        public SwipeBackgroundHelper<T> setFarEnoughIconResId(@DrawableRes int farEnoughIconResId) {
             this.farEnoughIconResId = farEnoughIconResId;
             return this;
         }
@@ -588,8 +588,7 @@ public class CustomRecycler<T> {
                 temp_notFarEnoughColor_icon = notFarEnoughColor_icon_left;
                 temp_farEnoughColor_circle = farEnoughColor_circle_left;
                 temp_notFarEnoughColor_circle = notFarEnoughColor_circle_left;
-            }
-            else {
+            } else {
                 temp_iconResId = iconResId;
                 temp_farEnoughIconResId = farEnoughIconResId;
                 temp_farEnoughColor_icon = farEnoughColor_icon;
@@ -628,7 +627,7 @@ public class CustomRecycler<T> {
             float draggedMoreThanMargin = Math.abs(dX) - margin;
             float totalRoom = viewItem.getWidth() * threshold - margin;
             float maxRadius = marginEnd - marginStart;
-            float radius =  (draggedMoreThanMargin / totalRoom) * maxRadius;
+            float radius = (draggedMoreThanMargin / totalRoom) * maxRadius;
             if (radius >= maxRadius)
                 return maxRadius;
             return radius;
@@ -645,7 +644,7 @@ public class CustomRecycler<T> {
             if (v < margin)
                 return swipedLeft ? left + marginStart : right - marginStart;
             else
-                return swipedLeft ?  right - marginEnd : left + marginEnd;
+                return swipedLeft ? right - marginEnd : left + marginEnd;
         }
 
         private boolean isMarginReached() {
@@ -1136,6 +1135,7 @@ public class CustomRecycler<T> {
                 this.subComparator = subComparator;
                 return this;
             }
+
             public ToGroupExpandableList<Result, Item, Key> setSort(Comparator<Expandable<Result>> keyComparator) {
                 this.keyComparator = keyComparator;
                 return this;
@@ -1275,9 +1275,6 @@ public class CustomRecycler<T> {
                     .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
-                            //At this point the layout is complete and the
-                            //dimensions of recyclerView and any child views are known.
-                            //Remove listener after changed RecyclerView's height to prevent infinite loop
                             onGenerate.run(CustomRecycler.this);
                             recycler.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                         }
@@ -1292,8 +1289,8 @@ public class CustomRecycler<T> {
             objectList.addAll(getActiveObjectList.runGetActiveObjectList(this));
         }
         mAdapter.notifyDataSetChanged();
-        if (onReload != null)
-            onReload.run(this);
+        if (onReload != null) // ToDo: reload Listener wie bei loadListener
+            runOnReload();
         return this;
     }
 
@@ -1302,7 +1299,7 @@ public class CustomRecycler<T> {
         this.objectList.addAll(objectList);
         mAdapter.notifyDataSetChanged();
         if (onReload != null)
-            onReload.run(this);
+            runOnReload();
         return this;
     }
 
@@ -1313,7 +1310,7 @@ public class CustomRecycler<T> {
         }
         Arrays.asList(index).forEach(mAdapter::notifyItemChanged);
         if (onReload != null)
-            onReload.run(this);
+            runOnReload();
         return recycler;
     }
 
@@ -1323,9 +1320,21 @@ public class CustomRecycler<T> {
         this.recycler.setAdapter(mAdapter);
         generateRecyclerView();
         if (onReload != null)
-            onReload.run(this);
+            runOnReload();
         return recycler;
     }
+
+    private void runOnReload() {
+        recycler.getViewTreeObserver()
+                .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        onReload.run(CustomRecycler.this);
+                        recycler.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
+    }
+
     //  <----- Generate -----
 
 
@@ -1339,8 +1348,9 @@ public class CustomRecycler<T> {
     }
 
     public Pair<CustomRecycler<T>, CustomDialog> goTo(GoToFilter<T> goToFilter, String search) {
-        return goTo(goToFilter, null,search);
+        return goTo(goToFilter, null, search);
     }
+
     public Pair<CustomRecycler<T>, CustomDialog> goTo(GoToFilter<T> goToFilter, ElementToString<T> elementToString, String search) {
         final T[] currentObject = (T[]) new Object[1];
         CustomList<T> filterdObjectList = new CustomList<>();
@@ -1376,25 +1386,25 @@ public class CustomRecycler<T> {
                 .enableTitleBackButton()
                 .setView(getLayoutId())
                 .setEdit(new CustomDialog.EditBuilder().setHint("Filter").setFireActionDirectly(search != null && !search.isEmpty()).setText(search != null ? search : "").allowEmpty()
-                        .setOnAction((textInputHelper, textInputLayout, actionId, text1) -> {
-                            filterdObjectList.clear();
-                            filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(text1, t)).collect(toList()));
-                            if (filterdObjectList.isEmpty())
-                                Toast.makeText(context, "Kein Eintrag für diese Suche", Toast.LENGTH_SHORT).show();
-                            else if (filterdObjectList.size() == 1) {
-                                scrollTo(allObjectList.indexOf(filterdObjectList.get(0)), true);
-                                goToDialog.dismiss();
-                            } else {
-                                currentObject[0] = filterdObjectList.get(0);
-                                goToDialog.reloadView();
-                            }
-                        }, Helpers.TextInputHelper.IME_ACTION.SEARCH)
-                        .setDropDownList(() -> {
-                            if (getObjectList().isEmpty() || elementToString == null)
-                                return null;
+                                .setOnAction((textInputHelper, textInputLayout, actionId, text1) -> {
+                                    filterdObjectList.clear();
+                                    filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(text1, t)).collect(toList()));
+                                    if (filterdObjectList.isEmpty())
+                                        Toast.makeText(context, "Kein Eintrag für diese Suche", Toast.LENGTH_SHORT).show();
+                                    else if (filterdObjectList.size() == 1) {
+                                        scrollTo(allObjectList.indexOf(filterdObjectList.get(0)), true);
+                                        goToDialog.dismiss();
+                                    } else {
+                                        currentObject[0] = filterdObjectList.get(0);
+                                        goToDialog.reloadView();
+                                    }
+                                }, Helpers.TextInputHelper.IME_ACTION.SEARCH)
+                                .setDropDownList(() -> {
+                                    if (getObjectList().isEmpty() || elementToString == null)
+                                        return null;
 
 //                            if (elementToString != null) {
-                                return objectList.stream().map(elementToString::runElementToString).collect(toList());
+                                    return objectList.stream().map(elementToString::runElementToString).collect(toList());
 //                            }
 //                            else {
 //                                T t = getObjectList().get(0);
@@ -1406,10 +1416,10 @@ public class CustomRecycler<T> {
 //                                else
 //                                    return null;
 //                            }
-                        }, (parent, view, position, id) -> {
-                            scrollTo(position, true);
-                            goToDialog.dismiss();
-                        })
+                                }, (parent, view, position, id) -> {
+                                    scrollTo(position, true);
+                                    goToDialog.dismiss();
+                                })
                 )
                 .setSetViewContent((customDialog1, view1, reload) -> {
                     view1.setBackground(null);

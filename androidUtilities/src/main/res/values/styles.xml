@@ -53,14 +53,14 @@
         <item name="android:clickable">true</item>
     </style>
 
-    <style name="ActionButtonStyle" parent="@style/Widget.AppCompat.Button.Colored">
-<!--        &lt;!&ndash; text color for the button &ndash;&gt;-->
-<!--        <item name="android:textColor">#ffffff</item>-->
-<!--        &lt;!&ndash; Background tint for the button &ndash;&gt;-->
-<!--        <item name="backgroundTint">@color/colorPrimaryDark</item>-->
+    <style name="TextButtonStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:clickable">true</item>
+        <item name="android:textColor">@color/clickable_text_color</item>
     </style>
 
-    <style name="ColoredBorderlessButtonStyle" parent="Widget.AppCompat.Button.Borderless.Colored">
+    <style name="ActionButtonStyle" parent="@style/Widget.AppCompat.Button.Colored" />
 
-    </style>
+    <style name="ColoredBorderlessButtonStyle" parent="Widget.AppCompat.Button.Borderless.Colored" />
 </resources>

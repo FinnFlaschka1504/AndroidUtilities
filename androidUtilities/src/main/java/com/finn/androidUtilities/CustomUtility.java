@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
@@ -40,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import top.defaults.drawabletoolbox.DrawableBuilder;
@@ -762,4 +764,65 @@ public class CustomUtility {
         void runExecuteIfNotNull(E e);
     }
     //  <------------------------- ifNotNull -------------------------
+
+    //  ------------------------- Reflections ------------------------->
+    public static List<TextWatcher> removeTextListeners(TextView view){
+        List<TextWatcher> returnList = null;
+        try {
+            Field mListeners = TextView.class.getDeclaredField("mListeners");
+            mListeners.setAccessible(true);
+            returnList = (List<TextWatcher>) mListeners.get(view);
+            mListeners.set(view, null);
+        } catch (IllegalAccessException | NoSuchFieldException ignored) {
+        }
+        return returnList;
+    }
+    //  <------------------------- Reflections -------------------------
+
+
+    //  ------------------------- EasyLogic ------------------------->
+    public static <T> Boolean boolOr(T what, T... to){
+        if (to.length == 0)
+            return null;
+
+        for (Object o : to) {
+            if (Objects.equals(what, o))
+                return true;
+        }
+        return false;
+    }
+
+    public static <T> Boolean boolXOr(T what, T... to){
+        if (to.length == 0)
+            return null;
+
+        boolean found = false;
+        for (Object o : to) {
+            if (Objects.equals(what, o)) {
+                if (found)
+                    return false;
+                found = true;
+            }
+        }
+        return found;
+    }
+
+    public static <T> Boolean boolAnd(T what, T... to){
+        if (to.length == 0)
+            return null;
+
+        for (Object o : to) {
+            if (!Objects.equals(what, o))
+                return false;
+        }
+        return true;
+    }
+
+        // ---
+
+    public static boolean stringExists(String s){
+        return s != null && !s.isEmpty();
+    }
+    //  <------------------------- EasyLogic -------------------------
+
 }

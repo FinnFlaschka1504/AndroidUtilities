@@ -77,7 +77,7 @@ public class CustomDialog {
     private boolean removeBackground;
     private boolean removeMargin;
     private Drawable backgroundDrawable;
-    private boolean coloredActionButtons;
+    private boolean coloredActionButtons = true;
     private OnBackPressedListener onBackPressedListener;
 
 
@@ -239,6 +239,11 @@ public class CustomDialog {
 
     public CustomDialog enableColoredActionButtons() {
         this.coloredActionButtons = true;
+        return this;
+    }
+
+    public CustomDialog disableColoredActionButtons() {
+        this.coloredActionButtons = false;
         return this;
     }
 
