@@ -78,6 +78,16 @@ public class CustomList<E> extends ArrayList<E> {
         return this;
     }
 
+    public CustomList<E> executeIf(Predicate<CustomList<E>> predicate, ListInterface<E> executeOnTrue) {
+        if (predicate.test(this))
+            executeOnTrue.runListInterface(this);
+        return this;
+    }
+
+    public interface ListInterface<E> {
+        void runListInterface(CustomList<E> customList);
+    }
+
     //  ------------------------- Checks ------------------------->
     public boolean isFirst(E e) {
         if (e == null || isEmpty())

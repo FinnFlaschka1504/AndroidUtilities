@@ -17,8 +17,8 @@ import com.finn.androidUtilities.CustomList;
 import com.finn.androidUtilities.CustomRecycler;
 import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
-import com.finn.androidUtilities.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,6 +26,8 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
+    List<Player> playerList = new ArrayList<>();
+    CustomRecycler<Player> recycler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +71,23 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setSubSort((o1, o2) -> Integer.valueOf(o1).compareTo(Integer.valueOf(o2)) * -1)
                 .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
 
+
+//        recycler = new CustomRecycler<Player>(this, findViewById(R.id.recycler))
+//                .setObjectList(playerList)
+//                .setItemLayout(R.layout.list_item_player)
+//                .setSetItemContent((customRecycler, itemView, player) -> ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName()))
+//                .addSubOnClickListener(R.id.listItem_player_delete, (customRecycler, itemView, player, index) -> {
+//                    Toast.makeText(this, player.getName(), Toast.LENGTH_SHORT).show();
+//                    playerList.remove(player);
+//                    customRecycler.reload();
+//                }) // ToDo: idRes
+//                .enableDragAndDrop((customRecycler, objectList) -> {})
+//                .generate();
+
+
+
+//        if (true)
+//            return;
 //        testRecycler =
         testRecycler = new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
 //                .setItemLayout(R.layout.list_item_expandable)
@@ -132,7 +151,14 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                                .enableExpandByDefault()
                                 .setExpandMatching(expandable -> expandable.getList().stream().anyMatch(s -> s.contains("1")))
                 )
-                .setObjectList(expandableList)
+                .setGetActiveObjectList(customRecycler -> {
+                    return new CustomRecycler.Expandable.ToGroupExpandableList<String, Pair<String, String>, String>()
+                            .keepExpandedState(customRecycler)
+                            .setSort((o1, o2) -> o1.getName().compareTo(o2.getName()) * -1)
+                            .setSubSort((o1, o2) -> Integer.valueOf(o1).compareTo(Integer.valueOf(o2)) * -1)
+                            .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
+                })
+//                .setObjectList(expandableList)
 //                .enableSwiping((objectList, direction, stringExpandable) -> {
 //                    String BREAKPOINT = null;
 //                }, true, true)
@@ -142,10 +168,10 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setOnReload(customRecycler -> customRecycler.getRecycler().getHeight())
                 .generate();
 
-        CustomInternetHelper.initialize(this);
+//        CustomInternetHelper.initialize(this);
 
 
-        CustomUtility.PingTask.simulate(true, 3000);
+//        CustomUtility.PingTask.simulate(true, 3000);
 
 //        CustomUtility.isOnline(() -> {
 //            CustomDialog.Builder(this)
@@ -167,6 +193,21 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
     }
 
     public void showAmountDialog(View view) {
+        CustomDialog.Builder(this)
+                .setTitle("Spieler Hinzufügen")
+                .setText("Den Namen des Spielers eingeben")
+                .setEdit(new CustomDialog.EditBuilder().setHint("Spieler Name"))
+                .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
+                .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
+                    playerList.add(new Player(customDialog.getEditText()));
+                    recycler.reload();
+                })
+                .disableLastAddedButton() // ToDo: wenn kein button vorhanden dann nichts machen
+                .show();
+
+
+        if (true)
+            return;
         CustomUtility.isOnline(this, () -> {
             CustomDialog.Builder(this)
                     .setTitle(new CustomDialog.TextBuilder("Anzahl Festlegen").setColor(Color.BLUE))
@@ -219,9 +260,11 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         int id = item.getItemId();
         switch (id) {
             case R.id.toolbar_main_internetTest:
-                CustomUtility.isOnline(this, status -> {
-                    Toast.makeText(this, String.valueOf(status), Toast.LENGTH_SHORT).show();
-                }).markAsPending(item); // .suspendMenuItem(item);
+                testRecycler.reload();
+                Toast.makeText(this, "reload", Toast.LENGTH_SHORT).show();
+//                CustomUtility.isOnline(this, status -> {
+//                    Toast.makeText(this, String.valueOf(status), Toast.LENGTH_SHORT).show();
+//                }).markAsPending(item); // .suspendMenuItem(item);
                 break;
         }
         return true;

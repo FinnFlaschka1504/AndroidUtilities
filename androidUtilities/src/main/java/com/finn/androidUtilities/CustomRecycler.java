@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import androidx.annotation.ColorRes;
 import androidx.annotation.DrawableRes;
+import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +44,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,6 +76,7 @@ public class CustomRecycler<T> {
     private int layoutId = -1;
     private SetItemContent<T> setItemContent;
     private List<T> objectList = new ArrayList<>();
+    private List<T> tempObjectList = null;
     private int orientation = RecyclerView.VERTICAL;
     private OnLongClickListener<T> onLongClickListener;
     private View.OnLongClickListener longClickListener = view -> {
@@ -202,12 +205,12 @@ public class CustomRecycler<T> {
         return this;
     }
 
-    public CustomRecycler<T> addSubOnClickListener(int viewId, OnClickListener<T> onClickListener, boolean ripple) {
+    public CustomRecycler<T> addSubOnClickListener(@IdRes int viewId, OnClickListener<T> onClickListener, boolean ripple) {
         idSubOnClickListenerMap.put(viewId, new Pair<>(onClickListener, ripple));
         return this;
     }
 
-    public CustomRecycler<T> addSubOnClickListener(int viewId, OnClickListener<T> onClickListener) {
+    public CustomRecycler<T> addSubOnClickListener(@IdRes int viewId, OnClickListener<T> onClickListener) {
         idSubOnClickListenerMap.put(viewId, new Pair<>(onClickListener, false));
         return this;
     }
@@ -315,7 +318,7 @@ public class CustomRecycler<T> {
                 Collections.swap(objectList, posDragged, posTarget);
                 mAdapter.notifyItemMoved(posDragged, posTarget);
 
-                onDragAndDrop.runOnDragAndDrop(objectList);
+                onDragAndDrop.runOnDragAndDrop(CustomRecycler.this, objectList);
 
                 return true;
             }
@@ -748,7 +751,7 @@ public class CustomRecycler<T> {
     }
 
     public interface OnDragAndDrop<T> {
-        void runOnDragAndDrop(List<T> objectList);
+        void runOnDragAndDrop(CustomRecycler<T> customRecycler, List<T> objectList);
     }
 
     public interface OnSwiped<T> {
@@ -1110,7 +1113,7 @@ public class CustomRecycler<T> {
         public static class ToGroupExpandableList<Result, Item, Key> {
             Comparator<Expandable<Result>> keyComparator;
             Comparator<Result> subComparator;
-
+            CustomRecycler<Expandable<Result>> prevRecycler;
 
             public List<Expandable<Result>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
                     , KeyToString<Key, Item> keyToString, ItemToResult<Item, Result> itemToResult) {
@@ -1128,6 +1131,13 @@ public class CustomRecycler<T> {
                 if (subComparator != null)
                     expandableList.forEach(listExpandable -> listExpandable.getList().sort(subComparator));
 
+                if (prevRecycler != null && prevRecycler.tempObjectList != null) {
+                    prevRecycler.tempObjectList.forEach(prevExp -> {
+                        expandableList.stream().filter(newExp -> Objects.equals(prevExp.getPayload(), newExp.getPayload())).findAny().ifPresent(newExp ->
+                                newExp.setExpended(prevExp.isExpended()));
+                    });
+                }
+
                 return expandableList;
             }
 
@@ -1138,6 +1148,11 @@ public class CustomRecycler<T> {
 
             public ToGroupExpandableList<Result, Item, Key> setSort(Comparator<Expandable<Result>> keyComparator) {
                 this.keyComparator = keyComparator;
+                return this;
+            }
+
+            public ToGroupExpandableList<Result, Item, Key> keepExpandedState(CustomRecycler<Expandable<Result>> prevRecycler) {
+                this.prevRecycler = prevRecycler;
                 return this;
             }
         }
@@ -1285,8 +1300,11 @@ public class CustomRecycler<T> {
 
     public CustomRecycler<T> reload() {
         if (useActiveObjectList) {
+            if (!objectList.isEmpty() && objectList.get(0) instanceof Expandable)
+                tempObjectList = new ArrayList<>(objectList);
             objectList.clear();
             objectList.addAll(getActiveObjectList.runGetActiveObjectList(this));
+            tempObjectList = null;
         }
         mAdapter.notifyDataSetChanged();
         if (onReload != null) // ToDo: reload Listener wie bei loadListener
@@ -1305,8 +1323,11 @@ public class CustomRecycler<T> {
 
     public RecyclerView update(Integer... index) {
         if (useActiveObjectList) {
+            if (!objectList.isEmpty() && objectList.get(0) instanceof Expandable)
+                tempObjectList = new ArrayList<>(objectList);
             objectList.clear();
             objectList.addAll(getActiveObjectList.runGetActiveObjectList(this));
+            tempObjectList = null;
         }
         Arrays.asList(index).forEach(mAdapter::notifyItemChanged);
         if (onReload != null)

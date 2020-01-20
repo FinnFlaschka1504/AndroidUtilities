@@ -967,5 +967,4 @@ public class CustomDialog {
             lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         dialog.getWindow().setAttributes(lp);
     }
-
 }
