@@ -1,5 +1,6 @@
 package com.finn.androidUtilities;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -11,9 +12,12 @@ import android.graphics.RectF;
 import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
 import android.util.Pair;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -53,7 +57,6 @@ import kotlin.jvm.JvmStatic;
 import static java.util.stream.Collectors.toList;
 
 public class CustomRecycler<T> {
-
     // ToDo: BouncyOverscroll https://github.com/chthai64/overscroll-bouncy-android
 
     public enum ORIENTATION {
@@ -110,6 +113,9 @@ public class CustomRecycler<T> {
     private SwipeBackgroundHelper<T> swipeBackgroundHelper;
     private CustomRecyclerInterface<T> onReload;
     private CustomRecyclerInterface<T> onGenerate;
+    private int dragViewId = -1;
+    private boolean longPressDrag;
+    private ItemTouchHelper itemTouchHelper;
 
 
     public CustomRecycler(AppCompatActivity context) {
@@ -291,6 +297,13 @@ public class CustomRecycler<T> {
         return this;
     }
 
+    public CustomRecycler<T> enableDragAndDrop(@IdRes int dragViewId, OnDragAndDrop<T> onDragAndDrop, boolean longPressDrag) {
+        this.onDragAndDrop = onDragAndDrop;
+        this.dragViewId = dragViewId;
+        this.longPressDrag = longPressDrag;
+        return this;
+    }
+
     public CustomRecycler<T> enableSwiping(OnSwiped<T> onSwiped, boolean start, boolean end) {
         this.onSwiped = onSwiped;
         this.leftRightSwipe_pair = new Pair<>(start, end);
@@ -368,9 +381,16 @@ public class CustomRecycler<T> {
                 }
                 return super.getSwipeThreshold(viewHolder);
             }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                if (dragViewId != -1)
+                    return false;
+                return super.isLongPressDragEnabled();
+            }
         };
-        ItemTouchHelper helper = new ItemTouchHelper(itemTouchHelperCallback);
-        helper.attachToRecyclerView(recycler);
+        itemTouchHelper = new ItemTouchHelper(itemTouchHelperCallback);
+        itemTouchHelper.attachToRecyclerView(recycler);
     }
 
     public static class SwipeBackgroundHelper<T> {
@@ -835,6 +855,7 @@ public class CustomRecycler<T> {
             return viewHolder;
         }
 
+        @SuppressLint("ClickableViewAccessibility")
         @Override
         public void onBindViewHolder(ViewHolder viewHolder, int position) {
             if (setItemContent == null) {
@@ -852,6 +873,25 @@ public class CustomRecycler<T> {
                 };
             }
             setItemContent.runSetCellContent(CustomRecycler.this, viewHolder.itemView, dataSet.get(position));
+
+            if (dragViewId != -1 && onDragAndDrop != null) {
+                GestureDetector gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+                    @Override
+                    public void onLongPress(MotionEvent e) {
+                        itemTouchHelper.startDrag(viewHolder);
+                        super.onLongPress(e);
+                    }
+                });
+                viewHolder.itemView.findViewById(dragViewId).setOnTouchListener((v, event) -> {
+                    if (!longPressDrag && event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                        itemTouchHelper.startDrag(viewHolder);
+                    }
+                    else if (longPressDrag && CustomUtility.boolOr(event.getActionMasked() ,MotionEvent.ACTION_DOWN, MotionEvent.ACTION_CANCEL)) {
+                        gestureDetector.onTouchEvent(event);
+                    }
+                    return false;
+                });
+            }
         }
 
         @Override
@@ -1132,10 +1172,14 @@ public class CustomRecycler<T> {
                     expandableList.forEach(listExpandable -> listExpandable.getList().sort(subComparator));
 
                 if (prevRecycler != null && prevRecycler.tempObjectList != null) {
-                    prevRecycler.tempObjectList.forEach(prevExp -> {
-                        expandableList.stream().filter(newExp -> Objects.equals(prevExp.getPayload(), newExp.getPayload())).findAny().ifPresent(newExp ->
-                                newExp.setExpended(prevExp.isExpended()));
-                    });
+                    for (Expandable<Result> prevExp : prevRecycler.tempObjectList) {
+                        for (Expandable<Result> newExp : expandableList) {
+                            if (Objects.equals(prevExp.getPayload(), newExp.getPayload())) {
+                                newExp.setExpended(prevExp.isExpended());
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 return expandableList;
@@ -1152,6 +1196,52 @@ public class CustomRecycler<T> {
             }
 
             public ToGroupExpandableList<Result, Item, Key> keepExpandedState(CustomRecycler<Expandable<Result>> prevRecycler) {
+                this.prevRecycler = prevRecycler;
+                return this;
+            }
+        }
+
+        public static class ToExpandableList<Result, Item>{
+            private Comparator<Expandable<Result>> keyComparator;
+            private CustomRecycler<Expandable<Result>> prevRecycler;
+
+
+            public List<Expandable<Result>> runToExpandableList(List<Item> list, ItemToResult<Item, Result> itemToResult) {
+
+                List<Expandable<Result>> expandableList;
+
+                if (itemToResult == null)
+                    expandableList = list.stream().map(item -> new Expandable<>(item instanceof ParentClass ? ((ParentClass) item).getName() : item.toString(),
+                            (Result) item)).collect(Collectors.toList());
+                else
+                    expandableList = list.stream().map(item -> new Expandable<>(item instanceof ParentClass ? ((ParentClass) item).getName() : item.toString(),
+                            itemToResult.runItemToResult(item))).collect(Collectors.toList());
+
+
+
+                if (keyComparator != null)
+                    expandableList.sort(keyComparator);
+
+                if (prevRecycler != null && prevRecycler.tempObjectList != null) {
+                    for (Expandable<Result> prevExp : prevRecycler.tempObjectList) {
+                        for (Expandable<Result> newExp : expandableList) {
+                            if (Objects.equals(prevExp.getObject(), newExp.getObject())) {
+                                newExp.setExpended(prevExp.isExpended());
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return expandableList;
+            }
+
+            public ToExpandableList<Result, Item> setSort(Comparator<Expandable<Result>> keyComparator) {
+                this.keyComparator = keyComparator;
+                return this;
+            }
+
+            public ToExpandableList<Result, Item> keepExpandedState(CustomRecycler<Expandable<Result>> prevRecycler) {
                 this.prevRecycler = prevRecycler;
                 return this;
             }

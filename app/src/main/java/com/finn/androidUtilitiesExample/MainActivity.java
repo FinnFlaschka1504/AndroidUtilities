@@ -26,8 +26,8 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
-    List<Player> playerList = new ArrayList<>();
-    CustomRecycler<Player> recycler;
+    List<Player> playerList = new ArrayList<>(Arrays.asList(new Player("Player1"), new Player("Player2"), new Player("Player3"), new Player("Player4"), new Player("Player5")));
+    CustomRecycler<CustomRecycler.Expandable<Player>> recycler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,23 +72,30 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
 
 
-//        recycler = new CustomRecycler<Player>(this, findViewById(R.id.recycler))
-//                .setObjectList(playerList)
-//                .setItemLayout(R.layout.list_item_player)
+        recycler = new CustomRecycler<CustomRecycler.Expandable<Player>>(this, findViewById(R.id.recycler))
+                .setGetActiveObjectList(customRecycler -> new CustomRecycler.Expandable.ToExpandableList<Player, Player>()
+                        .keepExpandedState(customRecycler)
+                        .runToExpandableList(playerList, null))
 //                .setSetItemContent((customRecycler, itemView, player) -> ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName()))
-//                .addSubOnClickListener(R.id.listItem_player_delete, (customRecycler, itemView, player, index) -> {
-//                    Toast.makeText(this, player.getName(), Toast.LENGTH_SHORT).show();
-//                    playerList.remove(player);
-//                    customRecycler.reload();
-//                }) // ToDo: idRes
-//                .enableDragAndDrop((customRecycler, objectList) -> {})
-//                .generate();
+                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<Player>(R.layout.list_item_player, (customRecycler1, itemView, player, expanded) -> {
+                    if (!expanded)
+                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName());
+                    else
+                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText("Mip\n" + player.getName() + "\n\nExpand");
+
+                }))
+                .addSubOnClickListener(R.id.listItem_player_delete, (customRecycler, itemView, playerExpandable, index) -> {
+                    Toast.makeText(this, playerExpandable.getName(), Toast.LENGTH_SHORT).show();
+                    playerList.remove(playerExpandable.getObject());
+                    customRecycler.reload();
+                })
+                .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler, objectList) -> {}, false)
+                .generate();
 
 
 
-//        if (true)
-//            return;
-//        testRecycler =
+        if (true)
+            return;
         testRecycler = new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
 //                .setItemLayout(R.layout.list_item_expandable)
 //                .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(s))
@@ -260,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         int id = item.getItemId();
         switch (id) {
             case R.id.toolbar_main_internetTest:
-                testRecycler.reload();
+                recycler.reload();
                 Toast.makeText(this, "reload", Toast.LENGTH_SHORT).show();
 //                CustomUtility.isOnline(this, status -> {
 //                    Toast.makeText(this, String.valueOf(status), Toast.LENGTH_SHORT).show();
