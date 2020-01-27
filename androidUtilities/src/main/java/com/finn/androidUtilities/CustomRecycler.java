@@ -21,6 +21,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AutoCompleteTextView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -1478,26 +1479,35 @@ public class CustomRecycler<T> {
             }
         }
 
+        int prevButtonId = View.generateViewId();
+        int nextButtonId = View.generateViewId();
+        int goButtonId = View.generateViewId();
+
         CustomDialog goToDialog = CustomDialog.Builder(context);
         goToDialog
                 .setTitle("Gehe Zu")
-//                .addButton("Zurück", customDialog1 -> {
-//                    if (filterdObjectList.isEmpty())
-//                        return;
-//                    currentObject[0] = filterdObjectList.previous(currentObject[0]);
-//                    customDialog1.reloadView();
-//                }, false)
-//                .addButton("Weiter", customDialog1 -> {
-//                    if (filterdObjectList.isEmpty())
-//                        return;
-//                    currentObject[0] = filterdObjectList.next(currentObject[0]);
-//                    customDialog1.reloadView();
-//                }, false)
-//                .addButton(CustomDialog.BUTTON_TYPE.GO_TO_BUTTON, customDialog1 -> scrollTo(allObjectList.indexOf(currentObject[0]), true))
+                .addButton("Zurück", customDialog1 -> {
+                    if (filterdObjectList.isEmpty())
+                        return;
+                    currentObject[0] = filterdObjectList.previous(currentObject[0]);
+                    customDialog1.reloadView();
+                }, prevButtonId, false)
+                .hideLastAddedButton()
+                .addButton("Weiter", customDialog1 -> {
+                    if (filterdObjectList.isEmpty())
+                        return;
+                    currentObject[0] = filterdObjectList.next(currentObject[0]);
+                    customDialog1.reloadView();
+                }, nextButtonId,false)
+                .hideLastAddedButton()
+                .addButton(CustomDialog.BUTTON_TYPE.GO_TO_BUTTON, customDialog1 -> scrollTo(allObjectList.indexOf(currentObject[0]), true), goButtonId)
+                .hideLastAddedButton()
+                .colorLastAddedButton()
                 .enableTitleBackButton()
                 .setView(getLayoutId())
                 .setEdit(new CustomDialog.EditBuilder().setHint("Filter").setFireActionDirectly(search != null && !search.isEmpty()).setText(search != null ? search : "").allowEmpty()
                                 .setOnAction((textInputHelper, textInputLayout, actionId, text1) -> {
+                                    ((AutoCompleteTextView) textInputLayout.getEditText()).dismissDropDown();
                                     filterdObjectList.clear();
                                     filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(text1, t)).collect(toList()));
                                     if (filterdObjectList.isEmpty())
@@ -1508,6 +1518,9 @@ public class CustomRecycler<T> {
                                     } else {
                                         currentObject[0] = filterdObjectList.get(0);
                                         goToDialog.reloadView();
+                                        goToDialog.getButton(prevButtonId).setVisibility(View.VISIBLE);
+                                        goToDialog.getButton(nextButtonId).setVisibility(View.VISIBLE);
+                                        goToDialog.getButton(goButtonId).setVisibility(View.VISIBLE);
                                     }
                                 }, Helpers.TextInputHelper.IME_ACTION.SEARCH)
                                 .setDropDownList(() -> {

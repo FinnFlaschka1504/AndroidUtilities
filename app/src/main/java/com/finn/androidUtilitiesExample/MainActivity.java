@@ -21,12 +21,14 @@ import com.finn.androidUtilities.Helpers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
-    List<Player> playerList = new ArrayList<>(Arrays.asList(new Player("Player1"), new Player("Player2"), new Player("Player3"), new Player("Player4"), new Player("Player5")));
+    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(100).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
     CustomRecycler<CustomRecycler.Expandable<Player>> recycler;
 
     @Override
@@ -89,9 +91,19 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                     playerList.remove(playerExpandable.getObject());
                     customRecycler.reload();
                 })
-                .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler, objectList) -> {}, false)
+                .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler, objectList) -> {}, true)
                 .generate();
 
+        CustomDialog.Builder(this)
+                .setTitle("Button Test")
+                .addButton(R.drawable.ic_delete, customDialog -> Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show(), null, false)
+                .alignPreviousButtonsLeft()
+                .colorLastAddedButton()
+                .addButton("T1")
+                .colorLastAddedButton()
+                .addButton("T2")
+                .colorLastAddedButton()
+                .show();
 
 
         if (true)
@@ -234,7 +246,8 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
     }
 
     public void goTo(View view) {
-        testRecycler.goTo((search, expandable) -> expandable.getName().equals(search), CustomRecycler.Expandable::getName, null);
+        recycler.goTo((search, expandable) -> expandable.getName().contains(search), CustomRecycler.Expandable::getName, null);
+//        testRecycler.goTo((search, expandable) -> expandable.getName().equals(search), CustomRecycler.Expandable::getName, null);
     }
 
     @Override

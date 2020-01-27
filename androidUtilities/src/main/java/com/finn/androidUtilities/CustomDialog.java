@@ -1,6 +1,5 @@
 package com.finn.androidUtilities;
 
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
@@ -16,14 +15,16 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
-import androidx.core.content.ContextCompat;
+import androidx.annotation.Nullable;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -514,10 +515,11 @@ public class CustomDialog {
     public class ButtonHelper {
         private Integer id;
         private String label;
+        private Integer iconId;
         private BUTTON_TYPE buttonType;
         private OnClick onClick;
         private boolean dismiss;
-        private Button button;
+        private View button;
         private boolean alignLeft;
         private boolean disabled;
         private boolean hidden;
@@ -535,20 +537,28 @@ public class CustomDialog {
 //            button.setTextColor(((Button)dialog.findViewById(R.id.dialog_custom_Button1)).getTextColors());
         }
 
-        public ButtonHelper(String label, BUTTON_TYPE buttonType, OnClick onClick, Integer id, boolean dismiss) {
+        public ButtonHelper(String label, BUTTON_TYPE buttonType, Integer iconId, OnClick onClick, Integer id, boolean dismiss) {
             this.id = id;
             this.label = label;
+            this.iconId = iconId;
             this.buttonType = buttonType;
             this.onClick = onClick;
             this.dismiss = dismiss;
         }
 
-        public Button generateButton() {
-            Button button;
-            if ((coloredActionButtons && isActionButton()) || colored)
-                button = new Button(context, null, 0, R.style.ActionButtonStyle);
-            else
-                button = new Button(context, null, 0, R.style.ColoredBorderlessButtonStyle);
+        public View generateButton() {
+            View button;
+            if (iconId == null) {
+                if ((coloredActionButtons && isActionButton()) || colored)
+                    button = new Button(context, null, 0, R.style.ActionButtonStyle);
+                else
+                    button = new Button(context, null, 0, R.style.ColoredBorderlessButtonStyle);
+            } else {
+                button = new ImageView(context, null, 0, R.style.ImageButtonStyle);
+                ((ImageView) button).setImageResource(iconId);
+                if (colored)
+                    ((ImageView) button).setColorFilter(context.getColor(R.color.colorAccent));
+            }
 
             if (stackButtons || expandButtons) {
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
@@ -558,9 +568,9 @@ public class CustomDialog {
 
 
             if (label != null)
-                button.setText(label);
+                ((Button) button).setText(label);
             else if (buttonType != null)
-                button.setText(buttonType.label);
+                ((Button) button).setText(buttonType.label);
 
             if (id != null)
                 button.setId(id);
@@ -570,7 +580,7 @@ public class CustomDialog {
             }
 
             if (!buttonLabelAllCaps)
-                button.setAllCaps(false);
+                ((Button) button).setAllCaps(false);
 
             if (disabled)
                 button.setEnabled(false);
@@ -591,6 +601,8 @@ public class CustomDialog {
             }
 
             layout.addView(button);
+            if (button instanceof ImageView)
+                CustomUtility.setMargins(button, 7);
             this.button = button;
 
             button.setOnClickListener(v -> {
@@ -613,7 +625,7 @@ public class CustomDialog {
             return this;
         }
 
-        public Button getButton() {
+        public View getButton() {
             return button;
         }
 
@@ -623,40 +635,44 @@ public class CustomDialog {
     }
 
     public CustomDialog addButton(String buttonName) {
-        return addButton_complete(buttonName, null, null, null, true);
+        return addButton_complete(buttonName, null, null, null, null, true);
     }
     public CustomDialog addButton(String buttonName, OnClick onClick) {
-        return addButton_complete(buttonName, null, onClick, null, true);
+        return addButton_complete(buttonName, null, null, onClick, null, true);
     }
     public CustomDialog addButton(String buttonName, OnClick onClick, int buttonId) {
-        return addButton_complete(buttonName, null, onClick, buttonId, true);
+        return addButton_complete(buttonName, null, null, onClick, buttonId, true);
     }
     public CustomDialog addButton(String buttonName, OnClick onClick, boolean dismissDialog){
-        return addButton_complete(buttonName, null, onClick, null, dismissDialog);
+        return addButton_complete(buttonName, null, null, onClick, null, dismissDialog);
     }
     public CustomDialog addButton(String buttonName, OnClick onClick, int buttonId, boolean dismissDialog){
-        return addButton_complete(buttonName, null, onClick, buttonId, dismissDialog);
+        return addButton_complete(buttonName, null, null, onClick, buttonId, dismissDialog);
     }
 
     public CustomDialog addButton(BUTTON_TYPE button_type) {
-        return addButton_complete(null , button_type, null, null, true);
+        return addButton_complete(null , button_type, null, null, null, true);
     }
     public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick) {
-        return addButton_complete(null , button_type, onClick, null, true);
+        return addButton_complete(null , button_type, null, onClick, null, true);
     }
     public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick, int buttonId) {
-        return addButton_complete(null , button_type, onClick, buttonId, true);
+        return addButton_complete(null , button_type, null, onClick, buttonId, true);
     }
     public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick, boolean dismissDialog){
-        return addButton_complete(null , button_type, onClick, null, dismissDialog);
+        return addButton_complete(null , button_type, null, onClick, null, dismissDialog);
     }
     public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick, int buttonId, boolean dismissDialog){
-        return addButton_complete(null , button_type, onClick, buttonId, dismissDialog);
+        return addButton_complete(null , button_type, null, onClick, buttonId, dismissDialog);
+    }
+
+    public CustomDialog addButton(@DrawableRes int drawableResId, @Nullable OnClick onClick, @Nullable Integer buttonId, @Nullable Boolean dismissDialog) {
+        return addButton_complete(null, null, drawableResId, onClick, buttonId, dismissDialog == null ? true : dismissDialog);
     }
 
 
-    private CustomDialog addButton_complete(String buttonName, BUTTON_TYPE button_type, OnClick onClick, Integer buttonId, boolean dismissDialog) {
-        ButtonHelper buttonHelper = new ButtonHelper(buttonName, button_type, onClick, buttonId, dismissDialog);
+    private CustomDialog addButton_complete(String buttonName, BUTTON_TYPE button_type, Integer iconId, OnClick onClick, Integer buttonId, boolean dismissDialog) {
+        ButtonHelper buttonHelper = new ButtonHelper(buttonName, button_type, iconId, onClick, buttonId, dismissDialog);
         buttonHelperList.add(buttonHelper);
         return this;
     }
@@ -679,7 +695,7 @@ public class CustomDialog {
     }
 
     public CustomDialog addGoToButton(CustomRecycler.GoToFilter goToFilter, CustomRecycler customRecycler) {
-        return addButton_complete(null , BUTTON_TYPE.GO_TO_BUTTON, customDialog -> customRecycler.goTo(goToFilter, null), null, false);
+        return addButton_complete(null , BUTTON_TYPE.GO_TO_BUTTON, null, customDialog -> customRecycler.goTo(goToFilter, null), null, false);
     }
     //  <----- Buttons -----
 
