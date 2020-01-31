@@ -53,6 +53,15 @@
         <item name="android:clickable">true</item>
     </style>
 
+    <style name="ImageButtonStyle.Wide">
+        <item name="android:foreground">@drawable/ripple_narrow</item>
+<!--        <item name="android:background">?android:attr/selectableItemBackground</item>-->
+        <item name="android:paddingTop">5dp</item>
+        <item name="android:paddingBottom">5dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+    </style>
+
     <style name="TextButtonStyle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

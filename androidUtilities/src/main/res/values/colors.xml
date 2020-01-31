@@ -15,4 +15,7 @@
     <color name="colorDayNightContent">#757575</color>
     <color name="colorBackground">#fafafa</color>
     <color name="colorBackgroundLight">#ffffff</color>
+
+    <color name="colorDisabledButtonBackground">#F4F5F5</color>
+    <color name="colorButtonForeground">#FFFFFF</color>
 </resources>

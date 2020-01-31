@@ -96,11 +96,11 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
         CustomDialog.Builder(this)
                 .setTitle("Button Test")
-                .addButton(R.drawable.ic_delete, customDialog -> Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show(), null, false)
+                .addButton(R.drawable.ic_delete, customDialog -> Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show(), false)
+                .colorLastAddedButton()
+                .addButton(R.drawable.ic_arrow_down, customDialog -> Toast.makeText(this, "Test2", Toast.LENGTH_SHORT).show(), false)
                 .alignPreviousButtonsLeft()
-                .colorLastAddedButton()
                 .addButton("T1")
-                .colorLastAddedButton()
                 .addButton("T2")
                 .colorLastAddedButton()
                 .show();
@@ -252,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
     @Override
     protected void onDestroy() {
-        CustomInternetHelper.destroyInstance(this);
+//        CustomInternetHelper.destroyInstance(this);
         super.onDestroy();
     }
 

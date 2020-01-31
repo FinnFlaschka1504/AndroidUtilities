@@ -5,6 +5,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -22,12 +23,15 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -42,6 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import top.defaults.drawabletoolbox.DrawableBuilder;
@@ -354,6 +359,13 @@ public class CustomUtility {
             return String.format(Locale.GERMANY, "%.2f €", amount);
     }
 
+    public static void tintImageButton(@NonNull ImageView button) {
+        ColorStateList colours = button.getResources()
+                .getColorStateList(R.color.button_state_list, null);
+        Drawable d = DrawableCompat.wrap(button.getDrawable());
+        DrawableCompat.setTintList(d, colours);
+        button.setImageDrawable(d);
+    }
 
     //  --------------- OnClickListener --------------->
     public static View.OnClickListener getOnClickListener(View view) {
@@ -825,7 +837,17 @@ public class CustomUtility {
     public interface ExecuteIfNotNull<E> {
         void runExecuteIfNotNull(E e);
     }
+
+    public static boolean ignoreNull(Runnable runnable) {
+        try {
+            runnable.run();
+            return true;
+        } catch (NullPointerException e) {
+            return false;
+        }
+    }
     //  <------------------------- ifNotNull -------------------------
+
 
     //  ------------------------- Reflections ------------------------->
     public static List<TextWatcher> removeTextListeners(TextView view){
@@ -886,5 +908,58 @@ public class CustomUtility {
         return s != null && !s.isEmpty();
     }
     //  <------------------------- EasyLogic -------------------------
+
+
+    //  ------------------------- Switch Expression ------------------------->
+    public static class SwitchExpression<Input, Output> {
+        private Input input;
+        private List<Pair<Input, ExecuteOnCase>> caseList = new ArrayList<>();
+        private ExecuteOnCase defaultCase;
+
+        public SwitchExpression(Input input) {
+            this.input = input;
+        }
+
+        public static <Input> SwitchExpression<Input, Object> setInput(Input input){
+            return new SwitchExpression<>(input);
+        }
+
+        //  ------------------------- Getters & Setters ------------------------->
+        public Input getInput() {
+            return input;
+        }
+        //  <------------------------- Getters & Setters -------------------------
+
+
+        //  ------------------------- Cases ------------------------->
+        public <Type> SwitchExpression<Input, Type>  addCase(Input inputCase, ExecuteOnCase<Input, Type> executeOnCase) {
+            caseList.add(new Pair<>(inputCase, executeOnCase));
+            return (SwitchExpression<Input, Type>) this;
+        }
+
+        public <Type> SwitchExpression<Input, Type> setDefault(ExecuteOnCase<Input, Type> defaultCase) {
+            this.defaultCase = defaultCase;
+            return (SwitchExpression<Input, Type>) this;
+        }
+
+        public interface ExecuteOnCase<Input, Output> {
+            Output runExecuteOnCase(Input input);
+        }
+        //  <------------------------- Cases -------------------------
+
+
+        public Output evaluate() {
+            Optional<Pair<Input, ExecuteOnCase>> optional = caseList.stream().filter(inputExecuteOnCasePair -> Objects.equals(input, inputExecuteOnCasePair.first)).findFirst();
+
+            if (optional.isPresent())
+                return (Output) optional.get().second.runExecuteOnCase(input);
+            else if (defaultCase != null) {
+                return (Output) defaultCase.runExecuteOnCase(input);
+            } else {
+                return null;
+            }
+        }
+    }
+    //  <------------------------- Switch Expression -------------------------
 
 }

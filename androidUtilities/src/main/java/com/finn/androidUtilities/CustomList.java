@@ -52,6 +52,12 @@ public class CustomList<E> extends ArrayList<E> {
         return get(- 1);
     }
 
+    public E getFirst() {
+        if (isEmpty())
+            return null;
+        return get(0);
+    }
+
     @Override
     public E get(int index) {
         if (index < 0)

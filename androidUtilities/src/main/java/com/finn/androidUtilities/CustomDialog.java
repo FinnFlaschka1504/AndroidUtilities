@@ -2,6 +2,8 @@ package com.finn.androidUtilities;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Pair;
@@ -31,9 +33,12 @@ import com.google.android.material.textfield.TextInputLayout;
 import org.apmem.tools.layouts.FlowLayout;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import top.defaults.drawabletoolbox.DrawableBuilder;
 
 public class CustomDialog {
 
@@ -554,10 +559,15 @@ public class CustomDialog {
                 else
                     button = new Button(context, null, 0, R.style.ColoredBorderlessButtonStyle);
             } else {
-                button = new ImageView(context, null, 0, R.style.ImageButtonStyle);
-                ((ImageView) button).setImageResource(iconId);
-                if (colored)
-                    ((ImageView) button).setColorFilter(context.getColor(R.color.colorAccent));
+                button = new ImageView(context, null, 0, R.style.ImageButtonStyle_Wide);
+                ImageView imageView = (ImageView) button;
+                imageView.setImageResource(iconId);
+
+                if (colored) {
+                    imageView.setBackground(new DrawableBuilder().solidColor(context.getColor(R.color.button_state_list)).cornerRadius(CustomUtility.dpToPx(2)).build());
+                    imageView.setColorFilter(context.getColor(R.color.colorButtonForeground));
+                } else
+                    CustomUtility.tintImageButton(imageView);
             }
 
             if (stackButtons || expandButtons) {
@@ -602,7 +612,7 @@ public class CustomDialog {
 
             layout.addView(button);
             if (button instanceof ImageView)
-                CustomUtility.setMargins(button, 7);
+                CustomUtility.setMargins(button, -1, 7);
             this.button = button;
 
             button.setOnClickListener(v -> {
@@ -666,8 +676,20 @@ public class CustomDialog {
         return addButton_complete(null , button_type, null, onClick, buttonId, dismissDialog);
     }
 
-    public CustomDialog addButton(@DrawableRes int drawableResId, @Nullable OnClick onClick, @Nullable Integer buttonId, @Nullable Boolean dismissDialog) {
-        return addButton_complete(null, null, drawableResId, onClick, buttonId, dismissDialog == null ? true : dismissDialog);
+    public CustomDialog addButton(@DrawableRes int drawableResId) {
+        return addButton_complete(null, null, drawableResId, null, null, true);
+    }
+    public CustomDialog addButton(@DrawableRes int drawableResId, OnClick onClick) {
+        return addButton_complete(null, null, drawableResId, onClick, null, true);
+    }
+    public CustomDialog addButton(@DrawableRes int drawableResId, OnClick onClick, Integer buttonId) {
+        return addButton_complete(null, null, drawableResId, onClick, buttonId, true);
+    }
+    public CustomDialog addButton(@DrawableRes int drawableResId, OnClick onClick, boolean dismissDialog) {
+        return addButton_complete(null, null, drawableResId, onClick, null, dismissDialog);
+    }
+    public CustomDialog addButton(@DrawableRes int drawableResId, OnClick onClick, int buttonId, boolean dismissDialog) {
+        return addButton_complete(null, null, drawableResId, onClick, buttonId, dismissDialog);
     }
 
 
@@ -678,15 +700,23 @@ public class CustomDialog {
     }
 
     public CustomDialog colorLastAddedButton(){
-        buttonHelperList.getLast().colored = true;
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.colored = true, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
+
         return this;
     }
     public CustomDialog hideLastAddedButton(){
-        buttonHelperList.getLast().hidden = true;
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.hidden = true, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
+
         return this;
     }
     public CustomDialog disableLastAddedButton(){
-        buttonHelperList.getLast().disabled = true;
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.disabled = true, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
         return this;
     }
     public CustomDialog alignPreviousButtonsLeft() {
@@ -696,6 +726,12 @@ public class CustomDialog {
 
     public CustomDialog addGoToButton(CustomRecycler.GoToFilter goToFilter, CustomRecycler customRecycler) {
         return addButton_complete(null , BUTTON_TYPE.GO_TO_BUTTON, null, customDialog -> customRecycler.goTo(goToFilter, null), null, false);
+    }
+
+    class NoButtonAdded extends Exception {
+        public NoButtonAdded(String message) {
+            super(message);
+        }
     }
     //  <----- Buttons -----
 

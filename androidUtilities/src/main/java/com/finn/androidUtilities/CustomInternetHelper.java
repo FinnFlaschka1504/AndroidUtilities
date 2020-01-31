@@ -49,7 +49,7 @@ import java.util.Set;
 
 public class CustomInternetHelper extends BroadcastReceiver {
 
-    protected static Set<InternetStateReceiverListener> listeners;
+    protected static Set<InternetStateReceiverListener> listeners = new HashSet<>();
     protected static Boolean connected;
 
     private static CustomInternetHelper customInternetHelper;
@@ -85,7 +85,6 @@ public class CustomInternetHelper extends BroadcastReceiver {
 
 
     public CustomInternetHelper() {
-        listeners = new HashSet<>();
         connected = null;
     }
 

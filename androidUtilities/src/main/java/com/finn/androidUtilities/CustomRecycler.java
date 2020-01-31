@@ -1589,7 +1589,7 @@ public class CustomRecycler<T> {
 //                @Override
 //                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
 //                    recyclerView.getLayoutManager().findViewByPosition(index).setPressed(ripple);
-//                    recyclerView.clearOnScrollListeners();
+//                    recyclerView.removeOnScrollListener(this);
 //                    super.onScrolled(recyclerView, dx, dy);
 //                }
 //            });
@@ -1612,7 +1612,7 @@ public class CustomRecycler<T> {
                 @Override
                 public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                     recyclerView.getLayoutManager().findViewByPosition(index).setPressed(ripple);
-                    recyclerView.clearOnScrollListeners();
+                    recyclerView.removeOnScrollListener(this);
                     super.onScrolled(recyclerView, dx, dy);
                 }
             });

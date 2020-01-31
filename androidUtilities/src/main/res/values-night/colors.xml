@@ -6,4 +6,7 @@
     <color name="colorDayNightContent">#B3B3B3</color>
     <color name="colorBackground">#303030</color>
     <color name="colorBackgroundLight">#424242</color>
+
+    <color name="colorDisabledButtonBackground">#494949</color>
+    <color name="colorButtonForeground">#1C030C</color>
 </resources>
