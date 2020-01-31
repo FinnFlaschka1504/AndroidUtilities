@@ -367,10 +367,6 @@ public class CustomUtility {
         else
             colours = button.getResources().getColorStateList(R.color.button_state_list, null);
         button.setColorFilter(colours.getColorForState(button.getDrawableState(), Color.GREEN));
-
-//        Drawable d = DrawableCompat.wrap(button.getDrawable());
-//        DrawableCompat.setTintList(d, colours);
-//        button.setImageDrawable(d);
     }
 
     //  --------------- OnClickListener --------------->
