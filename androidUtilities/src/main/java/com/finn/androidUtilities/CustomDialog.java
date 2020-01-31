@@ -2,8 +2,6 @@ package com.finn.androidUtilities;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Pair;
@@ -17,7 +15,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -26,19 +23,15 @@ import android.widget.TextView;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
-import androidx.annotation.Nullable;
 
 import com.google.android.material.textfield.TextInputLayout;
 
 import org.apmem.tools.layouts.FlowLayout;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import top.defaults.drawabletoolbox.DrawableBuilder;
 
 public class CustomDialog {
 
@@ -564,10 +557,11 @@ public class CustomDialog {
                 imageView.setImageResource(iconId);
 
                 if (colored) {
-                    imageView.setBackground(new DrawableBuilder().solidColor(context.getColor(R.color.button_state_list)).cornerRadius(CustomUtility.dpToPx(2)).build());
-                    imageView.setColorFilter(context.getColor(R.color.colorButtonForeground));
+                    imageView.setBackgroundResource(R.drawable.rounded_button_background);
+//                    imageView.setColorFilter(context.getColor(R.color.colorButtonForeground));
+                    CustomUtility.tintImageButton(imageView, true);
                 } else
-                    CustomUtility.tintImageButton(imageView);
+                    CustomUtility.tintImageButton(imageView, false);
             }
 
             if (stackButtons || expandButtons) {
@@ -627,6 +621,8 @@ public class CustomDialog {
 
         public ButtonHelper setEnabled(boolean enabled) {
             button.setEnabled(enabled);
+            if (button instanceof ImageView)
+                CustomUtility.tintImageButton((ImageView) button, colored);
             return this;
         }
 

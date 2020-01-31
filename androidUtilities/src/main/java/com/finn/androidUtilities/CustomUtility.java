@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -359,12 +360,17 @@ public class CustomUtility {
             return String.format(Locale.GERMANY, "%.2f €", amount);
     }
 
-    public static void tintImageButton(@NonNull ImageView button) {
-        ColorStateList colours = button.getResources()
-                .getColorStateList(R.color.button_state_list, null);
-        Drawable d = DrawableCompat.wrap(button.getDrawable());
-        DrawableCompat.setTintList(d, colours);
-        button.setImageDrawable(d);
+    public static void tintImageButton(@NonNull ImageView button, boolean colored) {
+        ColorStateList colours;
+        if (colored)
+            colours = button.getResources().getColorStateList(R.color.button_state_list_colored, null);
+        else
+            colours = button.getResources().getColorStateList(R.color.button_state_list, null);
+        button.setColorFilter(colours.getColorForState(button.getDrawableState(), Color.GREEN));
+
+//        Drawable d = DrawableCompat.wrap(button.getDrawable());
+//        DrawableCompat.setTintList(d, colours);
+//        button.setImageDrawable(d);
     }
 
     //  --------------- OnClickListener --------------->

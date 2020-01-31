@@ -18,4 +18,5 @@
 
     <color name="colorDisabledButtonBackground">#F4F5F5</color>
     <color name="colorButtonForeground">#FFFFFF</color>
+    <color name="colorDisabledButtonForeground">#BDBDBD</color>
 </resources>

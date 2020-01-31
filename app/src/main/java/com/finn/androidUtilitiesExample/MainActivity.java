@@ -82,8 +82,10 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<Player>(R.layout.list_item_player, (customRecycler1, itemView, player, expanded) -> {
                     if (!expanded)
                         ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName());
-                    else
+                    else {
                         ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText("Mip\n" + player.getName() + "\n\nExpand");
+                    }
+                    itemView.findViewById(R.id.listItem_player_delete).setEnabled(expanded);
 
                 }))
                 .addSubOnClickListener(R.id.listItem_player_delete, (customRecycler, itemView, playerExpandable, index) -> {
@@ -94,16 +96,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler, objectList) -> {}, true)
                 .generate();
 
-        CustomDialog.Builder(this)
-                .setTitle("Button Test")
-                .addButton(R.drawable.ic_delete, customDialog -> Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show(), false)
-                .colorLastAddedButton()
-                .addButton(R.drawable.ic_arrow_down, customDialog -> Toast.makeText(this, "Test2", Toast.LENGTH_SHORT).show(), false)
-                .alignPreviousButtonsLeft()
-                .addButton("T1")
-                .addButton("T2")
-                .colorLastAddedButton()
-                .show();
+        showButtonTest();
 
 
         if (true)
@@ -207,6 +200,22 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //        }, this);
     }
 
+    private void showButtonTest() {
+        int deleteButtonId = View.generateViewId();
+        CustomDialog.Builder(this)
+                .setTitle("Button Test")
+                .addButton(R.drawable.ic_delete, customDialog -> customDialog.getButton(deleteButtonId).setEnabled(false), deleteButtonId,false)
+                .colorLastAddedButton()
+//                .disableLastAddedButton()
+                .addButton(R.drawable.ic_arrow_down, customDialog -> Toast.makeText(this, "Test2", Toast.LENGTH_SHORT).show(), false)
+                .alignPreviousButtonsLeft()
+                .addButton("T1")
+                .colorLastAddedButton().disableLastAddedButton()
+                .addButton("T2")
+                .colorLastAddedButton()
+                .show();
+    }
+
     private CustomList<String> generateObjectList() {
         return new CustomList<String>().generate(amount, String::valueOf);
     }
@@ -280,6 +289,11 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         int id = item.getItemId();
         switch (id) {
             case R.id.toolbar_main_internetTest:
+                showButtonTest();
+                if (true)
+                    return true;
+
+
                 recycler.reload();
                 Toast.makeText(this, "reload", Toast.LENGTH_SHORT).show();
 //                CustomUtility.isOnline(this, status -> {
