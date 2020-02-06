@@ -915,8 +915,8 @@ public class CustomUtility {
     //  ------------------------- Switch Expression ------------------------->
     public static class SwitchExpression<Input, Output> {
         private Input input;
-        private List<Pair<Input, ExecuteOnCase>> caseList = new ArrayList<>();
-        private ExecuteOnCase defaultCase;
+        private CustomList<Pair<Input, Object>> caseList = new CustomList<>();
+        private Object defaultCase;
 
         public SwitchExpression(Input input) {
             this.input = input;
@@ -939,10 +939,34 @@ public class CustomUtility {
             return (SwitchExpression<Input, Type>) this;
         }
 
+        public <Type> SwitchExpression<Input, Type>  addCase(Input inputCase, Type returnOnCase) {
+            caseList.add(new Pair<>(inputCase, returnOnCase));
+            return (SwitchExpression<Input, Type>) this;
+        }
+
+        public SwitchExpression<Input, Output> addCaseToLastCase(Input inputCase) {
+            caseList.add(new Pair<>(inputCase, caseList.getLast().second));
+            return this;
+        }
+
+        // ---------------
+
         public <Type> SwitchExpression<Input, Type> setDefault(ExecuteOnCase<Input, Type> defaultCase) {
             this.defaultCase = defaultCase;
             return (SwitchExpression<Input, Type>) this;
         }
+
+        public <Type> SwitchExpression<Input, Type> setDefault(Type defaultCase) {
+            this.defaultCase = defaultCase;
+            return (SwitchExpression<Input, Type>) this;
+        }
+
+        public SwitchExpression<Input, Output> setLastCaseAsDefault() {
+            defaultCase = caseList.getLast().second;
+            return this;
+        }
+
+        // ---------------
 
         public interface ExecuteOnCase<Input, Output> {
             Output runExecuteOnCase(Input input);
@@ -951,17 +975,35 @@ public class CustomUtility {
 
 
         public Output evaluate() {
-            Optional<Pair<Input, ExecuteOnCase>> optional = caseList.stream().filter(inputExecuteOnCasePair -> Objects.equals(input, inputExecuteOnCasePair.first)).findFirst();
+            Optional<Pair<Input, Object>> optional = caseList.stream().filter(inputExecuteOnCasePair -> Objects.equals(input, inputExecuteOnCasePair.first)).findFirst();
 
-            if (optional.isPresent())
-                return (Output) optional.get().second.runExecuteOnCase(input);
-            else if (defaultCase != null) {
-                return (Output) defaultCase.runExecuteOnCase(input);
+            if (optional.isPresent()) {
+                Object o = optional.get().second;
+                if (o instanceof ExecuteOnCase)
+                    return (Output) ((ExecuteOnCase) o).runExecuteOnCase(input);
+                else
+                    return (Output) o;
+            } else if (defaultCase != null) {
+                if (defaultCase instanceof ExecuteOnCase)
+                    return (Output) ((ExecuteOnCase) defaultCase).runExecuteOnCase(input);
+                else
+                    return (Output) defaultCase;
             } else {
                 return null;
             }
         }
     }
     //  <------------------------- Switch Expression -------------------------
+
+
+    //  ------------------------- Interfaces ------------------------->
+    public interface GenericInterface<T> {
+        void runGenericInterface(T t);
+    }
+
+    public interface GenericReturnInterface<T,R> {
+        R runGenericInterface(T t);
+    }
+    //  <------------------------- Interfaces -------------------------
 
 }

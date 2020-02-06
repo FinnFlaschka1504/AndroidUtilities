@@ -32,6 +32,7 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
@@ -1207,7 +1208,7 @@ public class CustomRecycler<T> {
             private CustomRecycler<Expandable<Result>> prevRecycler;
 
 
-            public List<Expandable<Result>> runToExpandableList(List<Item> list, ItemToResult<Item, Result> itemToResult) {
+            public List<Expandable<Result>> runToExpandableList(List<Item> list, @Nullable ItemToResult<Item, Result> itemToResult) {
 
                 List<Expandable<Result>> expandableList;
 

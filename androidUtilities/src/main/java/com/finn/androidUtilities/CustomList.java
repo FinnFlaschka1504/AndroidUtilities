@@ -114,23 +114,24 @@ public class CustomList<E> extends ArrayList<E> {
 
     //  --------------- Recycle --------------->
     public E next(E e) {
+        if (isEmpty())
+            return null;
+
         if (isLast(e))
             return get(0);
         else
             return get(indexOf(e) + 1);
     }
+
     public E previous(E e) {
         if (isEmpty())
             return null;
-//        if (get(0).equals(e))
-//            return getLast();
-//        else
         return get(indexOf(e) - 1);
     }
     //  <--------------- Recycle ---------------
 
 
-//  ----- forEach ----->
+    //  ----- forEach ----->
     public void forEachCount(ForEachCount_breakable<E> forEachCount_breakable) {
         int count = 0;
         for (E e : this) {
@@ -154,7 +155,7 @@ public class CustomList<E> extends ArrayList<E> {
     public interface ForEachCount<E> {
         void runForeEachCount(E e, int count);
     }
-//  <----- forEach -----
+    //  <----- forEach -----
 
     public Integer indexOf(Predicate<? super E> predicate) {
         final Integer[] foundAt = new Integer[1];
@@ -190,9 +191,36 @@ public class CustomList<E> extends ArrayList<E> {
         return stream().map(mapper).collect(Collectors.toCollection(CustomList::new));
     }
 
-    public CustomList<E> filter(Predicate<? super E> mapper) {
-        return stream().filter(mapper).collect(Collectors.toCollection(CustomList::new));
+
+    //       -------------------- Filter -------------------->
+    public <T> CustomList<E> filterAnd(T[] filter, LogicFilter<? super E, T> mapper, boolean replace) {
+        Stream<E> filteredStream = stream();
+        for (T t : filter)
+            filteredStream = filteredStream.filter(e -> mapper.runLogicFilter(e, t));
+        CustomList<E> list = filteredStream.collect(Collectors.toCollection(CustomList::new));
+        if (replace)
+            replaceWith(list);
+        return list;
     }
+
+    public <T> CustomList<E> filterOr(T[] filter, LogicFilter<? super E, T> mapper, boolean replace) {
+        CustomList<E> tempList = replace ? this : new CustomList<>(this);
+        tempList.removeIf(e -> Arrays.stream(filter).noneMatch(t -> mapper.runLogicFilter(e, t)));
+        return tempList;
+    }
+
+    public interface LogicFilter<E,Type> {
+        boolean runLogicFilter(E e, Type type);
+    }
+
+    public CustomList<E> filter(Predicate<? super E> mapper, boolean replace) {
+        CustomList<E> list = stream().filter(mapper).collect(Collectors.toCollection(CustomList::new));
+        if (replace)
+            replaceWith(list);
+        return list;
+    }
+    //       <-------------------- Filter --------------------
+
 
     public CustomList<E> sorted(@Nullable Comparator<? super E> c) {
         super.sort(c);
@@ -205,7 +233,7 @@ public class CustomList<E> extends ArrayList<E> {
         addAll(distinct.collect(Collectors.toCollection(CustomList::new)));
         return this;
     }
-//  <----- Stream -----
+    //  <----- Stream -----
 
 
     //  --------------- To ... --------------->
@@ -232,10 +260,27 @@ public class CustomList<E> extends ArrayList<E> {
 
 
     //  ------------------------- remove ------------------------->
+    @Override
+    public E remove(int index) {
+        if (index >= 0)
+            return super.remove(index);
+        else
+            return super.remove(size() + index);
+    }
+
     public E removeLast() {
         if (isEmpty())
             return null;
-        return remove(size() - 1);
+        return remove( - 1);
+    }
+
+    public List<E> removeLast(int amount) {
+        if (isEmpty())
+            return null;
+        List<E> returnList = new ArrayList<>();
+        for (int i = 0; i < amount; i++)
+            returnList.add(remove(-1));
+        return returnList;
     }
 
     public E removeFirst() {
@@ -243,5 +288,23 @@ public class CustomList<E> extends ArrayList<E> {
             return null;
         return remove(0);
     }
+
+    public List<E> removeFirst(int amount) {
+        if (isEmpty())
+            return null;
+        List<E> returnList = new ArrayList<>();
+        for (int i = 0; i < amount; i++)
+            returnList.add(remove(0));
+        return returnList;
+    }
     //  <------------------------- remove -------------------------
+
+
+    //  ------------------------- replaceWith ------------------------->
+    public CustomList<E> replaceWith(Collection<? extends E> newList) {
+        clear();
+        addAll(newList);
+        return this;
+    }
+    //  <------------------------- replaceWith -------------------------
 }

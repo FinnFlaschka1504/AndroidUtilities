@@ -18,7 +18,6 @@ import com.finn.androidUtilities.CustomRecycler;
 import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -146,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                                                objectList.replaceAll(s1 -> s.equals(s1) ? String.valueOf(Integer.parseInt(s) + 1) : s1);
 //                                                subRecycler.reload();
                                             }, true, true)
-                                            .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper<String>(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
+                                            .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper<String>(R.drawable.ic_delete, getColor(R.color.colorGreen))
                                                     .setDynamicResources((swipeBackgroundHelper, s) -> {
                                                         swipeBackgroundHelper
                                                                 .setFarEnoughColor_icon(getColor(R.color.colorAccent)).setNotFarEnoughColor_icon(Color.RED).setThreshold(0.4f)
@@ -174,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                .enableSwiping((objectList, direction, stringExpandable) -> {
 //                    String BREAKPOINT = null;
 //                }, true, true)
-//                .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper(R.drawable.ic_delete_black_24dp, getColor(R.color.colorGreen))
+//                .setSwipeBackgroundHelper(new CustomRecycler.SwipeBackgroundHelper(R.drawable.ic_delete, getColor(R.color.colorGreen))
 //                        .setFarEnoughColor_icon(Color.YELLOW).setNotFarEnoughColor_icon(Color.RED).enableBouncyThreshold().setThreshold(0.3f))
                 .setOnGenerate(customRecycler -> customRecycler.getRecycler().getHeight())
                 .setOnReload(customRecycler -> customRecycler.getRecycler().getHeight())
@@ -209,9 +208,11 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                .disableLastAddedButton()
                 .addButton(R.drawable.ic_arrow_down, customDialog -> Toast.makeText(this, "Test2", Toast.LENGTH_SHORT).show(), false)
                 .alignPreviousButtonsLeft()
-                .addButton("T1")
-                .colorLastAddedButton().disableLastAddedButton()
-                .addButton("T2")
+                .addButton(CustomDialog.BUTTON_TYPE.SAVE_BUTTON)
+                .transformPreviousButtonToImageButton()
+                .colorLastAddedButton()
+                .addButton(CustomDialog.BUTTON_TYPE.EDIT_BUTTON)
+                .transformPreviousButtonToImageButton()
                 .colorLastAddedButton()
                 .show();
     }

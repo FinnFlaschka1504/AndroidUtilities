@@ -40,14 +40,17 @@ public class CustomDialog {
     }
 
     public enum BUTTON_TYPE {
-        YES_BUTTON("Ja"), NO_BUTTON("Nein"), SAVE_BUTTON("Speichern")
-        , CANCEL_BUTTON("Abbrechen"), BACK_BUTTON("Zurück"), OK_BUTTON("Ok"), DELETE_BUTTON("Löschen")
-        , GO_TO_BUTTON("Gehe zu"), EDIT_BUTTON("Bearbeiten");
+        YES_BUTTON("Ja", R.drawable.ic_check), NO_BUTTON("Nein", R.drawable.ic_cancel), SAVE_BUTTON("Speichern", R.drawable.ic_save)
+        , CANCEL_BUTTON("Abbrechen", R.drawable.ic_cancel), BACK_BUTTON("Zurück", R.drawable.ic_arrow_back), OK_BUTTON("Ok", R.drawable.ic_check)
+        , DELETE_BUTTON("Löschen", R.drawable.ic_delete), GO_TO_BUTTON("Gehe zu", R.drawable.ic_search), EDIT_BUTTON("Bearbeiten", R.drawable.ic_edit)
+        , DETAIL_BUTTON("Details", R.drawable.ic_info), ADD_BUTTON("Hinzufügen", R.drawable.ic_add); // ToDo: Button oben Links & Rechts
 
         String label;
+        int iconId;
 
-        BUTTON_TYPE(String label) {
+        BUTTON_TYPE(String label, @DrawableRes int iconId) {
             this.label = label;
+            this.iconId = iconId;
         }
     }
 
@@ -605,8 +608,16 @@ public class CustomDialog {
             }
 
             layout.addView(button);
-            if (button instanceof ImageView)
-                CustomUtility.setMargins(button, -1, 7);
+
+
+            if (isImageButton()) {
+                ButtonHelper next = buttonHelperList.next(this);
+                if (next != null && !buttonHelperList.isLast(this) && next.isImageButton())
+                    CustomUtility.setMargins(button, -1, 7, 7, 7);
+                else
+                    CustomUtility.setMargins(button, -1, 7);
+            }
+
             this.button = button;
 
             button.setOnClickListener(v -> {
@@ -637,6 +648,10 @@ public class CustomDialog {
 
         public boolean isActionButton() {
             return (buttonType == BUTTON_TYPE.OK_BUTTON ||buttonType == BUTTON_TYPE.SAVE_BUTTON || buttonType == BUTTON_TYPE.YES_BUTTON);
+        }
+
+        public boolean isImageButton() {
+            return iconId != null;
         }
     }
 
@@ -699,7 +714,6 @@ public class CustomDialog {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.colored = true, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
-
         return this;
     }
     public CustomDialog hideLastAddedButton(){
@@ -717,6 +731,15 @@ public class CustomDialog {
     }
     public CustomDialog alignPreviousButtonsLeft() {
         buttonHelperList.forEach(buttonHelper -> buttonHelper.alignLeft = true);
+        return this;
+    }
+    public CustomDialog transformPreviousButtonToImageButton() {
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
+            buttonHelper.iconId = buttonHelper.buttonType.iconId;
+            buttonHelper.buttonType = null;
+        }, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
         return this;
     }
 
