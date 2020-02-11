@@ -1156,6 +1156,9 @@ public class CustomRecycler<T> {
             Comparator<Expandable<Result>> keyComparator;
             Comparator<Result> subComparator;
             CustomRecycler<Expandable<Result>> prevRecycler;
+            private boolean useExpandMatching;
+            private boolean expandNewByDefault;
+            private boolean keepExpandedState;
 
             public List<Expandable<Result>> runToGroupExpandableList(List<Item> list, Function<Item, Key> classifier
                     , KeyToString<Key, Item> keyToString, ItemToResult<Item, Result> itemToResult) {
@@ -1173,7 +1176,7 @@ public class CustomRecycler<T> {
                 if (subComparator != null)
                     expandableList.forEach(listExpandable -> listExpandable.getList().sort(subComparator));
 
-                if (prevRecycler != null && prevRecycler.tempObjectList != null) {
+                if (keepExpandedState && prevRecycler != null && prevRecycler.tempObjectList != null) {
                     for (Expandable<Result> prevExp : prevRecycler.tempObjectList) {
                         for (Expandable<Result> newExp : expandableList) {
                             if (Objects.equals(prevExp.getPayload(), newExp.getPayload())) {
@@ -1181,6 +1184,24 @@ public class CustomRecycler<T> {
                                 break;
                             }
                         }
+                    }
+                }
+
+                if (useExpandMatching && !keepExpandedState && prevRecycler != null) {
+                    if (prevRecycler.expandableHelper != null && prevRecycler.expandableHelper.expandMatching != null) {
+                        ExpandMatching<Result> expandMatching = prevRecycler.expandableHelper.expandMatching;
+                        expandableList.forEach(expandable -> expandable.setExpended(expandMatching.runExpandMatching(expandable)));
+                    }
+                }
+
+                if ((expandNewByDefault || (useExpandMatching && keepExpandedState)) && prevRecycler != null && prevRecycler.tempObjectList != null) {
+                    ArrayList<Expandable<Result>> arrayList = new ArrayList<>(expandableList);
+                    arrayList.removeAll(prevRecycler.tempObjectList);
+                    if (expandNewByDefault)
+                        arrayList.forEach(resultExpandable -> resultExpandable.setExpended(true));
+                    else if (prevRecycler.expandableHelper != null && prevRecycler.expandableHelper.expandMatching != null) {
+                        ExpandMatching<Result> expandMatching = prevRecycler.expandableHelper.expandMatching;
+                        arrayList.forEach(expandable -> expandable.setExpended(expandMatching.runExpandMatching(expandable)));
                     }
                 }
 
@@ -1199,13 +1220,32 @@ public class CustomRecycler<T> {
 
             public ToGroupExpandableList<Result, Item, Key> keepExpandedState(CustomRecycler<Expandable<Result>> prevRecycler) {
                 this.prevRecycler = prevRecycler;
+                keepExpandedState = true;
                 return this;
             }
+
+
+            public ToGroupExpandableList<Result, Item, Key> enableUseExpandMatching(CustomRecycler<Expandable<Result>> prevRecycler) {
+                this.prevRecycler = prevRecycler;
+                useExpandMatching = true;
+                return this;
+            }
+
+            public ToGroupExpandableList<Result, Item, Key> enableExpandNewByDefault(CustomRecycler<Expandable<Result>> prevRecycler) {
+                this.prevRecycler = prevRecycler;
+                expandNewByDefault = true;
+                return this;
+            }
+
         }
 
         public static class ToExpandableList<Result, Item>{
             private Comparator<Expandable<Result>> keyComparator;
             private CustomRecycler<Expandable<Result>> prevRecycler;
+            private boolean useExpandMatching;
+            private boolean expandNewByDefault;
+            private boolean keepExpandedState;
+
 
 
             public List<Expandable<Result>> runToExpandableList(List<Item> list, @Nullable ItemToResult<Item, Result> itemToResult) {
@@ -1224,7 +1264,7 @@ public class CustomRecycler<T> {
                 if (keyComparator != null)
                     expandableList.sort(keyComparator);
 
-                if (prevRecycler != null && prevRecycler.tempObjectList != null) {
+                if (keepExpandedState && prevRecycler != null && prevRecycler.tempObjectList != null) {
                     for (Expandable<Result> prevExp : prevRecycler.tempObjectList) {
                         for (Expandable<Result> newExp : expandableList) {
                             if (Objects.equals(prevExp.getObject(), newExp.getObject())) {
@@ -1232,6 +1272,24 @@ public class CustomRecycler<T> {
                                 break;
                             }
                         }
+                    }
+                }
+
+                if (useExpandMatching && !keepExpandedState && prevRecycler != null) {
+                    if (prevRecycler.expandableHelper != null && prevRecycler.expandableHelper.expandMatching != null) {
+                        ExpandMatching<Result> expandMatching = prevRecycler.expandableHelper.expandMatching;
+                        expandableList.forEach(expandable -> expandable.setExpended(expandMatching.runExpandMatching(expandable)));
+                    }
+                }
+
+                if ((expandNewByDefault || (useExpandMatching && keepExpandedState)) && prevRecycler != null && prevRecycler.tempObjectList != null) {
+                    ArrayList<Expandable<Result>> arrayList = new ArrayList<>(expandableList);
+                    arrayList.removeAll(prevRecycler.tempObjectList);
+                    if (expandNewByDefault)
+                        arrayList.forEach(resultExpandable -> resultExpandable.setExpended(true));
+                    else if (prevRecycler.expandableHelper != null && prevRecycler.expandableHelper.expandMatching != null) {
+                        ExpandMatching<Result> expandMatching = prevRecycler.expandableHelper.expandMatching;
+                        arrayList.forEach(expandable -> expandable.setExpended(expandMatching.runExpandMatching(expandable)));
                     }
                 }
 
@@ -1245,6 +1303,19 @@ public class CustomRecycler<T> {
 
             public ToExpandableList<Result, Item> keepExpandedState(CustomRecycler<Expandable<Result>> prevRecycler) {
                 this.prevRecycler = prevRecycler;
+                keepExpandedState = true;
+                return this;
+            }
+
+            public ToExpandableList<Result, Item> enableUseExpandMatching(CustomRecycler<Expandable<Result>> prevRecycler) {
+                this.prevRecycler = prevRecycler;
+                useExpandMatching = true;
+                return this;
+            }
+
+            public ToExpandableList<Result, Item> enableExpandNewByDefault(CustomRecycler<Expandable<Result>> prevRecycler) {
+                this.prevRecycler = prevRecycler;
+                expandNewByDefault = true;
                 return this;
             }
         }
@@ -1257,6 +1328,18 @@ public class CustomRecycler<T> {
             Result runItemToResult(Item item);
         }
         //  <--------------- toExpandable ---------------
+
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Expandable<?> that = (Expandable<?>) o;
+            return Objects.equals(getName(), that.getName()) &&
+                    Objects.equals(getList(), that.getList()) &&
+                    Objects.equals(getObject(), that.getObject()) &&
+                    Objects.equals(getPayload(), that.getPayload());
+        }
     }
     //  <--------------- Expandable ---------------
 
@@ -1447,7 +1530,6 @@ public class CustomRecycler<T> {
                     }
                 });
     }
-
     //  <----- Generate -----
 
 
