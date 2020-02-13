@@ -11,6 +11,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
+import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -300,10 +301,13 @@ public class Helpers {
                 int[][] states = {{android.R.attr.state_enabled}};
                 int[] colors = {color};
                 textInputLayout.setErrorTextColor(new ColorStateList(states, colors));
+                textInputLayout.getErrorCurrentTextColors();
                 if (textInputLayout.hasFocus()) {
+                    Pair<Integer, Integer> selection = Pair.create(textInputLayout.getEditText().getSelectionStart(), textInputLayout.getEditText().getSelectionEnd());
                     textInputLayout.setVisibility(View.GONE);
                     textInputLayout.setVisibility(View.VISIBLE);
                     textInputLayout.requestFocus();
+                    textInputLayout.getEditText().setSelection(selection.first, selection.second);
                 } else {
                     textInputLayout.setEnabled(false);
                     textInputLayout.setEnabled(true);
