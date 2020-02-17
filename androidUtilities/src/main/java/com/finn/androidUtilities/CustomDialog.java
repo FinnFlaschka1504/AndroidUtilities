@@ -520,6 +520,8 @@ public class CustomDialog {
         private BUTTON_TYPE buttonType;
         private OnClick onClick;
         private boolean dismiss;
+        private OnClick onLongClick;
+        private Boolean dismissOnLong;
         private View button;
         private boolean alignLeft;
         private boolean disabled;
@@ -621,12 +623,22 @@ public class CustomDialog {
             this.button = button;
 
             button.setOnClickListener(v -> {
-                if (dismiss)
-                    dialog.dismiss();
-
                 if (onClick != null)
                     onClick.runOnClick(CustomDialog.this);
+
+                if (dismiss)
+                    dialog.dismiss();
             });
+
+            if (onLongClick != null)
+                button.setOnLongClickListener(v -> {
+                    onLongClick.runOnClick(CustomDialog.this);
+
+                    if ((dismissOnLong != null && dismissOnLong) || (dismissOnLong == null && dismiss))
+                        dialog.dismiss();
+                    return true;
+                });
+
             return button;
         }
 
@@ -703,6 +715,18 @@ public class CustomDialog {
         return addButton_complete(null, null, drawableResId, onClick, buttonId, dismissDialog);
     }
 
+    public CustomDialog addOnLongClickToLastAddedButton(OnClick onLongClick) {
+        return addOnLongClickToLastAddedButton(onLongClick, null);
+    }
+    public CustomDialog addOnLongClickToLastAddedButton(OnClick onLongClick, Boolean dismissDialog) {
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
+            buttonHelper.onLongClick = onLongClick;
+            buttonHelper.dismissOnLong = dismissDialog;
+        }, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
+        return this;
+    }
 
     private CustomDialog addButton_complete(String buttonName, BUTTON_TYPE button_type, Integer iconId, OnClick onClick, Integer buttonId, boolean dismissDialog) {
         ButtonHelper buttonHelper = new ButtonHelper(buttonName, button_type, iconId, onClick, buttonId, dismissDialog);

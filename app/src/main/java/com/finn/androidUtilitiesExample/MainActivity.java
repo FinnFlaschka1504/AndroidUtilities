@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import studio.carbonylgroup.textfieldboxes.TextFieldBoxes;
+
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
@@ -202,6 +204,15 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setOnReload(customRecycler -> customRecycler.getRecycler().getHeight())
                 .generate();
 
+        CustomDialog.Builder(this)
+                .setTitle("TextFieldBoxes Test")
+                .setView(R.layout.dialog_text_box_test)
+                .setSetViewContent((customDialog, view, reload) -> {
+                    TextFieldBoxes text_field_boxes1 = view.findViewById(R.id.text_field_boxes1);
+                })
+                .addButton("Test", customDialog -> Toast.makeText(this, "Kurz", Toast.LENGTH_SHORT).show(), false)
+                .addOnLongClickToLastAddedButton(customDialog -> Toast.makeText(this, "Lang", Toast.LENGTH_SHORT).show())
+                .show();
 //        CustomInternetHelper.initialize(this);
 
 
