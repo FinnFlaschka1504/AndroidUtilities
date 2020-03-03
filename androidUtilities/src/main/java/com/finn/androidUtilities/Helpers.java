@@ -273,7 +273,7 @@ public class Helpers {
             }
 
             public STATUS validate(String text, boolean changeErrorMessage) {
-                if (changeErrorMessage)
+                if (changeErrorMessage && !text.isEmpty())
                     alreadyEdited = true;
                 reset();
 
@@ -293,7 +293,7 @@ public class Helpers {
                 if (status == STATUS.NONE && useDefaultValidation)
                     defaultValidation(text, changeErrorMessage);
 
-                if (changeErrorMessage || (prevStatus != status && alreadyEdited))
+                if ((changeErrorMessage || prevStatus != status) && alreadyEdited)
                     textInputLayout.setError(message);
 
 

@@ -253,6 +253,17 @@ public class CustomDialog {
         this.onBackPressedListener = onBackPressedListener;
         return this;
     }
+
+    public CustomDialog setDismissWhenClickedOutside(boolean dismiss) {
+        dialog.setCanceledOnTouchOutside(dismiss);
+        return this;
+    }
+
+    public CustomDialog enablePermanentDialog() {
+        setDismissWhenClickedOutside(true);
+        setOnBackPressedListener(customDialog -> true);
+        return this;
+    }
     //  <----- Getters & Setters -----
 
 
