@@ -17,7 +17,9 @@ import com.finn.androidUtilities.CustomList;
 import com.finn.androidUtilities.CustomRecycler;
 import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
+import com.google.android.material.textfield.TextInputLayout;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -204,15 +206,53 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setOnReload(customRecycler -> customRecycler.getRecycler().getHeight())
                 .generate();
 
-        CustomDialog.Builder(this)
-                .setTitle("TextFieldBoxes Test")
-                .setView(R.layout.dialog_text_box_test)
+        CustomDialog.Builder(MainActivity.this)
+                .setTitle("DatenBank-Code Eingeben")
+                .setView(R.layout.dialog_database_login)
                 .setSetViewContent((customDialog, view, reload) -> {
-                    TextFieldBoxes text_field_boxes1 = view.findViewById(R.id.text_field_boxes1);
+                    TextInputLayout dialog_databaseLogin_name_layout = customDialog.findViewById(R.id.dialog_databaseLogin_name_layout);
+                    TextInputLayout dialog_databaseLogin_oldPassword_layout = customDialog.findViewById(R.id.dialog_databaseLogin_oldPassword_layout);
+                    TextInputLayout dialog_databaseLogin_passwordFirst_layout = customDialog.findViewById(R.id.dialog_databaseLogin_passwordFirst_layout);
+                    TextInputLayout dialog_databaseLogin_passwordSecond_layout = customDialog.findViewById(R.id.dialog_databaseLogin_passwordSecond_layout);
+
+                    Helpers.TextInputHelper helper = new Helpers.TextInputHelper();
+                    helper.addValidator(dialog_databaseLogin_name_layout, dialog_databaseLogin_passwordFirst_layout, dialog_databaseLogin_passwordSecond_layout)
+                            .defaultDialogValidation(customDialog)
+//                            .setInputType(dialog_databaseLogin_passwordFirst_layout, Helpers.TextInputHelper.INPUT_TYPE.PASSWORD)
+//                            .setInputType(dialog_databaseLogin_passwordSecond_layout, Helpers.TextInputHelper.INPUT_TYPE.PASSWORD)
+                            .setValidation(dialog_databaseLogin_passwordSecond_layout, (validator, text) -> {
+                                if (CustomUtility.stringExists(text) && !text.equals(helper.getText(dialog_databaseLogin_passwordFirst_layout).trim()))
+                                    validator.setInvalid("Die Passwörter müssen gleich sein");
+                            })
+                    ;
+
                 })
-                .addButton("Test", customDialog -> Toast.makeText(this, "Kurz", Toast.LENGTH_SHORT).show(), false)
-                .addOnLongClickToLastAddedButton(customDialog -> Toast.makeText(this, "Lang", Toast.LENGTH_SHORT).show())
+                .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
+                .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
+//                    onFinish.runOndatabaseCodeFinish(customDialog.getEditText());
+
+                    TextInputLayout dialog_databaseLogin_name_layout = customDialog.findViewById(R.id.dialog_databaseLogin_name_layout);
+                    TextInputLayout dialog_databaseLogin_passwordFirst_layout = customDialog.findViewById(R.id.dialog_databaseLogin_passwordFirst_layout);
+
+                    String databaseCode = dialog_databaseLogin_name_layout.getEditText().getText().toString().trim();
+                    String password = dialog_databaseLogin_passwordFirst_layout.getEditText().getText().toString().trim();
+
+
+
+                }, false)
+                .disableLastAddedButton()
                 .show();
+
+
+//        CustomDialog.Builder(this)
+//                .setTitle("TextFieldBoxes Test")
+//                .setView(R.layout.dialog_text_box_test)
+//                .setSetViewContent((customDialog, view, reload) -> {
+//                    TextFieldBoxes text_field_boxes1 = view.findViewById(R.id.text_field_boxes1);
+//                })
+//                .addButton("Test", customDialog -> Toast.makeText(this, "Kurz", Toast.LENGTH_SHORT).show(), false)
+//                .addOnLongClickToLastAddedButton(customDialog -> Toast.makeText(this, "Lang", Toast.LENGTH_SHORT).show())
+//                .show();
 //        CustomInternetHelper.initialize(this);
 
 

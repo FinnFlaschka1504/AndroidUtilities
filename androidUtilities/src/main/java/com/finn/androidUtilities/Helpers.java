@@ -3,6 +3,7 @@ package com.finn.androidUtilities;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -28,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.finn.androidUtilities.Helpers.SpannableStringHelper.SPAN_TYPE;
 
 public class Helpers {
     //  ----- TextInput ----->
@@ -70,7 +73,10 @@ public class Helpers {
             this.layoutList = new CustomList<>(inputLayouts);
             inputValidationMap = this.layoutList.stream().collect(Collectors.toMap(o -> o, Validator::new));
             applyValidationListeners();
-            layoutList.forEach(textInputLayout -> textInputLayout.getEditText().setInputType(defaultInputType.code));
+            layoutList.forEach(textInputLayout -> {
+                if (textInputLayout.getEditText().getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE))
+                    textInputLayout.getEditText().setInputType(defaultInputType.code);
+            });
         }
 
         public TextInputHelper(OnValidationResult onValidationResult, TextInputLayout... inputLayouts) {
@@ -78,7 +84,10 @@ public class Helpers {
             this.layoutList = new CustomList<>(inputLayouts);
             inputValidationMap = this.layoutList.stream().collect(Collectors.toMap(o -> o, Validator::new));
             applyValidationListeners();
-            layoutList.forEach(textInputLayout -> textInputLayout.getEditText().setInputType(defaultInputType.code));
+            layoutList.forEach(textInputLayout -> {
+                if (textInputLayout.getEditText().getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE))
+                    textInputLayout.getEditText().setInputType(defaultInputType.code);
+            });
         }
 
         public TextInputHelper() {}
@@ -113,7 +122,8 @@ public class Helpers {
             for (TextInputLayout textInputLayout : textInputLayouts) {
                 inputValidationMap.put(textInputLayout, new Validator(textInputLayout));
                 applyValidationListerner(textInputLayout);
-                textInputLayout.getEditText().setInputType(defaultInputType.code);
+                if (textInputLayout.getEditText().getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE))
+                    textInputLayout.getEditText().setInputType(defaultInputType.code);
             }
             return this;
         }
@@ -209,6 +219,7 @@ public class Helpers {
 
             private boolean alwaysUseDefaultValidation = true;
             private STATUS status = STATUS.NONE;
+            private STATUS prevStatus = STATUS.NONE;
             private MODE mode;
             private MODE defaultMode = MODE.BLACK_LIST;
             private String message = "<Fehler>";
@@ -221,6 +232,7 @@ public class Helpers {
             private String regEx = "";
             private int warningColor = 0xffFFB300;
             private int errorColor = 0xFFFF7043;
+            private boolean alreadyEdited;
 
             public Validator(TextInputLayout textInputLayout) {
                 this.textInputLayout = textInputLayout;
@@ -228,6 +240,7 @@ public class Helpers {
 
             private void reset() {
                 message = null;
+                prevStatus = status;
                 status = STATUS.NONE;
                 useDefaultValidation = alwaysUseDefaultValidation;
                 message = "<Fehler>";
@@ -236,22 +249,22 @@ public class Helpers {
 
             private void defaultValidation(String text, boolean changeErrorMessage) {
                 if (text.isEmpty() && !allowEmpty && !warnIfEmpty) {
-                    if (changeErrorMessage)
+//                    if (changeErrorMessage)
                         message = "Das Feld darf nicht leer sein!";
                     status = STATUS.INVALID;
                 } else if (text.isEmpty() && !allowEmpty && warnIfEmpty){
-                    if (changeErrorMessage)
+//                    if (changeErrorMessage)
                         message = "Das Feld ist leer!";
                     status = STATUS.WARNING;
                 } else {
                     switch (mode) {
                         case BLACK_LIST:
-                            if (changeErrorMessage)
+//                            if (changeErrorMessage)
                                 message = null;
                             status = STATUS.VALID;
                             break;
                         case WHITE_LIST:
-                            if (changeErrorMessage)
+//                            if (changeErrorMessage)
                                 message = "Ungültige Eingabe";
                             status = STATUS.INVALID;
                             break;
@@ -260,6 +273,8 @@ public class Helpers {
             }
 
             public STATUS validate(String text, boolean changeErrorMessage) {
+                if (changeErrorMessage)
+                    alreadyEdited = true;
                 reset();
 
                 if (textValidation != null && regEx.isEmpty())
@@ -278,21 +293,23 @@ public class Helpers {
                 if (status == STATUS.NONE && useDefaultValidation)
                     defaultValidation(text, changeErrorMessage);
 
-                if (changeErrorMessage)
+                if (changeErrorMessage || (prevStatus != status && alreadyEdited))
                     textInputLayout.setError(message);
 
 
 
                 switch (status) {
                     case WARNING:
-                        setMessageColor(warningColor);
+                        if (prevStatus != status)
+                            setMessageColor(warningColor);
                         return STATUS.WARNING;
                     case VALID:
                         return STATUS.VALID;
 
                     default:
                     case INVALID:
-                        setMessageColor(errorColor);
+                        if (prevStatus != status)
+                            setMessageColor(errorColor);
                         return STATUS.INVALID;
                 }
             }
@@ -544,6 +561,31 @@ public class Helpers {
 
         public SpannableStringHelper append(String text, SPAN_TYPE span_type) {
             builder.append(text, span_type.getWhat(), Spannable.SPAN_COMPOSING);
+            return this;
+        }
+
+        public SpannableStringHelper appendBold(String text) {
+            builder.append(text, SPAN_TYPE.BOLD.getWhat(), Spannable.SPAN_COMPOSING);
+            return this;
+        }
+
+        public SpannableStringHelper appendItalic(String text) {
+            builder.append(text, SPAN_TYPE.ITALIC.getWhat(), Spannable.SPAN_COMPOSING);
+            return this;
+        }
+
+        public SpannableStringHelper appendBoldItalic(String text) {
+            builder.append(text, SPAN_TYPE.BOLD_ITALIC.getWhat(), Spannable.SPAN_COMPOSING);
+            return this;
+        }
+
+        public SpannableStringHelper appendStrikeThrough(String text) {
+            builder.append(text, SPAN_TYPE.STRIKE_THROUGH.getWhat(), Spannable.SPAN_COMPOSING);
+            return this;
+        }
+
+        public SpannableStringHelper appendUnderlined(String text) {
+            builder.append(text, SPAN_TYPE.UNDERLINED.getWhat(), Spannable.SPAN_COMPOSING);
             return this;
         }
 
