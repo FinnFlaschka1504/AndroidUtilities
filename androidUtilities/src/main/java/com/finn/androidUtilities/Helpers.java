@@ -98,10 +98,9 @@ public class Helpers {
             status = Validator.STATUS.VALID;
             for (Map.Entry<TextInputLayout, Validator> entry : inputValidationMap.entrySet()) {
                 Validator.STATUS validate = entry.getValue().validate(entry.getKey().getEditText().getText().toString().trim(),
-                        inputLayoutList.contains(entry.getKey()) || layoutLists.length == 0);
-                if (validate.getLevel() > status.getLevel()) {
+                        layoutLists.length == 0 ? null : inputLayoutList.contains(entry.getKey()));
+                if (validate.getLevel() > status.getLevel())
                     status = validate;
-                }
             }
             valid = status.isValid();
             if (onValidationResult != null)
@@ -272,7 +271,13 @@ public class Helpers {
                 }
             }
 
-            public STATUS validate(String text, boolean changeErrorMessage) {
+            public STATUS validate(String text, Boolean changeErrorMessage) {
+                boolean force = false;
+                if (changeErrorMessage == null) {
+                    changeErrorMessage = true;
+                    force = true;
+                }
+
                 if (changeErrorMessage && !text.isEmpty())
                     alreadyEdited = true;
                 reset();
@@ -293,10 +298,8 @@ public class Helpers {
                 if (status == STATUS.NONE && useDefaultValidation)
                     defaultValidation(text, changeErrorMessage);
 
-                if ((changeErrorMessage || prevStatus != status) && alreadyEdited)
+                if ((changeErrorMessage || prevStatus != status) && (alreadyEdited || force))
                     textInputLayout.setError(message);
-
-
 
                 switch (status) {
                     case WARNING:

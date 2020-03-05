@@ -260,7 +260,7 @@ public class CustomDialog {
     }
 
     public CustomDialog enablePermanentDialog() {
-        setDismissWhenClickedOutside(true);
+        setDismissWhenClickedOutside(false);
         setOnBackPressedListener(customDialog -> true);
         return this;
     }

@@ -206,6 +206,8 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setOnReload(customRecycler -> customRecycler.getRecycler().getHeight())
                 .generate();
 
+
+        int validateButtonId = View.generateViewId();
         CustomDialog.Builder(MainActivity.this)
                 .setTitle("DatenBank-Code Eingeben")
                 .setView(R.layout.dialog_database_login)
@@ -221,12 +223,21 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                            .setInputType(dialog_databaseLogin_passwordFirst_layout, Helpers.TextInputHelper.INPUT_TYPE.PASSWORD)
 //                            .setInputType(dialog_databaseLogin_passwordSecond_layout, Helpers.TextInputHelper.INPUT_TYPE.PASSWORD)
                             .setValidation(dialog_databaseLogin_passwordSecond_layout, (validator, text) -> {
-                                if (CustomUtility.stringExists(text) && !text.equals(helper.getText(dialog_databaseLogin_passwordFirst_layout).trim()))
+                                if (helper.getText(dialog_databaseLogin_passwordFirst_layout).trim().isEmpty())
+                                    validator.setWarning("Das Passwort ist noch leer");
+                                else if (CustomUtility.stringExists(text) && !text.equals(helper.getText(dialog_databaseLogin_passwordFirst_layout).trim()))
                                     validator.setInvalid("Die Passwörter müssen gleich sein");
-                            })
-                    ;
+                            });
+
+                    helper.interceptForValidation(customDialog.getButton(validateButtonId).getButton(),
+                            () -> Toast.makeText(this, "Invalid", Toast.LENGTH_SHORT).show(),
+                            () -> Toast.makeText(this, "Valide", Toast.LENGTH_SHORT).show());
 
                 })
+                .addButton("Validate", customDialog -> {
+
+                }, validateButtonId)
+                .alignPreviousButtonsLeft()
                 .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
                 .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
 //                    onFinish.runOndatabaseCodeFinish(customDialog.getEditText());
