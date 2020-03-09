@@ -109,6 +109,8 @@ public class CustomDialog {
     }
 
     public CustomDialog setTitle(String title) {
+        if (!firstTime)
+            ((TextView) dialog.findViewById(R.id.dialog_custom_title)).setText(title);
         this.title = title;
         return this;
     }
@@ -119,6 +121,8 @@ public class CustomDialog {
     }
 
     public CustomDialog setText(CharSequence text) {
+        if (!firstTime)
+            ((TextView) dialog.findViewById(R.id.dialog_custom_text)).setText(this.text);
         this.text = text;
         return this;
     }

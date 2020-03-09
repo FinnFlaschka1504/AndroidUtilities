@@ -235,8 +235,8 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
                 })
                 .addButton("Validate", customDialog -> {
-
-                }, validateButtonId)
+                    customDialog.setTitle("Valid");
+                }, validateButtonId, false)
                 .alignPreviousButtonsLeft()
                 .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
                 .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
