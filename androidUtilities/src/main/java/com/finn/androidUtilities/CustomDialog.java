@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -84,6 +85,7 @@ public class CustomDialog {
     private Drawable backgroundDrawable;
     private boolean coloredActionButtons = true;
     private OnBackPressedListener onBackPressedListener;
+    private OnDialogCallback onTouchOutside;
 
 
 
@@ -269,6 +271,11 @@ public class CustomDialog {
     public CustomDialog enablePermanentDialog() {
         setDismissWhenClickedOutside(false);
         setOnBackPressedListener(customDialog -> true);
+        return this;
+    }
+
+    public CustomDialog setOnTouchOutside(OnDialogCallback onTouchOutside) {
+        this.onTouchOutside = onTouchOutside;
         return this;
     }
     //  <----- Getters & Setters -----
@@ -991,6 +998,15 @@ public class CustomDialog {
                         }
                         return false;
                     });
+        }
+
+        if (onTouchOutside != null) {
+            dialog.getWindow().getDecorView().setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_UP && (event.getX() < 0 || event.getY() < 0 || event.getX() > v.getWidth() || event.getY() > v.getHeight()))
+                    onTouchOutside.runOnDialogCallback(this);
+                return false;
+            });
+
         }
 
 
