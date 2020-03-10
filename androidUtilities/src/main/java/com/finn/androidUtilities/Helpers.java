@@ -533,9 +533,60 @@ public class Helpers {
     //  <----- TextInput -----
 
 
-    //  ------------------------- TextBoxHelper ------------------------->
-    
-    //  <------------------------- TextBoxHelper -------------------------
+    //  ------------------------- DoubleClickHelper ------------------------->
+    public static class DoubleClickHelper{
+        private long lastClicked;
+        private int delay = 400;
+        private Runnable onFailed;
+        private Runnable onSuccess;
+
+        //  ------------------------- Constructor ------------------------->
+        public DoubleClickHelper() {
+        }
+
+        public static DoubleClickHelper create() {
+            return new DoubleClickHelper();
+        }
+        //  <------------------------- Constructor -------------------------
+
+        public boolean check() {
+            if (System.currentTimeMillis() - lastClicked > delay) {
+                if (onFailed != null)
+                    onFailed.run();
+                lastClicked = System.currentTimeMillis();
+                return false;
+            }
+            if (onSuccess != null)
+                onSuccess.run();
+            return true;
+        }
+
+        //  ------------------------- Getter & Setter ------------------------->
+        public long getLastClicked() {
+            return lastClicked;
+        }
+
+        public int getDelay() {
+            return delay;
+        }
+
+        public DoubleClickHelper setDelay(int delay) {
+            this.delay = delay;
+            return this;
+        }
+
+        public DoubleClickHelper setOnFailed(Runnable onFailed) {
+            this.onFailed = onFailed;
+            return this;
+        }
+
+        public DoubleClickHelper setOnSuccess(Runnable onSuccess) {
+            this.onSuccess = onSuccess;
+            return this;
+        }
+        //  <------------------------- Getter & Setter -------------------------
+    }
+    //  <------------------------- DoubleClickHelper -------------------------
 
 
     //  --------------- SpannableString --------------->

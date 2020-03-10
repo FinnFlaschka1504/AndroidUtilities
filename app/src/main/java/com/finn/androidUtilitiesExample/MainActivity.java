@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.SyncStateContract;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -211,6 +212,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         int validateButtonId = View.generateViewId();
         final long[] touchOutsideTime = {0};
         Toast toast = Toast.makeText(this, "Doppelclick zum Abbrechen", Toast.LENGTH_SHORT);
+        Helpers.DoubleClickHelper doubleClickHelper = Helpers.DoubleClickHelper.create().setOnFailed(toast::show);
         CustomDialog.Builder(MainActivity.this)
                 .setTitle("DatenBank-Code Eingeben")
                 .setView(R.layout.dialog_database_login)
@@ -258,14 +260,11 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .disableLastAddedButton()
                 .setDismissWhenClickedOutside(false)
                 .setOnTouchOutside(customDialog -> {
-                    if (System.currentTimeMillis() - touchOutsideTime[0] > 400) {
-                        toast.show();
-                        touchOutsideTime[0] = System.currentTimeMillis();
-                        return;
+                    if (doubleClickHelper.check()) {
+                        customDialog.dismiss();
+                        toast.cancel();
+                        Toast.makeText(this, "Klick Draußen", Toast.LENGTH_SHORT).show();
                     }
-                    customDialog.dismiss();
-                    toast.cancel();
-                    Toast.makeText(this, "Klick Draußen", Toast.LENGTH_SHORT).show();
                 })
                 .show();
 
