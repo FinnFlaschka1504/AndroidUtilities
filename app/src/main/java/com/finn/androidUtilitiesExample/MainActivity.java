@@ -8,6 +8,7 @@ import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -237,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .addButton("Validate", customDialog -> {
                     customDialog.setTitle("Valid");
                 }, validateButtonId, false)
-                .doubleClickLastAddedButton("Doppelklick zum Validieren")
+                .doubleClickLastAddedButton("Doppelklick zum Validieren", customDialog -> ((EditText) customDialog.findViewById(R.id.dialog_databaseLogin_name)).getText().toString().isEmpty())
                 .alignPreviousButtonsLeft()
                 .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
                 .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {

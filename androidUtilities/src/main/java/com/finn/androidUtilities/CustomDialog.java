@@ -25,6 +25,7 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -545,6 +546,7 @@ public class CustomDialog {
         private boolean hidden;
         private boolean colored;
         private String doubleClickMessage;
+        private CustomUtility.GenericReturnInterface<CustomDialog, Boolean> enableDoubleClick;
 
         public ButtonHelper(BUTTON_TYPE buttonType) {
             this.buttonType = buttonType;
@@ -653,7 +655,14 @@ public class CustomDialog {
                 final long[] time = {0};
                 Toast toast = Toast.makeText(context, doubleClickMessage, Toast.LENGTH_SHORT);
                 View.OnClickListener doubleClickListener = v -> {
-                    if (System.currentTimeMillis() - time[0] > 300) {
+                    if (enableDoubleClick != null) {
+                        if (!enableDoubleClick.runGenericInterface(CustomDialog.this)) {
+                            toast.cancel();
+                            onClickListener.onClick(v);
+                            return;
+                        }
+                    }
+                    if (System.currentTimeMillis() - time[0] > 400) {
                         toast.show();
                         time[0] = System.currentTimeMillis();
                         return;
@@ -800,9 +809,10 @@ public class CustomDialog {
         });
         return this;
     }
-    public CustomDialog doubleClickLastAddedButton(@NonNull String message) {
+    public CustomDialog doubleClickLastAddedButton(@NonNull String message, @Nullable CustomUtility.GenericReturnInterface<CustomDialog, Boolean> enableDoubleClick) {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
             buttonHelper.doubleClickMessage = message;
+            buttonHelper.enableDoubleClick = enableDoubleClick;
         }, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
