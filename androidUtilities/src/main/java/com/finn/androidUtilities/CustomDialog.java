@@ -19,10 +19,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -542,6 +544,7 @@ public class CustomDialog {
         private boolean disabled;
         private boolean hidden;
         private boolean colored;
+        private String doubleClickMessage;
 
         public ButtonHelper(BUTTON_TYPE buttonType) {
             this.buttonType = buttonType;
@@ -637,13 +640,29 @@ public class CustomDialog {
 
             this.button = button;
 
-            button.setOnClickListener(v -> {
+            View.OnClickListener onClickListener = v -> {
                 if (onClick != null)
                     onClick.runOnClick(CustomDialog.this);
 
                 if (dismiss)
                     dialog.dismiss();
-            });
+            };
+            if (doubleClickMessage == null)
+                button.setOnClickListener(onClickListener);
+            else {
+                final long[] time = {0};
+                Toast toast = Toast.makeText(context, doubleClickMessage, Toast.LENGTH_SHORT);
+                View.OnClickListener doubleClickListener = v -> {
+                    if (System.currentTimeMillis() - time[0] > 300) {
+                        toast.show();
+                        time[0] = System.currentTimeMillis();
+                        return;
+                    }
+                    toast.cancel();
+                    onClickListener.onClick(v);
+                };
+                button.setOnClickListener(doubleClickListener);
+            }
 
             if (onLongClick != null)
                 button.setOnLongClickListener(v -> {
@@ -776,6 +795,14 @@ public class CustomDialog {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
             buttonHelper.iconId = buttonHelper.buttonType.iconId;
             buttonHelper.buttonType = null;
+        }, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
+        return this;
+    }
+    public CustomDialog doubleClickLastAddedButton(@NonNull String message) {
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
+            buttonHelper.doubleClickMessage = message;
         }, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });

@@ -504,7 +504,7 @@ public class Helpers {
             CustomUtility.interceptOnClick(view, view1 -> {
                 long currentTime = System.currentTimeMillis();
                 boolean alwaysValid = validate().isAlwaysValid();
-                if (currentTime - time[0] > 500 && !alwaysValid) {
+                if (currentTime - time[0] > 400 && !alwaysValid) {
                     time[0] = currentTime;
                     if (onIntercept_onAllow.length > 0)
                         onIntercept_onAllow[0].run();

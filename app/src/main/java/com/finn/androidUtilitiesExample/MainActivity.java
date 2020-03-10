@@ -229,14 +229,15 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                     validator.setInvalid("Die Passwörter müssen gleich sein");
                             });
 
-                    helper.interceptForValidation(customDialog.getButton(validateButtonId).getButton(),
-                            () -> Toast.makeText(this, "Invalid", Toast.LENGTH_SHORT).show(),
-                            () -> Toast.makeText(this, "Valide", Toast.LENGTH_SHORT).show());
+//                    helper.interceptForValidation(customDialog.getButton(validateButtonId).getButton(),
+//                            () -> Toast.makeText(this, "Invalid", Toast.LENGTH_SHORT).show(),
+//                            () -> Toast.makeText(this, "Valide", Toast.LENGTH_SHORT).show());
 
                 })
                 .addButton("Validate", customDialog -> {
                     customDialog.setTitle("Valid");
                 }, validateButtonId, false)
+                .doubleClickLastAddedButton("Doppelklick zum Validieren")
                 .alignPreviousButtonsLeft()
                 .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
                 .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
