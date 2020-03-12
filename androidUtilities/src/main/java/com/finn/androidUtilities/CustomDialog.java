@@ -278,6 +278,22 @@ public class CustomDialog {
         this.onTouchOutside = onTouchOutside;
         return this;
     }
+
+    public CustomDialog enableDoubleClickOutsideToDismiss(String... onFirstClick_onSecondClick) {
+        setDismissWhenClickedOutside(false);
+        Helpers.DoubleClickHelper doubleClickHelper = Helpers.DoubleClickHelper.create();
+        Toast toast = Toast.makeText(context, onFirstClick_onSecondClick.length > 0 && onFirstClick_onSecondClick[0] != null ? onFirstClick_onSecondClick[0] : "Doppelklick zum Schließen", Toast.LENGTH_SHORT);
+        setOnTouchOutside(customDialog -> {
+            if (doubleClickHelper.check()) {
+                customDialog.dismiss();
+                toast.cancel();
+                if (onFirstClick_onSecondClick.length > 1)
+                    Toast.makeText(context, onFirstClick_onSecondClick[1], Toast.LENGTH_SHORT).show();
+            } else
+                toast.show();
+        });
+        return this;
+    }
     //  <----- Getters & Setters -----
 
 

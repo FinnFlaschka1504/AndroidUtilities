@@ -298,6 +298,9 @@ public class Helpers {
                 if (status == STATUS.NONE && useDefaultValidation)
                     defaultValidation(text, changeErrorMessage);
 
+                if (force && status != STATUS.VALID)
+                    alreadyEdited = true;
+
                 if ((changeErrorMessage || prevStatus != status) && (alreadyEdited || force))
                     textInputLayout.setError(message);
 
@@ -559,6 +562,11 @@ public class Helpers {
             if (onSuccess != null)
                 onSuccess.run();
             return true;
+        }
+
+        public DoubleClickHelper reset() {
+            lastClicked = 0;
+            return this;
         }
 
         //  ------------------------- Getter & Setter ------------------------->

@@ -234,15 +234,15 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                     validator.setInvalid("Die Passwörter müssen gleich sein");
                             });
 
-//                    helper.interceptForValidation(customDialog.getButton(validateButtonId).getButton(),
-//                            () -> Toast.makeText(this, "Invalid", Toast.LENGTH_SHORT).show(),
-//                            () -> Toast.makeText(this, "Valide", Toast.LENGTH_SHORT).show());
+                    helper.interceptForValidation(customDialog.getButton(validateButtonId).getButton(),
+                            () -> Toast.makeText(this, "Invalid", Toast.LENGTH_SHORT).show(),
+                            () -> Toast.makeText(this, "Valide", Toast.LENGTH_SHORT).show());
 
                 })
                 .addButton("Validate", customDialog -> {
                     customDialog.setTitle("Valid");
                 }, validateButtonId, false)
-                .doubleClickLastAddedButton("Doppelklick zum Validieren", customDialog -> ((EditText) customDialog.findViewById(R.id.dialog_databaseLogin_name)).getText().toString().isEmpty())
+//                .doubleClickLastAddedButton("Doppelklick zum Validieren", customDialog -> ((EditText) customDialog.findViewById(R.id.dialog_databaseLogin_name)).getText().toString().isEmpty())
                 .alignPreviousButtonsLeft()
                 .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
                 .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
@@ -258,14 +258,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
                 }, false)
                 .disableLastAddedButton()
-                .setDismissWhenClickedOutside(false)
-                .setOnTouchOutside(customDialog -> {
-                    if (doubleClickHelper.check()) {
-                        customDialog.dismiss();
-                        toast.cancel();
-                        Toast.makeText(this, "Klick Draußen", Toast.LENGTH_SHORT).show();
-                    }
-                })
+                .enableDoubleClickOutsideToDismiss(null, "Dismiss")
                 .show();
 
 

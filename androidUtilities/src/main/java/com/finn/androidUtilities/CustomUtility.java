@@ -1004,6 +1004,10 @@ public class CustomUtility {
     public interface GenericReturnInterface<T,R> {
         R runGenericInterface(T t);
     }
+
+    public interface GenericReturnOnlyInterface<T> {
+        T runGenericInterface();
+    }
     //  <------------------------- Interfaces -------------------------
 
 }
