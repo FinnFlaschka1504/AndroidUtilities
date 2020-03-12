@@ -279,12 +279,12 @@ public class CustomDialog {
         return this;
     }
 
-    public CustomDialog enableDoubleClickOutsideToDismiss(String... onFirstClick_onSecondClick) {
+    public CustomDialog enableDoubleClickOutsideToDismiss(@Nullable CustomUtility.GenericReturnInterface<CustomDialog, Boolean> enableDoubleClick, String... onFirstClick_onSecondClick) {
         setDismissWhenClickedOutside(false);
         Helpers.DoubleClickHelper doubleClickHelper = Helpers.DoubleClickHelper.create();
         Toast toast = Toast.makeText(context, onFirstClick_onSecondClick.length > 0 && onFirstClick_onSecondClick[0] != null ? onFirstClick_onSecondClick[0] : "Doppelklick zum Schließen", Toast.LENGTH_SHORT);
         setOnTouchOutside(customDialog -> {
-            if (doubleClickHelper.check()) {
+            if (doubleClickHelper.check() || (enableDoubleClick != null && !enableDoubleClick.runGenericInterface(this))) {
                 customDialog.dismiss();
                 toast.cancel();
                 if (onFirstClick_onSecondClick.length > 1)

@@ -258,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
                 }, false)
                 .disableLastAddedButton()
-                .enableDoubleClickOutsideToDismiss(null, "Dismiss")
+                .enableDoubleClickOutsideToDismiss(customDialog -> !((EditText) customDialog.findViewById(R.id.dialog_databaseLogin_name)).getText().toString().isEmpty(), null, "Dismiss")
                 .show();
 
 
