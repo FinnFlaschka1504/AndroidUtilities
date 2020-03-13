@@ -2,6 +2,7 @@ package com.finn.androidUtilities;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Pair;
@@ -10,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -78,8 +80,8 @@ public class CustomDialog {
     private boolean firstTime = true;
     private boolean removeLastDivider;
     private boolean titleBackButton;
-    private List<OnDialogCallback> onDismissListenerList = new ArrayList<>();
-    private List<OnDialogCallback> onShowListenerList = new ArrayList<>();
+    private CustomList<Pair<Boolean,OnDialogCallback>> onDismissListenerList = new CustomList<>();
+    private CustomList<Pair<Boolean,OnDialogCallback>> onShowListenerList = new CustomList<>();
     private boolean removeBackground;
     private boolean removeMargin;
     private Drawable backgroundDrawable;
@@ -163,7 +165,13 @@ public class CustomDialog {
     }
 
     public CustomDialog setDimensions(boolean width, boolean height) {
+        setDialogLayoutParameters(dialog, width, height);
         this.dimensions = new Pair<>(width, height);
+        return this;
+    }
+
+    public CustomDialog setDimensionsFullscreen() {
+        this.dimensions = new Pair<>(true, true);
         return this;
     }
 
@@ -195,26 +203,6 @@ public class CustomDialog {
 
     public CustomDialog setPayload(Object payload) {
         this.payload = payload;
-        return this;
-    }
-
-    public CustomDialog addOnDialogDismiss(OnDialogCallback onDialogDismiss) {
-        onDismissListenerList.add(onDialogDismiss);
-        dialog.setOnDismissListener(dialog1 -> onDismissListenerList.forEach(onDialogCallback -> onDialogCallback.runOnDialogCallback(this)));
-        return this;
-    }
-    public CustomDialog setOnDialogDismiss(OnDialogCallback onDialogDismiss) {
-        dialog.setOnDismissListener(dialog1 -> onDialogDismiss.runOnDialogCallback(this));
-        return this;
-    }
-
-    public CustomDialog addOnDialogShown(OnDialogCallback onDialogShown) {
-        onShowListenerList.add(onDialogShown);
-        dialog.setOnShowListener(dialog1 -> onShowListenerList.forEach(onDialogCallback -> onDialogCallback.runOnDialogCallback(this)));
-        return this;
-    }
-    public CustomDialog setOnDialogShown(OnDialogCallback onDialogShown) {
-        dialog.setOnShowListener(dialog1 -> onDialogShown.runOnDialogCallback(this));
         return this;
     }
 
@@ -294,7 +282,80 @@ public class CustomDialog {
         });
         return this;
     }
+
+   public CustomDialog enableDynamicWrapHeight(View rootView) {
+       View dialogRootView = dialog.getWindow().getDecorView();
+       ViewTreeObserver.OnGlobalLayoutListener layoutListener = () -> {
+           Rect r = new Rect();
+           rootView.getWindowVisibleDisplayFrame(r);
+
+           int availableSpace = r.bottom - r.top;
+           int neededSpace = dialogRootView.getHeight();
+
+           setDialogLayoutParameters(dialog, true, availableSpace < neededSpace);
+       };
+       rootView.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
+       addOnDialogDismiss_system(customDialog -> rootView.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener));
+       return this;
+   }
     //  <----- Getters & Setters -----
+
+
+    //  ------------------------- Listener ------------------------->
+    private CustomDialog addOnDialogDismiss_system(OnDialogCallback onDialogDismiss) {
+        onDismissListenerList.add(Pair.create(true, onDialogDismiss));
+        return this;
+    }
+
+    public CustomDialog addOnDialogDismiss(OnDialogCallback onDialogDismiss) {
+        onDismissListenerList.add(Pair.create(false, onDialogDismiss));
+        return this;
+    }
+
+    public CustomDialog setOnDialogDismiss(OnDialogCallback onDialogDismiss) {
+        onDismissListenerList.filter(pair -> pair.first, true);
+        onDismissListenerList.add(Pair.create(false, onDialogDismiss));
+        return this;
+    }
+
+    public CustomDialog removeOnDialogDismiss(OnDialogCallback onDialogCallback) {
+        onDismissListenerList.remove(Pair.create(false, onDialogCallback));
+        return this;
+    }
+
+    public CustomDialog clearOnDialogDismiss() {
+        onDismissListenerList.filter(pair -> pair.first, true);
+        return this;
+    }
+
+    // ---------------
+
+    private CustomDialog addOnDialogShown_system(OnDialogCallback onDialogShown) {
+        onShowListenerList.add(Pair.create(true, onDialogShown));
+        return this;
+    }
+
+    public CustomDialog addOnDialogShown(OnDialogCallback onDialogShown) {
+        onShowListenerList.add(Pair.create(false, onDialogShown));
+        return this;
+    }
+
+    public CustomDialog setOnDialogShown(OnDialogCallback onDialogShown) {
+        onShowListenerList.filter(pair -> pair.first, true);
+        onShowListenerList.add(Pair.create(false, onDialogShown));
+        return this;
+    }
+
+    public CustomDialog removeOnDialogShown (OnDialogCallback onDialogCallback) {
+        onShowListenerList.remove(Pair.create(false, onDialogCallback));
+        return this;
+    }
+
+    public CustomDialog clearOnDialogShown() {
+        onShowListenerList.filter(pair -> pair.first, true);
+        return this;
+    }
+    //  <------------------------- Listener -------------------------
 
 
     //  ----- Interfaces ----->
@@ -1025,6 +1086,8 @@ public class CustomDialog {
 
         }
 
+        dialog.setOnDismissListener(dialog1 -> onDismissListenerList.forEach(pair -> pair.second.runOnDialogCallback(this)));
+        dialog.setOnShowListener(dialog1 -> onShowListenerList.forEach(pair -> pair.second.runOnDialogCallback(this)));
 
         firstTime = false;
         dialog.show();
@@ -1116,7 +1179,7 @@ public class CustomDialog {
             if (editBuilder.onItemClickListener != null)
                 autoCompleteTextView.setOnItemClickListener(editBuilder.onItemClickListener);
             if (editBuilder.showDropdownDirectly)
-                addOnDialogShown(customDialog -> autoCompleteTextView.showDropDown());
+                addOnDialogShown_system(customDialog -> autoCompleteTextView.showDropDown());
         }
     }
 
@@ -1133,7 +1196,7 @@ public class CustomDialog {
     }
     //  <------------------------- Apply -------------------------
 
-    static void setDialogLayoutParameters(Dialog dialog, boolean width, boolean height) {
+    public static void setDialogLayoutParameters(Dialog dialog, boolean width, boolean height) {
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         lp.copyFrom(dialog.getWindow().getAttributes());
         if (width)

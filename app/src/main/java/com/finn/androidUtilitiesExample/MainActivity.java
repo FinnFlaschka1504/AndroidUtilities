@@ -210,9 +210,6 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
 
         int validateButtonId = View.generateViewId();
-        final long[] touchOutsideTime = {0};
-        Toast toast = Toast.makeText(this, "Doppelclick zum Abbrechen", Toast.LENGTH_SHORT);
-        Helpers.DoubleClickHelper doubleClickHelper = Helpers.DoubleClickHelper.create().setOnFailed(toast::show);
         CustomDialog.Builder(MainActivity.this)
                 .setTitle("DatenBank-Code Eingeben")
                 .setView(R.layout.dialog_database_login)
@@ -237,7 +234,6 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                     helper.interceptForValidation(customDialog.getButton(validateButtonId).getButton(),
                             () -> Toast.makeText(this, "Invalid", Toast.LENGTH_SHORT).show(),
                             () -> Toast.makeText(this, "Valide", Toast.LENGTH_SHORT).show());
-
                 })
                 .addButton("Validate", customDialog -> {
                     customDialog.setTitle("Valid");
@@ -259,8 +255,10 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 }, false)
                 .disableLastAddedButton()
                 .enableDoubleClickOutsideToDismiss(customDialog -> !((EditText) customDialog.findViewById(R.id.dialog_databaseLogin_name)).getText().toString().isEmpty(), null, "Dismiss")
+                .enableDynamicWrapHeight(findViewById(android.R.id.content))
                 .show();
 
+        new CustomUtility.KeyboardChangeListener(this).setOnChange(aBoolean -> Toast.makeText(this, aBoolean ? "show" : "hide", Toast.LENGTH_SHORT).show());
 
 //        CustomDialog.Builder(this)
 //                .setTitle("TextFieldBoxes Test")
@@ -271,7 +269,8 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                .addButton("Test", customDialog -> Toast.makeText(this, "Kurz", Toast.LENGTH_SHORT).show(), false)
 //                .addOnLongClickToLastAddedButton(customDialog -> Toast.makeText(this, "Lang", Toast.LENGTH_SHORT).show())
 //                .show();
-//        CustomInternetHelper.initialize(this);
+
+        CustomInternetHelper.initialize(this);
 
 
 //        CustomUtility.PingTask.simulate(true, 3000);

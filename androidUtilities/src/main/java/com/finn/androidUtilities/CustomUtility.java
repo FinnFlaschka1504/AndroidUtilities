@@ -1,16 +1,20 @@
 package com.finn.androidUtilities;
 
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.app.AlarmManager;
+import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -19,6 +23,7 @@ import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -32,7 +37,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.drawable.DrawableCompat;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -313,15 +317,8 @@ public class CustomUtility {
     }
     //  <--------------- isOnline ---------------
 
-    public static void restartApp(Context context, Class startClass) {
-        Intent mStartActivity = new Intent(context, startClass);
-        int mPendingIntentId = 123456;
-        PendingIntent mPendingIntent = PendingIntent.getActivity(context, mPendingIntentId, mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
-        AlarmManager mgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
-        System.exit(0);
-    }
 
+    //  ------------------------- Keyboard ------------------------->
     public static void changeWindowKeyboard(Window window, boolean show) {
         if (show)
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -335,6 +332,122 @@ public class CustomUtility {
             imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
         else
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
+    public static class KeyboardChangeListener {
+        private Activity activity;
+        private View rootView;
+        private Runnable onShown;
+        private Runnable onHide;
+        private GenericInterface<Boolean> onChange;
+        private ViewTreeObserver.OnGlobalLayoutListener layoutListener;
+        private boolean prevState;
+        private boolean ignorePrevState;
+
+        //  ------------------------- Constructor ------------------------->
+        public KeyboardChangeListener(Activity activity) {
+            this.activity = activity;
+            rootView = activity.findViewById(android.R.id.content).getRootView();
+            applyListener();
+        }
+
+        public static KeyboardChangeListener bind(Activity activity){
+            return new KeyboardChangeListener(activity);
+        }
+        //  <------------------------- Constructor -------------------------
+
+
+        //  ------------------------- Getter & Setter ------------------------->
+        public KeyboardChangeListener setOnShown(Runnable onShown) {
+            this.onShown = onShown;
+            return this;
+        }
+
+        public KeyboardChangeListener setOnHide(Runnable onHide) {
+            this.onHide = onHide;
+            return this;
+        }
+
+        public KeyboardChangeListener setOnChange(GenericInterface<Boolean> onChange) {
+            this.onChange = onChange;
+            return this;
+        }
+
+        public KeyboardChangeListener enableIgnorePrevState() {
+            this.ignorePrevState = true;
+            return this;
+        }
+        //  <------------------------- Getter & Setter -------------------------
+
+
+        //  ------------------------- Convenience ------------------------->
+        private void applyListener() {
+            activity.getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+                @Override
+                public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {}
+
+                @Override
+                public void onActivityStarted(@NonNull Activity activity) {}
+
+                @Override
+                public void onActivityResumed(@NonNull Activity activity) {
+                    layoutListener = () -> {
+                        int rootViewHeight = rootView.getHeight();
+                        Rect rect = new Rect();
+
+                        rootView.getWindowVisibleDisplayFrame(rect);
+
+                        int availableSpace = rect.bottom - rect.top;
+                        int heightDiff = rootViewHeight - availableSpace;
+
+                        boolean result = heightDiff > 100;
+
+                        if (result != prevState || ignorePrevState) {
+                            if (onChange != null)
+                                onChange.runGenericInterface(result);
+
+                            if (result && onShown != null)
+                                onShown.run();
+                            else if (!result && onHide != null)
+                                onHide.run();
+                        }
+
+                        prevState = result;
+                    };
+                    rootView.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
+                }
+
+                @Override
+                public void onActivityPaused(@NonNull Activity activity) {}
+
+                @Override
+                public void onActivityStopped(@NonNull Activity activity) {}
+
+                @Override
+                public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {}
+
+                @Override
+                public void onActivityDestroyed(@NonNull Activity activity) {
+                    unregister();
+                    activity.getApplication().unregisterActivityLifecycleCallbacks(this);
+                }
+            });
+        }
+
+        public void unregister() {
+            rootView.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
+        }
+        //  <------------------------- Convenience -------------------------
+    }
+    //  <------------------------- Keyboard -------------------------
+
+    public static void restartApp(Context context, Class startClass) {
+        Intent mStartActivity = new Intent(context, startClass);
+        int mPendingIntentId = 123456;
+        PendingIntent mPendingIntent = PendingIntent.getActivity(context, mPendingIntentId, mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+        AlarmManager mgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+        System.exit(0);
     }
 
     public static void openUrl(Context context, String url, boolean select) {
@@ -470,12 +583,20 @@ public class CustomUtility {
         public B second;
         public C third;
 
+        //  ------------------------- Constructor ------------------------->
         public Triple(A first, B second, C third) {
             this.first = first;
             this.second = second;
             this.third = third;
         }
 
+        public static <A, B, C> Triple<A, B, C> create(A a, B b, C c) {
+            return new Triple<>(a, b, c);
+        }
+        //  <------------------------- Constructor -------------------------
+
+
+        //  ------------------------- Getter & Setter ------------------------->
         public A getFirst() {
             return first;
         }
@@ -502,6 +623,7 @@ public class CustomUtility {
             this.third = third;
             return this;
         }
+        //  <------------------------- Getter & Setter -------------------------
     }
 
     public static class Quadruple<A, B, C, D> {
@@ -510,6 +632,7 @@ public class CustomUtility {
         public C third;
         public D fourth;
 
+        //  ------------------------- Constructor ------------------------->
         public Quadruple(A first, B second, C third, D fourth) {
             this.first = first;
             this.second = second;
@@ -517,6 +640,13 @@ public class CustomUtility {
             this.fourth = fourth;
         }
 
+        public static <A, B, C, D> Quadruple<A, B, C, D> create(A a, B b, C c, D d) {
+            return new Quadruple<>(a, b, c, d);
+        }
+        //  <------------------------- Constructor -------------------------
+
+
+        //  ------------------------- Getter & Setter ------------------------->
         public A getFirst() {
             return first;
         }
@@ -552,6 +682,7 @@ public class CustomUtility {
             this.fourth = fourth;
             return this;
         }
+        //  <------------------------- Getter & Setter -------------------------
     }
 
     //  ----- Pixels ----->
@@ -820,14 +951,14 @@ public class CustomUtility {
 
 
     //  ------------------------- ifNotNull ------------------------->
-    public static <E> boolean ifNotNull(E e, ExecuteIfNotNull<E> executeIfNotNull){
+    public static <E> boolean ifNotNull(E e, ExecuteIfNotNull<E> executeIfNotNull) {
         if (e == null)
             return false;
         executeIfNotNull.runExecuteIfNotNull(e);
         return true;
     }
 
-    public static <E> boolean ifNotNull(E e, ExecuteIfNotNull<E> executeIfNotNull, Runnable executeIfNull){
+    public static <E> boolean ifNotNull(E e, ExecuteIfNotNull<E> executeIfNotNull, Runnable executeIfNull) {
         if (e == null) {
             executeIfNull.run();
             return false;
@@ -852,7 +983,7 @@ public class CustomUtility {
 
 
     //  ------------------------- Reflections ------------------------->
-    public static List<TextWatcher> removeTextListeners(TextView view){
+    public static List<TextWatcher> removeTextListeners(TextView view) {
         List<TextWatcher> returnList = null;
         try {
             Field mListeners = TextView.class.getDeclaredField("mListeners");
@@ -867,23 +998,56 @@ public class CustomUtility {
 
 
     //  ------------------------- EasyLogic ------------------------->
-    public static <T> Boolean boolOr(T what, T... to){
-        if (to.length == 0)
-            return null;
+    public static class NoArgumentException extends RuntimeException {
+        public static final String DEFAULT_MESSAGE = "Keine Argumente mitgegeben";
 
-        for (Object o : to) {
+        public NoArgumentException(String message) {
+            super(message);
+        }
+    }
+
+    public static <T> boolean boolOr(GenericReturnInterface<T, Boolean> what, T... to) {
+        if (to.length == 0)
+            throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
+
+        for (T o : to) {
+            if (what.runGenericInterface(o))
+                return true;
+        }
+        return false;
+
+    }
+    public static <T> boolean boolOr(T what, T... to) {
+        if (to.length == 0)
+            throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
+
+        for (T o : to) {
             if (Objects.equals(what, o))
                 return true;
         }
         return false;
     }
 
-    public static <T> Boolean boolXOr(T what, T... to){
+    public static <T> boolean boolXOr(GenericReturnInterface<T, Boolean> what, T... to) {
         if (to.length == 0)
-            return null;
+            throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
 
         boolean found = false;
-        for (Object o : to) {
+        for (T o : to) {
+            if (what.runGenericInterface(o)) {
+                if (found)
+                    return false;
+                found = true;
+            }
+        }
+        return found;
+    }
+    public static <T> boolean boolXOr(T what, T... to) {
+        if (to.length == 0)
+            throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
+
+        boolean found = false;
+        for (T o : to) {
             if (Objects.equals(what, o)) {
                 if (found)
                     return false;
@@ -893,20 +1057,30 @@ public class CustomUtility {
         return found;
     }
 
-    public static <T> Boolean boolAnd(T what, T... to){
+    public static <T> boolean boolAnd(T what, T... to) {
         if (to.length == 0)
-            return null;
+            throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
 
-        for (Object o : to) {
+        for (T o : to) {
             if (!Objects.equals(what, o))
                 return false;
         }
         return true;
     }
+    public static <T> boolean boolAnd(GenericReturnInterface<T, Boolean> what, T... to) {
+        if (to.length == 0)
+            throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
 
-        // ---
+        for (T o : to) {
+            if (!what.runGenericInterface(o))
+                return false;
+        }
+        return true;
+    }
 
-    public static boolean stringExists(String s){
+    // ---
+
+    public static boolean stringExists(String s) {
         return s != null && !s.isEmpty();
     }
     //  <------------------------- EasyLogic -------------------------
@@ -922,7 +1096,7 @@ public class CustomUtility {
             this.input = input;
         }
 
-        public static <Input> SwitchExpression<Input, Object> setInput(Input input){
+        public static <Input> SwitchExpression<Input, Object> setInput(Input input) {
             return new SwitchExpression<>(input);
         }
 
@@ -934,12 +1108,12 @@ public class CustomUtility {
 
 
         //  ------------------------- Cases ------------------------->
-        public <Type> SwitchExpression<Input, Type>  addCase(Input inputCase, ExecuteOnCase<Input, Type> executeOnCase) {
+        public <Type> SwitchExpression<Input, Type> addCase(Input inputCase, ExecuteOnCase<Input, Type> executeOnCase) {
             caseList.add(new Pair<>(inputCase, executeOnCase));
             return (SwitchExpression<Input, Type>) this;
         }
 
-        public <Type> SwitchExpression<Input, Type>  addCase(Input inputCase, Type returnOnCase) {
+        public <Type> SwitchExpression<Input, Type> addCase(Input inputCase, Type returnOnCase) {
             caseList.add(new Pair<>(inputCase, returnOnCase));
             return (SwitchExpression<Input, Type>) this;
         }
@@ -1001,7 +1175,7 @@ public class CustomUtility {
         void runGenericInterface(T t);
     }
 
-    public interface GenericReturnInterface<T,R> {
+    public interface GenericReturnInterface<T, R> {
         R runGenericInterface(T t);
     }
 

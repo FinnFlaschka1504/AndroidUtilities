@@ -1,5 +1,7 @@
 package com.finn.androidUtilities;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -8,8 +10,11 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Bundle;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.HashSet;
@@ -61,6 +66,46 @@ public class CustomInternetHelper extends BroadcastReceiver {
             customInternetHelper = newInstance((AppCompatActivity) listener).addListener(listener);
         else
             customInternetHelper.addListener(listener);
+        if (listener instanceof AppCompatActivity) {
+            AppCompatActivity appCompatActivity = (AppCompatActivity) listener;
+            appCompatActivity.getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+                @Override
+                public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+
+                }
+
+                @Override
+                public void onActivityStarted(@NonNull Activity activity) {
+
+                }
+
+                @Override
+                public void onActivityResumed(@NonNull Activity activity) {
+
+                }
+
+                @Override
+                public void onActivityPaused(@NonNull Activity activity) {
+
+                }
+
+                @Override
+                public void onActivityStopped(@NonNull Activity activity) {
+
+                }
+
+                @Override
+                public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
+
+                }
+
+                @Override
+                public void onActivityDestroyed(@NonNull Activity activity) {
+                    destroyInstance(appCompatActivity);
+                    appCompatActivity.getApplication().unregisterActivityLifecycleCallbacks(this);
+                }
+            });
+        }
         return customInternetHelper;
     }
 
