@@ -235,11 +235,19 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                             () -> Toast.makeText(this, "Invalid", Toast.LENGTH_SHORT).show(),
                             () -> Toast.makeText(this, "Valide", Toast.LENGTH_SHORT).show());
                 })
+                .addOptionalModifications(customDialog -> {
+                    if (Math.round(Math.random()) != 0)
+                        customDialog.addButton("Test");
+                })
                 .addButton("Validate", customDialog -> {
                     customDialog.setTitle("Valid");
                 }, validateButtonId, false)
 //                .doubleClickLastAddedButton("Doppelklick zum Validieren", customDialog -> ((EditText) customDialog.findViewById(R.id.dialog_databaseLogin_name)).getText().toString().isEmpty())
                 .alignPreviousButtonsLeft()
+                .addOptionalModifications(customDialog -> {
+                    if (Math.round(Math.random()) != 0)
+                        customDialog.addButton("Test2");
+                })
                 .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
                 .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON, customDialog -> {
 //                    onFinish.runOndatabaseCodeFinish(customDialog.getEditText());

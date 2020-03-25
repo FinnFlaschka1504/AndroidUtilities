@@ -90,7 +90,6 @@ public class CustomDialog {
     private OnDialogCallback onTouchOutside;
 
 
-
     private SetViewContent setViewContent;
 
     private CustomList<ButtonHelper> buttonHelperList = new CustomList<>();
@@ -271,15 +270,21 @@ public class CustomDialog {
         setDismissWhenClickedOutside(false);
         Helpers.DoubleClickHelper doubleClickHelper = Helpers.DoubleClickHelper.create();
         Toast toast = Toast.makeText(context, onFirstClick_onSecondClick.length > 0 && onFirstClick_onSecondClick[0] != null ? onFirstClick_onSecondClick[0] : "Doppelklick zum Schließen", Toast.LENGTH_SHORT);
-        setOnTouchOutside(customDialog -> {
+        Runnable runCheck = () -> {
             if (doubleClickHelper.check() || (enableDoubleClick != null && !enableDoubleClick.runGenericInterface(this))) {
-                customDialog.dismiss();
+                dismiss();
                 toast.cancel();
                 if (onFirstClick_onSecondClick.length > 1)
                     Toast.makeText(context, onFirstClick_onSecondClick[1], Toast.LENGTH_SHORT).show();
             } else
                 toast.show();
+        };
+
+        toast.getView().findViewById(android.R.id.message).setOnClickListener(v -> {
+            runCheck.run();
         });
+
+        setOnTouchOutside(customDialog -> runCheck.run());
         return this;
     }
 
@@ -298,6 +303,11 @@ public class CustomDialog {
        addOnDialogDismiss_system(customDialog -> rootView.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener));
        return this;
    }
+
+    public CustomDialog addOptionalModifications(OnDialogCallback optionalModifications) {
+        optionalModifications.runOnDialogCallback(this);
+        return this;
+    }
     //  <----- Getters & Setters -----
 
 
