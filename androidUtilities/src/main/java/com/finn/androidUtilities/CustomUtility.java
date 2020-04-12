@@ -38,7 +38,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
+import com.pixplicity.sharp.Sharp;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +58,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import okhttp3.Cache;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
 import top.defaults.drawabletoolbox.DrawableBuilder;
 
 
@@ -1183,5 +1192,79 @@ public class CustomUtility {
         T runGenericInterface();
     }
     //  <------------------------- Interfaces -------------------------
+
+
+    //  ------------------------- LoadUrlIntoImageView ------------------------->
+    public static void loadUrlIntoImageView(Context context, ImageView imageView, String imagePath, @Nullable String fullScreenPath, Runnable... onFullscreen) {
+        if (imagePath.endsWith(".svg")) {
+            CustomUtility.fetchSvg(context, imagePath, imageView);
+        } else {
+            Glide
+                    .with(context)
+                    .load(imagePath)
+                    .error(R.drawable.ic_broken_image)
+                    .placeholder(R.drawable.ic_download)
+                    .into(imageView);
+        }
+        if (fullScreenPath == null)
+            return;
+        imageView.setOnClickListener(v -> {
+            if (onFullscreen.length > 0)
+                onFullscreen[0].run();
+            CustomDialog.Builder(context)
+                    .setView(R.layout.dialog_poster)
+                    .setSetViewContent((customDialog1, view1, reload1) -> {
+                        ImageView dialog_poster_poster = view1.findViewById(R.id.dialog_poster_poster);
+                        if (fullScreenPath.endsWith(".svg")) {
+                            CustomUtility.fetchSvg(context, fullScreenPath, dialog_poster_poster);
+                        } else {
+                            Glide
+                                    .with(context)
+                                    .load(fullScreenPath)
+                                    .error(R.drawable.ic_broken_image)
+                                    .placeholder(R.drawable.ic_download)
+                                    .into(dialog_poster_poster);
+                        }
+                        dialog_poster_poster.setOnContextClickListener(v1 -> {
+                            customDialog1.dismiss();
+                            return true;
+                        });
+
+                    })
+                    .addOptionalModifications(customDialog -> {
+                        if (!(fullScreenPath.endsWith(".png") || fullScreenPath.endsWith(".svg")))
+                            customDialog.removeBackground();
+                    })
+                    .disableScroll()
+                    .show();
+        });
+    }
+
+    private static OkHttpClient httpClient;
+
+    public static void fetchSvg(Context context, String url, final ImageView target) {
+        if (httpClient == null) {
+            // Use cache for performance and basic offline capability
+            httpClient = new OkHttpClient.Builder()
+                    .cache(new Cache(context.getCacheDir(), 5 * 1024 * 1014))
+                    .build();
+        }
+
+        okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
+        httpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                target.setImageResource(R.drawable.ic_broken_image);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                InputStream stream = response.body().byteStream();
+                Sharp.loadInputStream(stream).into(target);
+                stream.close();
+            }
+        });
+    }
+    //  <------------------------- LoadUrlIntoImageView -------------------------
 
 }

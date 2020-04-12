@@ -1,15 +1,20 @@
 package com.finn.androidUtilitiesExample;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.widget.NestedScrollView;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.provider.SyncStateContract;
+import android.util.Log;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,36 +24,61 @@ import com.finn.androidUtilities.CustomList;
 import com.finn.androidUtilities.CustomRecycler;
 import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.textfield.TextInputLayout;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import studio.carbonylgroup.textfieldboxes.TextFieldBoxes;
-
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
-    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(2).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
+    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(25).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
     CustomRecycler<CustomRecycler.Expandable<Player>> recycler;
     List<Pair<String, String>> pairList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-//        Test.calcStart(9);
+        Log.d("TEST", "onCreate: test");
+
+        setContentView(R.layout.activity_test);
+
+//        NestedScrollView scrollView = findViewById(R.id.scrollView);
+        RecyclerView recycler = findViewById(R.id.recycler);
+//        TextView textView = findViewById(R.id.textView);
+//        CollapsingToolbarLayout collapsingToolbarLayout = findViewById(R.id.collapsingToolbarLayout);
+
+//        recycler.getViewTreeObserver().addOnScrollChangedListener(() -> {
 //
-//        Test.test(this);
+//        });
 
-        List<String> testList = Arrays.asList("1", "2", "3");
-        new CustomRecycler.Expandable<String>().toExpandableList(testList, s -> new CustomRecycler.Expandable<>(s, s));
+//        recycler.setOnTouchListener((v, event) -> {
+//            if (scrollView.getScrollY() - 1 < textView.getHeight()) {
+//                scrollView.onTouchEvent(event);
+//                return true;
+//            }
+//            return false;
+//        });
+
+
+//        Toolbar toolbar = findViewById(R.id.toolbar);
+//        toolbar.setTitle("Notice Board");
+//        setSupportActionBar(toolbar);
+
+//        if (true)
+//            return;
+
+//        setContentView(R.layout.activity_main);
+
+
+//        List<String> testList = Arrays.asList("1", "2", "3");
+//        new CustomRecycler.Expandable<String>().toExpandableList(testList, s -> new CustomRecycler.Expandable<>(s, s));
 
 //        List<CustomRecycler.Expandable<String>> expandableList = new ArrayList<>();
 //        for (int i = 0; i < amount; i++) {
@@ -73,17 +103,17 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //            expandableList.add(new CustomRecycler.Expandable<>(String.valueOf(i + 1), numberList));
 //        }
 
-        pairList = new ArrayList<>((Arrays.asList(new Pair<>("A", "1"), new Pair<>("C", "2"), new Pair<>("A", "3"), new Pair<>("A", "4"), new Pair<>("B", "5"), new Pair<>("C", "6"), new Pair<>("D", "7"), new Pair<>("B", "8"), new Pair<>("A", "9"), new Pair<>("D", "10"))));
-
-
-        List<CustomRecycler.Expandable<String>> expandableList = new CustomRecycler.Expandable.ToGroupExpandableList<String, Pair<String, String>, String>()
-                .setSort((o1, o2) -> o1.getName().compareTo(o2.getName()) * -1)
-                .setSubSort((o1, o2) -> Integer.valueOf(o1).compareTo(Integer.valueOf(o2)) * -1)
-                .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
-
-
+//        pairList = new ArrayList<>((Arrays.asList(new Pair<>("A", "1"), new Pair<>("C", "2"), new Pair<>("A", "3"), new Pair<>("A", "4"), new Pair<>("B", "5"), new Pair<>("C", "6"), new Pair<>("D", "7"), new Pair<>("B", "8"), new Pair<>("A", "9"), new Pair<>("D", "10"))));
+//
+//
+//        List<CustomRecycler.Expandable<String>> expandableList = new CustomRecycler.Expandable.ToGroupExpandableList<String, Pair<String, String>, String>()
+//                .setSort((o1, o2) -> o1.getName().compareTo(o2.getName()) * -1)
+//                .setSubSort((o1, o2) -> Integer.valueOf(o1).compareTo(Integer.valueOf(o2)) * -1)
+//                .runToGroupExpandableList(pairList, stringStringPair -> stringStringPair.first, (s, m) -> s, stringStringPair -> stringStringPair.second);
+//
+//
 //        List<String> stringList = Stream.iterate(1, count -> count + 1).limit(100).map(String::valueOf).collect(Collectors.toList());
-
+//
 //        new CustomRecycler<String>(this, findViewById(R.id.recycler))
 //                .setObjectList(stringList)
 //                .setOnClickListener((customRecycler, itemView, s, index) -> {
@@ -96,38 +126,48 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                .enableDivider()
 //                .generate();
 
-//        recycler = new CustomRecycler<CustomRecycler.Expandable<Player>>(this, findViewById(R.id.recycler))
-//                .setGetActiveObjectList(customRecycler -> new CustomRecycler.Expandable.ToExpandableList<Player, Player>()
-////                        .keepExpandedState(customRecycler)
-////                        .enableExpandNewByDefault(customRecycler)
-//                        .enableUseExpandMatching(customRecycler)
-//                        .runToExpandableList(playerList, null))
-////                .setSetItemContent((customRecycler, itemView, player) -> ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName()))
-//                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<Player>(R.layout.list_item_player, (customRecycler1, itemView, player, expanded) -> {
-//                    if (!expanded)
-//                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName());
-//                    else {
-//                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText("Mip\n" + player.getName() + "\n\nExpand");
-//                    }
-//                    itemView.findViewById(R.id.listItem_player_delete).setEnabled(expanded);
-//
-//                })
-//                        .setExpandMatching(expandable -> Integer.valueOf(expandable.getObject().getName().substring(7)) % 2 == 0))
-//                .addSubOnClickListener(R.id.listItem_player_delete, (customRecycler, itemView, playerExpandable, index) -> {
-//                    Toast.makeText(this, playerExpandable.getName(), Toast.LENGTH_SHORT).show();
-//                    playerList.remove(playerExpandable.getObject());
-//                    customRecycler.reload();
-//                })
-//                .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler, objectList) -> {
-//                }, true)
-//                .generate();
-//
-////        showButtonTest();
-//
-//
-//        if (true)
-//            return;
-        testRecycler = new CustomRecycler<CustomRecycler.Expandable<String>>(this, findViewById(R.id.recycler))
+        this.recycler = new CustomRecycler<CustomRecycler.Expandable<Player>>(this, recycler)
+                .setGetActiveObjectList(customRecycler -> new CustomRecycler.Expandable.ToExpandableList<Player, Player>()
+//                        .keepExpandedState(customRecycler)
+//                        .enableExpandNewByDefault(customRecycler)
+                        .enableUseExpandMatching(customRecycler)
+                        .runToExpandableList(playerList, null))
+//                .setSetItemContent((customRecycler, itemView, player) -> ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName()))
+                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<Player>(R.layout.list_item_player, (customRecycler1, itemView, player, expanded) -> {
+                    if (!expanded)
+                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName());
+                    else {
+                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText("Mip\n" + player.getName() + "\n\nExpand");
+                    }
+                    itemView.findViewById(R.id.listItem_player_delete).setEnabled(expanded);
+
+                })
+                        .setExpandMatching(expandable -> Integer.valueOf(expandable.getObject().getName().substring(7)) % 2 == 0))
+                .addSubOnClickListener(R.id.listItem_player_delete, (customRecycler, itemView, playerExpandable, index) -> {
+                    Toast.makeText(this, playerExpandable.getName(), Toast.LENGTH_SHORT).show();
+                    playerList.remove(playerExpandable.getObject());
+                    customRecycler.reload();
+                })
+                .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler, objectList) -> {
+                }, true)
+                .setOrientation(CustomRecycler.ORIENTATION.HORIZONTAL)
+                .generate();
+
+
+
+
+//        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+//        final boolean[] first = {true};
+//        appBarLayout.addOnOffsetChangedListener((appBarLayout1, verticalOffset) -> {
+//            if (first[0]) {
+//                ((AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) appBarLayout.getLayoutParams()).getBehavior()).setTopAndBottomOffset(-(findViewById(R.id.elementCount).getHeight()));
+//                first[0] = false;
+//            }
+//        });
+
+        if (true)
+            return;
+        testRecycler = new CustomRecycler<CustomRecycler.Expandable<String>>(this, recycler)
 //                .setItemLayout(R.layout.list_item_expandable)
 //                .setSetItemContent((itemView, s) -> ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(s))
 //                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<String>(R.layout.expandable_content_test, (itemView, s) -> {
@@ -208,6 +248,12 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setOnReload(customRecycler -> customRecycler.getRecycler().getHeight())
                 .generate();
 
+
+
+
+
+        if (true)
+            return;
 
         int validateButtonId = View.generateViewId();
         CustomDialog.Builder(MainActivity.this)

@@ -316,7 +316,7 @@ public class CustomRecycler<T> {
         int dragFlags = 0;
         int swipeFlags = 0;
         if (onDragAndDrop != null)
-            dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
+            dragFlags = orientation == RecyclerView.VERTICAL ? (ItemTouchHelper.UP | ItemTouchHelper.DOWN) : (ItemTouchHelper.START | ItemTouchHelper.END);
         if (onSwiped != null) {
             if (leftRightSwipe_pair.first)
                 swipeFlags += ItemTouchHelper.START;
