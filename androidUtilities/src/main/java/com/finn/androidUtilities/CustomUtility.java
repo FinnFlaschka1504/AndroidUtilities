@@ -9,8 +9,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -39,6 +45,11 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.DrawableImageViewTarget;
+import com.bumptech.glide.request.target.Target;
 import com.pixplicity.sharp.Sharp;
 
 import java.io.IOException;
@@ -1194,29 +1205,60 @@ public class CustomUtility {
     //  <------------------------- Interfaces -------------------------
 
 
-    //  ------------------------- LoadUrlIntoImageView ------------------------->
-    public static void loadUrlIntoImageView(Context context, ImageView imageView, String imagePath, @Nullable String fullScreenPath, Runnable... onFullscreen) {
+    //  ------------------------- ImageView ------------------------->
+    public static void loadUrlIntoImageView(Context context, ImageView imageView, String imagePath, @Nullable String fullScreenPath, Runnable... onFail_onSuccess_onFullscreen) {
         if (imagePath.endsWith(".svg")) {
-            CustomUtility.fetchSvg(context, imagePath, imageView);
+            CustomUtility.fetchSvg(context, imagePath, imageView, onFail_onSuccess_onFullscreen);
         } else {
             Glide
                     .with(context)
                     .load(imagePath)
+                    .addListener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                            if (onFail_onSuccess_onFullscreen.length > 0 && onFail_onSuccess_onFullscreen[0] != null)
+                                onFail_onSuccess_onFullscreen[0].run();
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+//                            if (onFail_onSuccess_onFullscreen.length > 1 && onFail_onSuccess_onFullscreen[1] != null)
+//                                onFail_onSuccess_onFullscreen[1].run();
+
+                            return false;
+                        }
+
+                    })
                     .error(R.drawable.ic_broken_image)
                     .placeholder(R.drawable.ic_download)
-                    .into(imageView);
+                    .into(new DrawableImageViewTarget(imageView) {
+                        @Override
+                        protected void setResource(@Nullable Drawable resource) {
+                            if (resource == null)
+                                return;
+                            super.setResource(resource);
+                            if (onFail_onSuccess_onFullscreen.length > 1 && onFail_onSuccess_onFullscreen[1] != null)
+                                onFail_onSuccess_onFullscreen[1].run();
+
+                        }
+                    });
+//                    .into(imageView);
         }
         if (fullScreenPath == null)
             return;
         imageView.setOnClickListener(v -> {
-            if (onFullscreen.length > 0)
-                onFullscreen[0].run();
+            if (onFail_onSuccess_onFullscreen.length > 2 && onFail_onSuccess_onFullscreen[2] != null)
+                onFail_onSuccess_onFullscreen[2].run();
             CustomDialog.Builder(context)
                     .setView(R.layout.dialog_poster)
                     .setSetViewContent((customDialog1, view1, reload1) -> {
                         ImageView dialog_poster_poster = view1.findViewById(R.id.dialog_poster_poster);
+                        if (fullScreenPath.endsWith(".png") || fullScreenPath.endsWith(".svg"))
+                            dialog_poster_poster.setPadding(0, 0, 0, 0);
+
                         if (fullScreenPath.endsWith(".svg")) {
-                            CustomUtility.fetchSvg(context, fullScreenPath, dialog_poster_poster);
+                            CustomUtility.fetchSvg(context, fullScreenPath, dialog_poster_poster, onFail_onSuccess_onFullscreen);
                         } else {
                             Glide
                                     .with(context)
@@ -1233,7 +1275,7 @@ public class CustomUtility {
                     })
                     .addOptionalModifications(customDialog -> {
                         if (!(fullScreenPath.endsWith(".png") || fullScreenPath.endsWith(".svg")))
-                            customDialog.removeBackground();
+                            customDialog.removeBackground_and_margin();
                     })
                     .disableScroll()
                     .show();
@@ -1242,7 +1284,7 @@ public class CustomUtility {
 
     private static OkHttpClient httpClient;
 
-    public static void fetchSvg(Context context, String url, final ImageView target) {
+    public static void fetchSvg(Context context, String url, final ImageView target, Runnable... onFail_onSuccess) {
         if (httpClient == null) {
             // Use cache for performance and basic offline capability
             httpClient = new OkHttpClient.Builder()
@@ -1250,21 +1292,96 @@ public class CustomUtility {
                     .build();
         }
 
+        if (!url.startsWith("http"))
+            url = "https://" + url;
         okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
+
+        Runnable runOnFailure = () -> {
+            if (context instanceof Activity) {
+                ((Activity) context).runOnUiThread(() -> {
+                    target.setImageResource(R.drawable.ic_broken_image);
+                    if (onFail_onSuccess.length > 0 && onFail_onSuccess[0] != null) {
+                        onFail_onSuccess[0].run();
+                    }
+                });
+            }
+        };
+
+        Runnable runOnSuccess = () -> {
+            if (context instanceof Activity) {
+                ((Activity) context).runOnUiThread(() -> {
+                    if (onFail_onSuccess.length > 1 && onFail_onSuccess[1] != null) {
+                        onFail_onSuccess[1].run();
+                    }
+                });
+            }
+        };
+
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                target.setImageResource(R.drawable.ic_broken_image);
+                runOnFailure.run();
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 InputStream stream = response.body().byteStream();
-                Sharp.loadInputStream(stream).into(target);
+                try {
+                    Sharp.loadInputStream(stream).into(target);
+                } catch (Exception e) {
+                    runOnFailure.run();
+                }
                 stream.close();
+                runOnSuccess.run();
             }
         });
     }
-    //  <------------------------- LoadUrlIntoImageView -------------------------
+
+    // ---------------
+
+    public static class ImageHelper {
+        public static Bitmap getRoundedCornerBitmap(Bitmap bitmap, int pixels) {
+            Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap
+                    .getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(output);
+
+            final int color = 0xff424242;
+            final Paint paint = new Paint();
+            final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+            final RectF rectF = new RectF(rect);
+            final float roundPx = pixels;
+
+            paint.setAntiAlias(true);
+            canvas.drawARGB(0, 0, 0, 0);
+            paint.setColor(color);
+            canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
+
+            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+            canvas.drawBitmap(bitmap, rect, rect, paint);
+
+            return output;
+        }
+    }
+
+    public static void roundImageview(ImageView imageView, int dp) {
+        int radius;
+        if (dp == -1) {
+            imageView.measure(0, 0);
+            radius = Math.max(imageView.getMeasuredWidth(), imageView.getMeasuredHeight()) / 2;
+        } else
+            radius = dpToPx(dp);
+
+//        Bitmap oldBitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+        imageView.setDrawingCacheEnabled(true);
+        imageView.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        imageView.layout(0, 0,
+                imageView.getMeasuredWidth(), imageView.getMeasuredHeight());
+        imageView.buildDrawingCache(true);
+        Bitmap oldBitmap = Bitmap.createBitmap(imageView.getDrawingCache());
+        imageView.setDrawingCacheEnabled(false);
+        imageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(oldBitmap, radius));
+    }
+    //  <------------------------- ImageView -------------------------
 
 }
