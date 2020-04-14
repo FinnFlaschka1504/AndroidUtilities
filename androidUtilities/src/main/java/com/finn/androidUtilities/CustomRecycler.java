@@ -223,12 +223,12 @@ public class CustomRecycler<T> {
         return this;
     }
 
-    public CustomRecycler<T> addSubOnLongClickListener(int viewId, OnClickListener<T> onClickListener, boolean ripple) {
+    public CustomRecycler<T> addSubOnLongClickListener(@IdRes int viewId, OnClickListener<T> onClickListener, boolean ripple) {
         idSubOnLongClickListenerMap.put(viewId, new Pair<>(onClickListener, ripple));
         return this;
     }
 
-    public CustomRecycler<T> addSubOnLongClickListener(int viewId, OnClickListener<T> onClickListener) {
+    public CustomRecycler<T> addSubOnLongClickListener(@IdRes int viewId, OnClickListener<T> onClickListener) {
         idSubOnLongClickListenerMap.put(viewId, new Pair<>(onClickListener, false));
         return this;
     }
@@ -804,14 +804,14 @@ public class CustomRecycler<T> {
                     view.setOnClickListener(view2 -> {
                         int index = recycler.getChildAdapterPosition(v);
                         entry.getValue().first.runOnClickListener(CustomRecycler.this, v, dataSet.get(index), index);
-                        view.setFocusable(true);
-                        view.setClickable(true);
-                        if (entry.getValue().second) {
-                            TypedValue outValue = new TypedValue();
-                            context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
-                            view.setBackgroundResource(outValue.resourceId);
-                        }
                     });
+                    view.setFocusable(true);
+                    view.setClickable(true);
+                    if (entry.getValue().second) {
+                        TypedValue outValue = new TypedValue();
+                        context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+                        view.setBackgroundResource(outValue.resourceId);
+                    }
                 }
             }
 
@@ -821,15 +821,15 @@ public class CustomRecycler<T> {
                     view.setOnLongClickListener(view2 -> {
                         int index = recycler.getChildAdapterPosition(v);
                         entry.getValue().first.runOnClickListener(CustomRecycler.this, v, dataSet.get(index), index);
-                        view.setFocusable(true);
-                        view.setClickable(true);
-                        if (entry.getValue().second) {
-                            TypedValue outValue = new TypedValue();
-                            context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
-                            view.setBackgroundResource(outValue.resourceId);
-                        }
                         return true;
                     });
+                    view.setFocusable(true);
+                    view.setClickable(true);
+                    if (entry.getValue().second) {
+                        TypedValue outValue = new TypedValue();
+                        context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+                        view.setBackgroundResource(outValue.resourceId);
+                    }
                 }
             }
 

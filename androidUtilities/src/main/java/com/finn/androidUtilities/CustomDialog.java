@@ -266,23 +266,24 @@ public class CustomDialog {
         return this;
     }
 
-    public CustomDialog enableDoubleClickOutsideToDismiss(@Nullable CustomUtility.GenericReturnInterface<CustomDialog, Boolean> enableDoubleClick, String... onFirstClick_onSecondClick) {
+    public CustomDialog enableDoubleClickOutsideToDismiss(@Nullable CustomUtility.GenericReturnInterface<CustomDialog, Boolean> enableDoubleClick, String... onFirstClick_onSecondClick_onDisabled) {
         setDismissWhenClickedOutside(false);
         Helpers.DoubleClickHelper doubleClickHelper = Helpers.DoubleClickHelper.create();
-        Toast toast = Toast.makeText(context, onFirstClick_onSecondClick.length > 0 && onFirstClick_onSecondClick[0] != null ? onFirstClick_onSecondClick[0] : "Doppelklick zum Schließen", Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(context, onFirstClick_onSecondClick_onDisabled.length > 0 && onFirstClick_onSecondClick_onDisabled[0] != null ? onFirstClick_onSecondClick_onDisabled[0] : "Doppelklick zum Schließen", Toast.LENGTH_SHORT);
         Runnable runCheck = () -> {
-            if (doubleClickHelper.check() || (enableDoubleClick != null && !enableDoubleClick.runGenericInterface(this))) {
+            boolean isDoubleClickEnabled = enableDoubleClick == null || enableDoubleClick.runGenericInterface(this);
+            if (doubleClickHelper.check() || !isDoubleClickEnabled) {
                 dismiss();
                 toast.cancel();
-                if (onFirstClick_onSecondClick.length > 1)
-                    Toast.makeText(context, onFirstClick_onSecondClick[1], Toast.LENGTH_SHORT).show();
+                if (!isDoubleClickEnabled && onFirstClick_onSecondClick_onDisabled.length > 2)
+                    Toast.makeText(context, onFirstClick_onSecondClick_onDisabled[2], Toast.LENGTH_SHORT).show();
+                else if (onFirstClick_onSecondClick_onDisabled.length > 1)
+                    Toast.makeText(context, onFirstClick_onSecondClick_onDisabled[1], Toast.LENGTH_SHORT).show();
             } else
                 toast.show();
         };
 
-        toast.getView().findViewById(android.R.id.message).setOnClickListener(v -> {
-            runCheck.run();
-        });
+        toast.getView().findViewById(android.R.id.message).setOnClickListener(v -> runCheck.run());
 
         setOnTouchOutside(customDialog -> runCheck.run());
         return this;

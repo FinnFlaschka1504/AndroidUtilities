@@ -17,7 +17,7 @@ public class CustomPopupWindow {
         }
     }
     public enum POSITION_RELATIVE_TO_ANCHOR{
-        DEFAULT, TOP, LEFT
+        DEFAULT, TOP, LEFT, CENTER_VERTICAL
     }
     private boolean dimBackground = true;
     private boolean centerOnScreen;
@@ -30,6 +30,12 @@ public class CustomPopupWindow {
     private POSITION_RELATIVE_TO_ANCHOR positionRelativeToAnchor = POSITION_RELATIVE_TO_ANCHOR.DEFAULT;
     private int xoff;
     private int yoff;
+
+    public CustomPopupWindow(Context context, View anchor, View view) {
+        popupWindow = new PopupWindow(context);
+        this.anchor = anchor;
+        this.view = view;
+    }
 
     public CustomPopupWindow(View anchor, View view) {
         popupWindow = new PopupWindow(widthParam.value, heightParam.value);
@@ -101,7 +107,17 @@ public class CustomPopupWindow {
                     break;
                 case TOP:
                     xoff = 0;
-                    yoff = -view.getMinimumHeight();
+                    view.measure(0, 0);
+                    yoff = -view.getMeasuredHeight();
+                    break;
+                case CENTER_VERTICAL:
+                    xoff = 0;
+                    if (view.getHeight() == 0)
+                        view.measure(0, 0);
+                    if (anchor.getHeight() == 0)
+                        anchor.measure(0,0);
+                    yoff = -(view.getMeasuredHeight() / 2 + anchor.getMeasuredHeight() / 2);
+                    String BREAKPOINT = null;
                     break;
             }
         }

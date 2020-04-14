@@ -5,7 +5,6 @@ import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
@@ -29,8 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static com.finn.androidUtilities.Helpers.SpannableStringHelper.SPAN_TYPE;
 
 public class Helpers {
     //  ----- TextInput ----->
@@ -113,31 +110,33 @@ public class Helpers {
             return this;
         }
 
-        public void setValidation(TextInputLayout textInputLayout, String regEx) {
+        public TextInputHelper setValidation(TextInputLayout textInputLayout, String regEx) {
             inputValidationMap.get(textInputLayout).setRegEx(regEx);
+            return this;
         }
 
         public TextInputHelper addValidator(@NonNull TextInputLayout... textInputLayouts) {
             for (TextInputLayout textInputLayout : textInputLayouts) {
                 inputValidationMap.put(textInputLayout, new Validator(textInputLayout));
-                applyValidationListerner(textInputLayout);
+                applyValidationListener(textInputLayout);
                 if (textInputLayout.getEditText().getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE))
                     textInputLayout.getEditText().setInputType(defaultInputType.code);
             }
             return this;
         }
 
-        public void applyValidationListeners(TextInputLayout... inputLayouts) {
+        public TextInputHelper applyValidationListeners(TextInputLayout... inputLayouts) {
             if (inputLayouts.length > 0) {
                 for (TextInputLayout inputLayout : inputLayouts)
-                    applyValidationListerner(inputLayout);
+                    applyValidationListener(inputLayout);
             } else {
                 for (TextInputLayout inputLayout : inputValidationMap.keySet())
-                    applyValidationListerner(inputLayout);
+                    applyValidationListener(inputLayout);
             }
+            return this;
         }
 
-        private void applyValidationListerner(TextInputLayout textInputLayout) {
+        private TextInputHelper applyValidationListener(TextInputLayout textInputLayout) {
             textInputLayout.getEditText().addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -154,6 +153,7 @@ public class Helpers {
                     validate(textInputLayout);
                 }
             });
+            return this;
         }
 
         public boolean isValid() {

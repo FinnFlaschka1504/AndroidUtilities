@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,6 +22,7 @@ import android.widget.Toast;
 import com.finn.androidUtilities.CustomDialog;
 import com.finn.androidUtilities.CustomInternetHelper;
 import com.finn.androidUtilities.CustomList;
+import com.finn.androidUtilities.CustomPopupWindow;
 import com.finn.androidUtilities.CustomRecycler;
 import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
@@ -48,6 +50,11 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         Log.d("TEST", "onCreate: test");
 
         setContentView(R.layout.activity_test);
+
+        CustomDialog.Builder(this)
+                .setTitle("Double Click Test")
+                .enableDoubleClickOutsideToDismiss(customDialog -> false, "eins", "zwei", "drei")
+                .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);
         RecyclerView recycler = findViewById(R.id.recycler);
@@ -150,7 +157,12 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 })
                 .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler, objectList) -> {
                 }, true)
-                .setOrientation(CustomRecycler.ORIENTATION.HORIZONTAL)
+//                .setOrientation(CustomRecycler.ORIENTATION.HORIZONTAL)
+//                .addSubOnClickListener(R.id.listItem_player_drag, (customRecycler, itemView, playerExpandable, index) -> {
+//                    Toast.makeText(this, playerExpandable.getName(), Toast.LENGTH_SHORT).show();
+//                    View inflate = LayoutInflater.from(this).inflate(R.layout.popup_set_amount, null);
+//                    new CustomPopupWindow(this, itemView, inflate).show();
+//                }, true)
                 .generate();
 
 
