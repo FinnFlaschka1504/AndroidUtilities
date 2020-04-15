@@ -748,7 +748,7 @@ public class CustomUtility {
     }
     //  <----- Pixels -----
 
-
+    //  ------------------------- Text ------------------------->
     public static void sendText(AppCompatActivity activity, String text) {
         Intent waIntent = new Intent(Intent.ACTION_SEND);
         waIntent.setType("text/plain");
@@ -760,6 +760,59 @@ public class CustomUtility {
         }
 
     }
+
+    public static String removeTrailingZeros(String s){
+        return (s.contains(".") || s.contains(",")) ? s.replaceAll("0*$", "").replaceAll("[,.]$", "") : s;
+    }
+
+    public static Pair<Integer,Integer> getTextWithAndHeight(Context context, String text, int size, int... typefaces){
+        TextView textView = new TextView(context);
+        textView.setTextSize(size);
+        for (int typeface : typefaces)
+            textView.setTypeface(textView.getTypeface(), typeface);
+        Rect bounds = new Rect();
+        Paint textPaint = textView.getPaint();
+        textPaint.getTextBounds(text, 0, text.length(), bounds);
+        int width = bounds.width();
+        int height = bounds.height();
+        return Pair.create(width, height);
+    }
+
+    public static String getEllipsedString(Context context, String text, int maxWidth_px, int size, int... typefaces) {
+        TextView textView = new TextView(context);
+        textView.setTextSize(size);
+        for (int typeface : typefaces)
+            textView.setTypeface(textView.getTypeface(), typeface);
+        Paint textPaint = textView.getPaint();
+        for (int i = 0; i < text.length(); i++) {
+            Rect bounds = new Rect();
+            String sub = CustomUtility.subString(text, 0, i == 0 ? text.length() : -i) + (i == 0 ? "" : "…");
+            textPaint.getTextBounds(sub, 0, sub.length(), bounds);
+            int width = bounds.width();
+            if (width < maxWidth_px)
+                return sub;
+        }
+        return "";
+    }
+
+    public static String subString(String text, int start, int ende){
+        if (start < 0)
+            start = text.length() + start;
+        if (ende < 0)
+            ende = text.length() + ende;
+        return text.substring(start, ende);
+    }
+
+    public static String subString(String text, int start){
+        if (start < 0)
+            start = text.length() + start;
+        return text.substring(start);
+    }
+
+    public static String stringReplace(String source, int start, int end, String replacement) {
+        return source.substring(0, start) + replacement + source.substring(end);
+    }
+    //  <------------------------- Text -------------------------
 
     public static <T> Pair<T, T> swap(T t1, T t2) {
         T temp = t1;
@@ -1100,8 +1153,12 @@ public class CustomUtility {
 
     // ---
 
-    public static boolean stringExists(String s) {
-        return s != null && !s.isEmpty();
+    public static boolean stringExists(CharSequence s) {
+        return s != null && !s.toString().trim().isEmpty();
+    }
+
+    public static CharSequence stringExistsOrElse(CharSequence s, String orElse) {
+        return stringExists(s) ? s : orElse;
     }
     //  <------------------------- EasyLogic -------------------------
 

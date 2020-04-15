@@ -80,6 +80,7 @@ public class CustomDialog {
     private boolean firstTime = true;
     private boolean removeLastDivider;
     private boolean titleBackButton;
+    private OnDialogCallback titleBackButton_clickListener;
     private CustomList<Pair<Boolean,OnDialogCallback>> onDismissListenerList = new CustomList<>();
     private CustomList<Pair<Boolean,OnDialogCallback>> onShowListenerList = new CustomList<>();
     private boolean removeBackground;
@@ -232,6 +233,12 @@ public class CustomDialog {
 
     public CustomDialog enableTitleBackButton() {
         this.titleBackButton = true;
+        return this;
+    }
+
+    public CustomDialog enableTitleBackButton(OnDialogCallback onButtonClick) {
+        this.titleBackButton = true;
+        this.titleBackButton_clickListener = onButtonClick;
         return this;
     }
 
@@ -1055,7 +1062,12 @@ public class CustomDialog {
 
         if (titleBackButton) {
             ImageView dialog_custom_title_backButton = dialog.findViewById(R.id.dialog_custom_title_backButton);
-            dialog_custom_title_backButton.setOnClickListener(v -> dismiss());
+            dialog_custom_title_backButton.setOnClickListener(v -> {
+                if (titleBackButton_clickListener == null)
+                    dismiss();
+                else
+                    titleBackButton_clickListener.runOnDialogCallback(this);
+            });
             dialog_custom_title_backButton.setVisibility(View.VISIBLE);
             TextView dialog_custom_title = dialog.findViewById(R.id.dialog_custom_title);
 

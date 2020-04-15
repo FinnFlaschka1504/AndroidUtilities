@@ -54,6 +54,10 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         CustomDialog.Builder(this)
                 .setTitle("Double Click Test")
                 .enableDoubleClickOutsideToDismiss(customDialog -> false, "eins", "zwei", "drei")
+                .enableTitleBackButton(customDialog -> {
+                    Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show();
+                    customDialog.dismiss();
+                })
                 .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);
