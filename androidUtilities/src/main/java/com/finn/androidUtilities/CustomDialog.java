@@ -805,7 +805,7 @@ public class CustomDialog {
         }
 
         public boolean isActionButton() {
-            return actionButton || CustomUtility.boolOr(buttonType, BUTTON_TYPE.OK_BUTTON, BUTTON_TYPE.SAVE_BUTTON, BUTTON_TYPE.YES_BUTTON, BUTTON_TYPE.CANCEL_BUTTON);
+            return actionButton || CustomUtility.boolOr(buttonType, BUTTON_TYPE.OK_BUTTON, BUTTON_TYPE.SAVE_BUTTON, BUTTON_TYPE.YES_BUTTON, BUTTON_TYPE.CLOSE_BUTTON);
         }
 
         public boolean isImageButton() {

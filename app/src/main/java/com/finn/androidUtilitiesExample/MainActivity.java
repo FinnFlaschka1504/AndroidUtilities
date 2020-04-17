@@ -58,18 +58,23 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                     Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show();
                     customDialog.dismiss();
                 })
-                .addButton(R.drawable.ic_drag, customDialog -> {
-                    CustomUtility.ifNotNull(customDialog.getActionButton(), buttonHelper -> Toast.makeText(this, "ja", Toast.LENGTH_SHORT).show(),() -> Toast.makeText(this, "nein", Toast.LENGTH_SHORT).show() );
-                })
-                .colorLastAddedButton()
+//                .addButton(R.drawable.ic_drag, customDialog -> {
+//                    CustomUtility.ifNotNull(customDialog.getActionButton(), buttonHelper -> Toast.makeText(this, "ja", Toast.LENGTH_SHORT).show(),() -> Toast.makeText(this, "nein", Toast.LENGTH_SHORT).show() );
+//                })
+//                .colorLastAddedButton()
+////                .disableLastAddedButton()
+//                .addButton("test")
+//                .colorLastAddedButton()
+////                .disableLastAddedButton()
+//                .addButton(R.drawable.ic_drag)
+////                .disableLastAddedButton()
+//                .addButton("test")
+////                .disableLastAddedButton()
+//                .alignPreviousButtonsLeft()
+                .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
+                .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON)
                 .disableLastAddedButton()
-                .addButton("test")
-                .markLastAddedButtonAsActionButton()
-                .disableLastAddedButton()
-                .addButton(R.drawable.ic_drag)
-                .disableLastAddedButton()
-                .addButton("test")
-                .disableLastAddedButton()
+                .setSetViewContent((customDialog, view, reload) -> customDialog.getActionButton().setEnabled(true))
                 .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);
