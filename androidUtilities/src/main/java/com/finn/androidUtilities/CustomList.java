@@ -113,18 +113,20 @@ public class CustomList<E> extends ArrayList<E> {
     //  <------------------------- Checks -------------------------
 
     //  --------------- Recycle --------------->
-    public E next(E e) {
+    public E next(E e, boolean wrap) {
         if (isEmpty())
             return null;
 
         if (isLast(e))
-            return get(0);
+            return wrap ? get(0) : null;
         else
             return get(indexOf(e) + 1);
     }
 
-    public E previous(E e) {
+    public E previous(E e, boolean wrap) {
         if (isEmpty())
+            return null;
+        if (!wrap && isFirst(e))
             return null;
         return get(indexOf(e) - 1);
     }

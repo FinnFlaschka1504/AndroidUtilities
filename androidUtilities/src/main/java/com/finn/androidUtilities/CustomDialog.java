@@ -49,7 +49,7 @@ public class CustomDialog {
         YES_BUTTON("Ja", R.drawable.ic_check), NO_BUTTON("Nein", R.drawable.ic_cancel), SAVE_BUTTON("Speichern", R.drawable.ic_save)
         , CANCEL_BUTTON("Abbrechen", R.drawable.ic_cancel), BACK_BUTTON("Zurück", R.drawable.ic_arrow_back), OK_BUTTON("Ok", R.drawable.ic_check)
         , DELETE_BUTTON("Löschen", R.drawable.ic_delete), GO_TO_BUTTON("Gehe zu", R.drawable.ic_search), EDIT_BUTTON("Bearbeiten", R.drawable.ic_edit)
-        , DETAIL_BUTTON("Details", R.drawable.ic_info), ADD_BUTTON("Hinzufügen", R.drawable.ic_add); // ToDo: Button oben Links & Rechts
+        , DETAIL_BUTTON("Details", R.drawable.ic_info), ADD_BUTTON("Hinzufügen", R.drawable.ic_add), CLOSE_BUTTON("Schließen", R.drawable.ic_cancel); // ToDo: Button oben Links & Rechts
 
         String label;
         int iconId;
@@ -638,6 +638,7 @@ public class CustomDialog {
         private String label;
         private Integer iconId;
         private BUTTON_TYPE buttonType;
+        private boolean actionButton;
         private OnClick onClick;
         private boolean dismiss;
         private OnClick onLongClick;
@@ -672,7 +673,7 @@ public class CustomDialog {
         }
 
         public View generateButton() {
-            View button;
+//            View button;
             if (iconId == null) {
                 if ((coloredActionButtons && isActionButton()) || colored)
                     button = new Button(context, null, 0, R.style.ActionButtonStyle);
@@ -686,9 +687,9 @@ public class CustomDialog {
                 if (colored) {
                     imageView.setBackgroundResource(R.drawable.rounded_button_background);
 //                    imageView.setColorFilter(context.getColor(R.color.colorButtonForeground));
-                    CustomUtility.tintImageButton(imageView, true);
+                    CustomUtility.tintImageButton(imageView, true, context, iconId);
                 } else
-                    CustomUtility.tintImageButton(imageView, false);
+                    CustomUtility.tintImageButton(imageView, false, context, iconId);
             }
 
             if (stackButtons || expandButtons) {
@@ -714,7 +715,7 @@ public class CustomDialog {
                 ((Button) button).setAllCaps(false);
 
             if (disabled)
-                button.setEnabled(false);
+                setEnabled(false); //ohne Farbe, Text und disabled: dark-36ffffff; light-3a000000
 
             if (hidden)
                 button.setVisibility(View.GONE);
@@ -735,14 +736,14 @@ public class CustomDialog {
 
 
             if (isImageButton()) {
-                ButtonHelper next = buttonHelperList.next(this);
+                ButtonHelper next = buttonHelperList.next(this, true);
                 if (next != null && !buttonHelperList.isLast(this) && next.isImageButton())
                     CustomUtility.setMargins(button, -1, 7, 7, 7);
                 else
                     CustomUtility.setMargins(button, -1, 7);
             }
 
-            this.button = button;
+//            this.button = button;
 
             View.OnClickListener onClickListener = v -> {
                 if (onClick != null)
@@ -790,7 +791,7 @@ public class CustomDialog {
         public ButtonHelper setEnabled(boolean enabled) {
             button.setEnabled(enabled);
             if (button instanceof ImageView)
-                CustomUtility.tintImageButton((ImageView) button, colored);
+                CustomUtility.tintImageButton((ImageView) button, colored, context, iconId);
             return this;
         }
 
@@ -804,7 +805,7 @@ public class CustomDialog {
         }
 
         public boolean isActionButton() {
-            return (buttonType == BUTTON_TYPE.OK_BUTTON ||buttonType == BUTTON_TYPE.SAVE_BUTTON || buttonType == BUTTON_TYPE.YES_BUTTON);
+            return actionButton || CustomUtility.boolOr(buttonType, BUTTON_TYPE.OK_BUTTON, BUTTON_TYPE.SAVE_BUTTON, BUTTON_TYPE.YES_BUTTON, BUTTON_TYPE.CANCEL_BUTTON);
         }
 
         public boolean isImageButton() {
@@ -889,7 +890,6 @@ public class CustomDialog {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.hidden = true, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
-
         return this;
     }
     public CustomDialog disableLastAddedButton(){
@@ -916,6 +916,12 @@ public class CustomDialog {
             buttonHelper.doubleClickMessage = message;
             buttonHelper.enableDoubleClick = enableDoubleClick;
         }, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
+        return this;
+    }
+    public CustomDialog markLastAddedButtonAsActionButton() {
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.actionButton = true, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
         return this;

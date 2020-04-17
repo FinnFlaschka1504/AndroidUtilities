@@ -9,5 +9,6 @@
 
     <color name="colorDisabledButtonBackground">#494949</color>
     <color name="colorButtonForeground">#1C030C</color>
-    <color name="colorDisabledButtonForeground">#808080</color>
+    <color name="colorDisabledButtonForeground">#24ffffff</color>
+    <color name="colorDisabledButtonForegroundColored">#3affffff</color>
 </resources>

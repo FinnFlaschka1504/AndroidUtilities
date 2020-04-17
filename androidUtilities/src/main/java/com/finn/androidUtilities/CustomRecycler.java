@@ -12,7 +12,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Handler;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.GestureDetector;
@@ -1572,14 +1571,14 @@ public class CustomRecycler<T> {
                 .addButton("Zurück", customDialog1 -> {
                     if (filterdObjectList.isEmpty())
                         return;
-                    currentObject[0] = filterdObjectList.previous(currentObject[0]);
+                    currentObject[0] = filterdObjectList.previous(currentObject[0], true);
                     customDialog1.reloadView();
                 }, prevButtonId, false)
                 .hideLastAddedButton()
                 .addButton("Weiter", customDialog1 -> {
                     if (filterdObjectList.isEmpty())
                         return;
-                    currentObject[0] = filterdObjectList.next(currentObject[0]);
+                    currentObject[0] = filterdObjectList.next(currentObject[0], true);
                     customDialog1.reloadView();
                 }, nextButtonId,false)
                 .hideLastAddedButton()

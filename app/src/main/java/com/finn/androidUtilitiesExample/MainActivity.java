@@ -58,6 +58,18 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                     Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show();
                     customDialog.dismiss();
                 })
+                .addButton(R.drawable.ic_drag, customDialog -> {
+                    CustomUtility.ifNotNull(customDialog.getActionButton(), buttonHelper -> Toast.makeText(this, "ja", Toast.LENGTH_SHORT).show(),() -> Toast.makeText(this, "nein", Toast.LENGTH_SHORT).show() );
+                })
+                .colorLastAddedButton()
+                .disableLastAddedButton()
+                .addButton("test")
+                .markLastAddedButtonAsActionButton()
+                .disableLastAddedButton()
+                .addButton(R.drawable.ic_drag)
+                .disableLastAddedButton()
+                .addButton("test")
+                .disableLastAddedButton()
                 .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);

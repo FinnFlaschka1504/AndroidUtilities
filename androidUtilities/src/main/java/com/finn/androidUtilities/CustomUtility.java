@@ -12,8 +12,10 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -25,6 +27,7 @@ import android.os.Handler;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Pair;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -43,6 +46,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -493,13 +497,19 @@ public class CustomUtility {
             return String.format(Locale.GERMANY, "%.2f €", amount);
     }
 
-    public static void tintImageButton(@NonNull ImageView button, boolean colored) {
+    public static void tintImageButton(@NonNull ImageView button, boolean colored, Context context, int iconId) {
+        Drawable drawable = ContextCompat.getDrawable(context, iconId).mutate();
         ColorStateList colours;
         if (colored)
             colours = button.getResources().getColorStateList(R.color.button_state_list_colored, null);
         else
-            colours = button.getResources().getColorStateList(R.color.button_state_list, null);
-        button.setColorFilter(colours.getColorForState(button.getDrawableState(), Color.GREEN));
+            colours = button.getResources().getColorStateList(R.color.button_state_list_image, null);
+        button.setColorFilter(colours.getColorForState(button.getDrawableState(), Color.GREEN), PorterDuff.Mode.SRC_IN);
+//        new PorterDuffColorFilter(ContextCompat.getColor(context, R.color.color_black), PorterDuff.Mode.SRC_ATOP);
+//        new ColorFilter()
+//        drawable.setColorFilter(colours.getColorForState(button.getDrawableState(), Color.GREEN));
+//        TypedValue typedValue = new TypedValue();
+//        context.getTheme().res
     }
 
     //  --------------- OnClickListener --------------->
@@ -1157,7 +1167,7 @@ public class CustomUtility {
         return s != null && !s.toString().trim().isEmpty();
     }
 
-    public static CharSequence stringExistsOrElse(CharSequence s, String orElse) {
+    public static <T extends CharSequence> T stringExistsOrElse(T s, T orElse) {
         return stringExists(s) ? s : orElse;
     }
     //  <------------------------- EasyLogic -------------------------
