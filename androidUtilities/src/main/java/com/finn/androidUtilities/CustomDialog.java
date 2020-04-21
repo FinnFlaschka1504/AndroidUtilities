@@ -129,7 +129,7 @@ public class CustomDialog {
 
     public CustomDialog setText(CharSequence text) {
         if (!firstTime)
-            ((TextView) dialog.findViewById(R.id.dialog_custom_text)).setText(this.text);
+            ((TextView) dialog.findViewById(R.id.dialog_custom_text)).setText(text);
         this.text = text;
         return this;
     }
