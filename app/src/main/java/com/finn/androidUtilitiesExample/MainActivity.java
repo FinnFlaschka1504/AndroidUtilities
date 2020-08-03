@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
-    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(25).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
+    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(0).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
     CustomRecycler<CustomRecycler.Expandable<Player>> recycler;
     List<Pair<String, String>> pairList;
 
@@ -51,7 +51,20 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
         setContentView(R.layout.activity_test);
 
+        int aButtonId = View.generateViewId();
+        int bButtonId = View.generateViewId();
+        int cButtonId = View.generateViewId();
+        int dButtonId = View.generateViewId();
+        int eButtonId = View.generateViewId();
+        int fButtonId = View.generateViewId();
+        int gButtonId = View.generateViewId();
+        int hButtonId = View.generateViewId();
+        int iButtonId = View.generateViewId();
+        int jButtonId = View.generateViewId();
+
         CustomDialog.Builder(this)
+                .setView(R.layout.dialog_filter_by_rating)
+//                .setDimensionsFullscreen()
                 .setTitle("Double Click Test")
                 .enableDoubleClickOutsideToDismiss(customDialog -> false, "eins", "zwei", "drei")
                 .enableTitleBackButton(customDialog -> {
@@ -71,10 +84,37 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                .addButton("test")
 ////                .disableLastAddedButton()
 //                .alignPreviousButtonsLeft()
-                .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
-                .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON)
-                .disableLastAddedButton()
-                .setSetViewContent((customDialog, view, reload) -> customDialog.getActionButton().setEnabled(true))
+//                .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
+//                .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON)
+//                .disableLastAddedButton()
+                .addButton("Eins", customDialog -> customDialog.getButton(aButtonId).setVisibility(View.GONE), aButtonId, false)
+                .addButton("Zwei", customDialog -> customDialog.getButton(bButtonId).setVisibility(View.GONE), bButtonId, false)
+                .addButton("Drei", customDialog -> customDialog.getButton(cButtonId).setVisibility(View.GONE), cButtonId, false)
+                .alignPreviousButtonsLeft()
+                .addButton(R.drawable.ic_add, customDialog -> customDialog.getButton(dButtonId).setVisibility(View.GONE), dButtonId, false)
+//                .addButton("Vier", customDialog -> customDialog.getButton(dButtonId).setVisibility(View.GONE), dButtonId, false)
+//                .hideLastAddedButton()
+                .addButton(R.drawable.ic_arrow_down, customDialog -> customDialog.getButton(eButtonId).setVisibility(View.GONE), eButtonId, false)
+//                .addButton("Fünf", customDialog -> customDialog.getButton(eButtonId).setVisibility(View.GONE), eButtonId, false)
+//                .hideLastAddedButton()
+                .addButton(R.drawable.ic_broken_image, customDialog -> customDialog.getButton(fButtonId).setVisibility(View.GONE), fButtonId, false)
+//                .addButton("Sechs", customDialog -> customDialog.getButton(fButtonId).setVisibility(View.GONE), fButtonId, false)
+//                .hideLastAddedButton()
+                .addButton("Sieben", customDialog -> {
+                    customDialog.getButton(hButtonId).setVisibility(View.VISIBLE);
+                    customDialog.getButton(gButtonId).setVisibility(View.GONE);
+                }, gButtonId, false)
+//                .hideLastAddedButton()
+                .addButton("Acht", customDialog -> {
+                    customDialog.getButton(gButtonId).setVisibility(View.VISIBLE);
+                    customDialog.getButton(hButtonId).setVisibility(View.GONE);
+                }, hButtonId, false)
+                .hideLastAddedButton()
+                .addButton("Neun", customDialog -> customDialog.getButton(iButtonId).setVisibility(View.GONE), iButtonId, false)
+                .hideLastAddedButton()
+                .addButton("Zehn", customDialog -> customDialog.getButton(jButtonId).setVisibility(View.GONE), jButtonId, false)
+                .hideLastAddedButton()
+//                .setSetViewContent((customDialog, view, reload) -> customDialog.getActionButton().setEnabled(true))
                 .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);

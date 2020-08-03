@@ -32,6 +32,7 @@ import androidx.annotation.Nullable;
 
 import com.google.android.material.textfield.TextInputLayout;
 
+
 import org.apmem.tools.layouts.FlowLayout;
 
 import java.util.ArrayList;
@@ -147,6 +148,11 @@ public class CustomDialog {
 
     public CustomDialog setView(View view) {
         this.view = view;
+        return this;
+    }
+
+    public CustomDialog setView(SetView setView) {
+        this.view = setView.runSetView(this);
         return this;
     }
 
@@ -395,6 +401,10 @@ public class CustomDialog {
 
     public interface OnBackPressedListener {
         boolean runOnBackPressedListener(CustomDialog customDialog);
+    }
+
+    public interface SetView {
+        View runSetView(CustomDialog customDialog);
     }
     //  <----- Interfaces -----
 
@@ -797,6 +807,7 @@ public class CustomDialog {
 
         public ButtonHelper setVisibility(int visibility) {
             button.setVisibility(visibility);
+            alignButtons();
             return this;
         }
 
@@ -810,6 +821,19 @@ public class CustomDialog {
 
         public boolean isImageButton() {
             return iconId != null;
+        }
+    }
+
+    private void alignButtons() {
+        FlowLayout dialog_custom_buttonLayout_left = dialog.findViewById(R.id.dialog_custom_buttonLayout_left);
+        FlowLayout dialog_custom_buttonLayout_right = dialog.findViewById(R.id.dialog_custom_buttonLayout_right);
+        if (dialog_custom_buttonLayout_left != null && dialog_custom_buttonLayout_right != null) {
+            LinearLayout.LayoutParams layoutParams_left = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    buttonHelperList.stream().filter(buttonHelper -> !buttonHelper.alignLeft && buttonHelper.getButton().getVisibility() != View.GONE).mapToInt(value -> value.isImageButton() ? 1 : 2).sum());
+            LinearLayout.LayoutParams layoutParams_right = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    buttonHelperList.stream().filter(buttonHelper -> buttonHelper.alignLeft && buttonHelper.getButton().getVisibility() != View.GONE).mapToInt(value -> value.isImageButton() ? 1 : 2).sum());
+            dialog_custom_buttonLayout_left.setLayoutParams(layoutParams_left);
+            dialog_custom_buttonLayout_right.setLayoutParams(layoutParams_right);
         }
     }
 
@@ -1043,16 +1067,7 @@ public class CustomDialog {
         }
 
         buttonHelperList.forEach(ButtonHelper::generateButton);
-        FlowLayout dialog_custom_buttonLayout_left = dialog.findViewById(R.id.dialog_custom_buttonLayout_left);
-        FlowLayout dialog_custom_buttonLayout_right = dialog.findViewById(R.id.dialog_custom_buttonLayout_right);
-        if (dialog_custom_buttonLayout_left != null && dialog_custom_buttonLayout_right != null) {
-            LinearLayout.LayoutParams layoutParams_left =
-                    new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, dialog_custom_buttonLayout_right.getChildCount());
-            LinearLayout.LayoutParams layoutParams_right =
-                    new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, dialog_custom_buttonLayout_left.getChildCount());
-            dialog_custom_buttonLayout_left.setLayoutParams(layoutParams_left);
-            dialog_custom_buttonLayout_right.setLayoutParams(layoutParams_right);
-        }
+        alignButtons();
 
         if (showEdit) {
             applyEdit();
