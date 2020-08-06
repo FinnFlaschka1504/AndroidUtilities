@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
-    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(0).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
+    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(500).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
     CustomRecycler<CustomRecycler.Expandable<Player>> recycler;
     List<Pair<String, String>> pairList;
 
@@ -49,73 +49,74 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
         Log.d("TEST", "onCreate: test");
 
-        setContentView(R.layout.activity_test);
+        setContentView(R.layout.activity_main);
+//        setSupportActionBar(findViewById(R.id.toolbar));
 
-        int aButtonId = View.generateViewId();
-        int bButtonId = View.generateViewId();
-        int cButtonId = View.generateViewId();
-        int dButtonId = View.generateViewId();
-        int eButtonId = View.generateViewId();
-        int fButtonId = View.generateViewId();
-        int gButtonId = View.generateViewId();
-        int hButtonId = View.generateViewId();
-        int iButtonId = View.generateViewId();
-        int jButtonId = View.generateViewId();
-
-        CustomDialog.Builder(this)
-                .setView(R.layout.dialog_filter_by_rating)
-//                .setDimensionsFullscreen()
-                .setTitle("Double Click Test")
-                .enableDoubleClickOutsideToDismiss(customDialog -> false, "eins", "zwei", "drei")
-                .enableTitleBackButton(customDialog -> {
-                    Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show();
-                    customDialog.dismiss();
-                })
-//                .addButton(R.drawable.ic_drag, customDialog -> {
-//                    CustomUtility.ifNotNull(customDialog.getActionButton(), buttonHelper -> Toast.makeText(this, "ja", Toast.LENGTH_SHORT).show(),() -> Toast.makeText(this, "nein", Toast.LENGTH_SHORT).show() );
+//        int aButtonId = View.generateViewId();
+//        int bButtonId = View.generateViewId();
+//        int cButtonId = View.generateViewId();
+//        int dButtonId = View.generateViewId();
+//        int eButtonId = View.generateViewId();
+//        int fButtonId = View.generateViewId();
+//        int gButtonId = View.generateViewId();
+//        int hButtonId = View.generateViewId();
+//        int iButtonId = View.generateViewId();
+//        int jButtonId = View.generateViewId();
+//
+//        CustomDialog.Builder(this)
+//                .setView(R.layout.dialog_filter_by_rating)
+////                .setDimensionsFullscreen()
+//                .setTitle("Double Click Test")
+//                .enableDoubleClickOutsideToDismiss(customDialog -> false, "eins", "zwei", "drei")
+//                .enableTitleBackButton(customDialog -> {
+//                    Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show();
+//                    customDialog.dismiss();
 //                })
-//                .colorLastAddedButton()
+////                .addButton(R.drawable.ic_drag, customDialog -> {
+////                    CustomUtility.ifNotNull(customDialog.getActionButton(), buttonHelper -> Toast.makeText(this, "ja", Toast.LENGTH_SHORT).show(),() -> Toast.makeText(this, "nein", Toast.LENGTH_SHORT).show() );
+////                })
+////                .colorLastAddedButton()
+//////                .disableLastAddedButton()
+////                .addButton("test")
+////                .colorLastAddedButton()
+//////                .disableLastAddedButton()
+////                .addButton(R.drawable.ic_drag)
+//////                .disableLastAddedButton()
+////                .addButton("test")
+//////                .disableLastAddedButton()
+////                .alignPreviousButtonsLeft()
+////                .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
+////                .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON)
 ////                .disableLastAddedButton()
-//                .addButton("test")
-//                .colorLastAddedButton()
-////                .disableLastAddedButton()
-//                .addButton(R.drawable.ic_drag)
-////                .disableLastAddedButton()
-//                .addButton("test")
-////                .disableLastAddedButton()
+//                .addButton("Eins", customDialog -> customDialog.getButton(aButtonId).setVisibility(View.GONE), aButtonId, false)
+//                .addButton("Zwei", customDialog -> customDialog.getButton(bButtonId).setVisibility(View.GONE), bButtonId, false)
+//                .addButton("Drei", customDialog -> customDialog.getButton(cButtonId).setVisibility(View.GONE), cButtonId, false)
 //                .alignPreviousButtonsLeft()
-//                .setButtonConfiguration(CustomDialog.BUTTON_CONFIGURATION.OK_CANCEL)
-//                .addButton(CustomDialog.BUTTON_TYPE.OK_BUTTON)
-//                .disableLastAddedButton()
-                .addButton("Eins", customDialog -> customDialog.getButton(aButtonId).setVisibility(View.GONE), aButtonId, false)
-                .addButton("Zwei", customDialog -> customDialog.getButton(bButtonId).setVisibility(View.GONE), bButtonId, false)
-                .addButton("Drei", customDialog -> customDialog.getButton(cButtonId).setVisibility(View.GONE), cButtonId, false)
-                .alignPreviousButtonsLeft()
-                .addButton(R.drawable.ic_add, customDialog -> customDialog.getButton(dButtonId).setVisibility(View.GONE), dButtonId, false)
-//                .addButton("Vier", customDialog -> customDialog.getButton(dButtonId).setVisibility(View.GONE), dButtonId, false)
+//                .addButton(R.drawable.ic_add, customDialog -> customDialog.getButton(dButtonId).setVisibility(View.GONE), dButtonId, false)
+////                .addButton("Vier", customDialog -> customDialog.getButton(dButtonId).setVisibility(View.GONE), dButtonId, false)
+////                .hideLastAddedButton()
+//                .addButton(R.drawable.ic_arrow_down, customDialog -> customDialog.getButton(eButtonId).setVisibility(View.GONE), eButtonId, false)
+////                .addButton("Fünf", customDialog -> customDialog.getButton(eButtonId).setVisibility(View.GONE), eButtonId, false)
+////                .hideLastAddedButton()
+//                .addButton(R.drawable.ic_broken_image, customDialog -> customDialog.getButton(fButtonId).setVisibility(View.GONE), fButtonId, false)
+////                .addButton("Sechs", customDialog -> customDialog.getButton(fButtonId).setVisibility(View.GONE), fButtonId, false)
+////                .hideLastAddedButton()
+//                .addButton("Sieben", customDialog -> {
+//                    customDialog.getButton(hButtonId).setVisibility(View.VISIBLE);
+//                    customDialog.getButton(gButtonId).setVisibility(View.GONE);
+//                }, gButtonId, false)
+////                .hideLastAddedButton()
+//                .addButton("Acht", customDialog -> {
+//                    customDialog.getButton(gButtonId).setVisibility(View.VISIBLE);
+//                    customDialog.getButton(hButtonId).setVisibility(View.GONE);
+//                }, hButtonId, false)
 //                .hideLastAddedButton()
-                .addButton(R.drawable.ic_arrow_down, customDialog -> customDialog.getButton(eButtonId).setVisibility(View.GONE), eButtonId, false)
-//                .addButton("Fünf", customDialog -> customDialog.getButton(eButtonId).setVisibility(View.GONE), eButtonId, false)
+//                .addButton("Neun", customDialog -> customDialog.getButton(iButtonId).setVisibility(View.GONE), iButtonId, false)
 //                .hideLastAddedButton()
-                .addButton(R.drawable.ic_broken_image, customDialog -> customDialog.getButton(fButtonId).setVisibility(View.GONE), fButtonId, false)
-//                .addButton("Sechs", customDialog -> customDialog.getButton(fButtonId).setVisibility(View.GONE), fButtonId, false)
+//                .addButton("Zehn", customDialog -> customDialog.getButton(jButtonId).setVisibility(View.GONE), jButtonId, false)
 //                .hideLastAddedButton()
-                .addButton("Sieben", customDialog -> {
-                    customDialog.getButton(hButtonId).setVisibility(View.VISIBLE);
-                    customDialog.getButton(gButtonId).setVisibility(View.GONE);
-                }, gButtonId, false)
-//                .hideLastAddedButton()
-                .addButton("Acht", customDialog -> {
-                    customDialog.getButton(gButtonId).setVisibility(View.VISIBLE);
-                    customDialog.getButton(hButtonId).setVisibility(View.GONE);
-                }, hButtonId, false)
-                .hideLastAddedButton()
-                .addButton("Neun", customDialog -> customDialog.getButton(iButtonId).setVisibility(View.GONE), iButtonId, false)
-                .hideLastAddedButton()
-                .addButton("Zehn", customDialog -> customDialog.getButton(jButtonId).setVisibility(View.GONE), jButtonId, false)
-                .hideLastAddedButton()
-//                .setSetViewContent((customDialog, view, reload) -> customDialog.getActionButton().setEnabled(true))
-                .show();
+////                .setSetViewContent((customDialog, view, reload) -> customDialog.getActionButton().setEnabled(true))
+//                .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);
         RecyclerView recycler = findViewById(R.id.recycler);
@@ -203,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                .setSetItemContent((customRecycler, itemView, player) -> ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName()))
                 .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<Player>(R.layout.list_item_player, (customRecycler1, itemView, player, expanded) -> {
                     if (!expanded)
-                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName());
+                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName() + (customRecycler1.isReloading() ? " Ja" : " Nein"));
                     else {
                         ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText("Mip\n" + player.getName() + "\n\nExpand");
                     }
@@ -216,6 +217,8 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                     playerList.remove(playerExpandable.getObject());
                     customRecycler.reload();
                 })
+                .setOnReload(customRecycler -> Toast.makeText(this, "Neu Geladen", Toast.LENGTH_SHORT).show())
+                .enableTrackReloading()
                 .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler, objectList) -> {
                 }, true)
 //                .setOrientation(CustomRecycler.ORIENTATION.HORIZONTAL)
@@ -225,8 +228,6 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                    new CustomPopupWindow(this, itemView, inflate).show();
 //                }, true)
                 .generate();
-
-
 
 
 //        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
@@ -322,9 +323,6 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .generate();
 
 
-
-
-
         if (true)
             return;
 
@@ -376,7 +374,6 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
                     String databaseCode = dialog_databaseLogin_name_layout.getEditText().getText().toString().trim();
                     String password = dialog_databaseLogin_passwordFirst_layout.getEditText().getText().toString().trim();
-
 
 
                 }, false)
@@ -509,12 +506,14 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         switch (id) {
             case R.id.toolbar_main_internetTest:
 //                showButtonTest();
+                recycler.reload();
 
-                pairList.addAll(Arrays.asList(new Pair<>("E", "11"), new Pair<>("F", "12"), new Pair<>("F", "13"), new Pair<>("E", "14"), new Pair<>("G", "24")));
-                testRecycler.reload();
 
                 if (true)
                     return true;
+                pairList.addAll(Arrays.asList(new Pair<>("E", "11"), new Pair<>("F", "12"), new Pair<>("F", "13"), new Pair<>("E", "14"), new Pair<>("G", "24")));
+                testRecycler.reload();
+
 
                 playerList.addAll(Stream.iterate(playerList.size() + 1, count -> count + 1).limit(2).map(count -> new Player("Spieler" + count)).collect(Collectors.toList()));
 

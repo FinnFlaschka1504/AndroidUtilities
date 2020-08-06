@@ -117,6 +117,8 @@ public class CustomRecycler<T> {
     private int dragViewId = -1;
     private boolean longPressDrag;
     private ItemTouchHelper itemTouchHelper;
+    private boolean reloading;
+    private boolean trackReloading;
 
 
     public CustomRecycler(AppCompatActivity context) {
@@ -1473,6 +1475,7 @@ public class CustomRecycler<T> {
     }
 
     public CustomRecycler<T> reload() {
+        reloading = true;
         if (useActiveObjectList) {
             if (!objectList.isEmpty() && objectList.get(0) instanceof Expandable)
                 tempObjectList = new ArrayList<>(objectList);
@@ -1481,21 +1484,23 @@ public class CustomRecycler<T> {
             tempObjectList = null;
         }
         mAdapter.notifyDataSetChanged();
-        if (onReload != null) // ToDo: reload Listener wie bei loadListener
+        if (onReload != null || trackReloading) // ToDo: reload Listener wie bei loadListener
             runOnReload();
         return this;
     }
 
     public CustomRecycler<T> reload(List<T> objectList) {
+        reloading = true;
         this.objectList.clear();
         this.objectList.addAll(objectList);
         mAdapter.notifyDataSetChanged();
-        if (onReload != null)
+        if (onReload != null || trackReloading)
             runOnReload();
         return this;
     }
 
     public RecyclerView update(Integer... index) {
+        reloading = true;
         if (useActiveObjectList) {
             if (!objectList.isEmpty() && objectList.get(0) instanceof Expandable)
                 tempObjectList = new ArrayList<>(objectList);
@@ -1504,17 +1509,18 @@ public class CustomRecycler<T> {
             tempObjectList = null;
         }
         Arrays.asList(index).forEach(mAdapter::notifyItemChanged);
-        if (onReload != null)
+        if (onReload != null || trackReloading)
             runOnReload();
         return recycler;
     }
 
 
     public RecyclerView reloadNew() {
+        reloading = true;
         mAdapter = new MyAdapter(objectList);
         this.recycler.setAdapter(mAdapter);
         generateRecyclerView();
-        if (onReload != null)
+        if (onReload != null || trackReloading)
             runOnReload();
         return recycler;
     }
@@ -1524,11 +1530,25 @@ public class CustomRecycler<T> {
                 .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
-                        onReload.run(CustomRecycler.this);
+                        if (onReload != null)
+                            onReload.run(CustomRecycler.this);
                         recycler.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        reloading = false;
                     }
                 });
     }
+
+    public CustomRecycler<T> enableTrackReloading() {
+        trackReloading = true;
+        return this;
+    }
+
+    public boolean isReloading() {
+        if (!trackReloading && onReload == null)
+            throw new IllegalStateException("Reload Tracking muss erst mit 'enableTrackReloading', oder 'setOnReload' aktiviert werden!");
+        return reloading;
+    }
+
     //  <----- Generate -----
 
 
