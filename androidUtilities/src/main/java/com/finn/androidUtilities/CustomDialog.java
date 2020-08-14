@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
+import androidx.annotation.IntDef;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -35,6 +36,8 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import org.apmem.tools.layouts.FlowLayout;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -90,6 +93,14 @@ public class CustomDialog {
     private boolean coloredActionButtons = true;
     private OnBackPressedListener onBackPressedListener;
     private OnDialogCallback onTouchOutside;
+
+    public static final int VISIBLE = 0x00000000;
+    public static final int INVISIBLE = 0x00000004;
+    public static final int GONE = 0x00000008;
+    @IntDef({VISIBLE, INVISIBLE, GONE})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Visibility {}
+
 
 
     private SetViewContent setViewContent;
@@ -661,6 +672,7 @@ public class CustomDialog {
         private String doubleClickMessage;
         private CustomUtility.GenericReturnInterface<CustomDialog, Boolean> enableDoubleClick;
 
+
         public ButtonHelper(BUTTON_TYPE buttonType) {
             this.buttonType = buttonType;
             label = buttonType.label;
@@ -805,7 +817,7 @@ public class CustomDialog {
             return this;
         }
 
-        public ButtonHelper setVisibility(int visibility) {
+        public ButtonHelper setVisibility(/*@Visibility*/ int visibility) {
             button.setVisibility(visibility);
             alignButtons();
             return this;

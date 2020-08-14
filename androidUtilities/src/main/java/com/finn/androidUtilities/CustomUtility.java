@@ -1170,6 +1170,14 @@ public class CustomUtility {
     public static <T extends CharSequence> T stringExistsOrElse(T s, T orElse) {
         return stringExists(s) ? s : orElse;
     }
+
+    public static <T> T isNotNullOrElse(T input, T orElse){
+        return input != null ? input : orElse;
+    }
+
+    public static <T> T isNotNullOrElse(T input, GenericReturnOnlyInterface<T> orElse){
+        return input != null ? input : orElse.runGenericInterface();
+    }
     //  <------------------------- EasyLogic -------------------------
 
 
@@ -1268,6 +1276,22 @@ public class CustomUtility {
 
     public interface GenericReturnOnlyInterface<T> {
         T runGenericInterface();
+    }
+
+    public static <T> boolean runGenericInterface(GenericInterface<T> genericInterface, T parameter) {
+        if (genericInterface != null) {
+            genericInterface.runGenericInterface(parameter);
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean runRunnable(Runnable runnable) {
+        if (runnable != null) {
+            runnable.run();
+            return true;
+        }
+        return false;
     }
     //  <------------------------- Interfaces -------------------------
 

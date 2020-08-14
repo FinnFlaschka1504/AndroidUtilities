@@ -16,6 +16,16 @@
         android:foreground="@color/colorTransparent"
         app:srcCompat="@drawable/ic_drag" />
 
+    <ImageView
+        android:id="@+id/listItem_player_imageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:adjustViewBounds="true"
+        android:minWidth="200dp"
+        android:minHeight="200dp"
+        app:srcCompat="@drawable/ic_download" />
+
     <TextView
         android:id="@+id/listItem_player_name"
         android:layout_width="match_parent"

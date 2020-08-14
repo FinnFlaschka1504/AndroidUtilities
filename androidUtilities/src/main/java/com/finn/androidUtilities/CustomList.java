@@ -28,7 +28,12 @@ public class CustomList<E> extends ArrayList<E> {
         super(initialCapacity);
     }
 
-    public CustomList(E[] objects) {
+//    public CustomList(E[] objects) {
+//        if (objects != null)
+//            addAll(Arrays.asList(objects));
+//    }
+
+    public CustomList(E... objects) {
         if (objects != null)
             addAll(Arrays.asList(objects));
     }
@@ -200,8 +205,10 @@ public class CustomList<E> extends ArrayList<E> {
         for (T t : filter)
             filteredStream = filteredStream.filter(e -> mapper.runLogicFilter(e, t));
         CustomList<E> list = filteredStream.collect(Collectors.toCollection(CustomList::new));
-        if (replace)
+        if (replace) {
             replaceWith(list);
+            return this;
+        }
         return list;
     }
 
@@ -217,8 +224,10 @@ public class CustomList<E> extends ArrayList<E> {
 
     public CustomList<E> filter(Predicate<? super E> mapper, boolean replace) {
         CustomList<E> list = stream().filter(mapper).collect(Collectors.toCollection(CustomList::new));
-        if (replace)
+        if (replace) {
             replaceWith(list);
+            return this;
+        }
         return list;
     }
     //       <-------------------- Filter --------------------
