@@ -30,6 +30,7 @@ import android.util.Pair;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -46,7 +47,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.ActionMenuView;
+import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
+import androidx.core.widget.NestedScrollView;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -54,11 +61,19 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.pixplicity.sharp.Sharp;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -66,11 +81,14 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import okhttp3.Cache;
@@ -592,6 +610,20 @@ public class CustomUtility {
         return calendar.getTime();
 
     }
+
+    public static boolean isUpcoming(Date date) {
+        if (date == null)
+            return false;
+        return new Date().before(date);
+    }
+
+    public static Date getDateFromJsonString(String key, JSONObject jsonObject) {
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd", Locale.GERMANY).parse(jsonObject.getString(key));
+        } catch (ParseException | JSONException e) {
+            return null;
+        }
+    }
     //  <--------------- Time ---------------
 
 
@@ -606,7 +638,14 @@ public class CustomUtility {
     public static void showCenteredToast(Context context, String text) {
         centeredToast(context, text).show();
     }
-    //  <--------------- Toast ---------------
+
+    public static void showOnClickToast(Context context, String text, View.OnClickListener onClickListener){
+        Toast toast = centeredToast(context, text);
+        View view = toast.getView().findViewById(android.R.id.message);
+        if (view != null) view.setOnClickListener(onClickListener);
+        toast.show();
+    }
+//  <--------------- Toast ---------------
 
     public static class Triple<A, B, C> {
         public A first;
@@ -822,7 +861,59 @@ public class CustomUtility {
     public static String stringReplace(String source, int start, int end, String replacement) {
         return source.substring(0, start) + replacement + source.substring(end);
     }
+
+    public static String formatDuration(Duration duration, @Nullable String format){
+        if (format == null)
+            format = "'%w% Woche§n§~, ~''%d% Tag§e§~, ~''%h% Stunde§n§~, ~''%m% Minute§n§~, ~''%s% Sekunde§n§~, ~'";
+        com.finn.androidUtilities.CustomList<Pair<String, Integer>> patternList = new com.finn.androidUtilities.CustomList<>(Pair.create("%w%", 604800), Pair.create("%d%", 86400), Pair.create("%h%", 3600), Pair.create("%m%", 60), Pair.create("%s%", 1));
+        int seconds = (int) (duration.toMillis() / 1000);
+        while (true) {
+            Matcher segments = Pattern.compile("'.+?'").matcher(format);
+            if (!segments.find())
+                break;
+            String segment = segments.group();
+            Iterator<Pair<String, Integer>> iterator = patternList.iterator();
+            while (iterator.hasNext()) {
+                Pair<String, Integer> pair = iterator.next();
+                if (segment.contains(pair.first)) {
+                    int amount = seconds / pair.second;
+                    if (amount > 0) {
+                        seconds = seconds % pair.second;
+                        Matcher matcher = Pattern.compile(pair.first).matcher(segment);
+                        String replacement = matcher.replaceFirst(String.valueOf(amount));
+                        if (replacement.contains("§")) {
+                            Matcher removePlural = Pattern.compile("§\\w+?§").matcher(replacement);
+                            if (removePlural.find())
+                                replacement = removePlural.replaceFirst(amount > 1 ? CustomUtility.subString(removePlural.group(), 1, -1) : "");
+                        }
+                        format = segments.replaceFirst(CustomUtility.subString(replacement, 1, -1));
+                    } else
+                        format = segments.replaceFirst("");
+
+                    patternList.remove(pair);
+                    break;
+                }
+            }
+        }
+
+        if (format.contains("~")) {
+            while (true) {
+                Matcher segments = Pattern.compile("~.+?~").matcher(format);
+                if (!segments.find())
+                    break;
+
+                int start = segments.start();
+                int end = segments.end();
+                String replacement = CustomUtility.subString(segments.group(), 1, -1);
+
+                format = CustomUtility.stringReplace(format, start, end, segments.find() ? replacement : "");
+            }
+        }
+
+        return format;
+    }
     //  <------------------------- Text -------------------------
+
 
     public static <T> Pair<T, T> swap(T t1, T t2) {
         T temp = t1;
@@ -831,7 +922,8 @@ public class CustomUtility {
         return new Pair<>(t1, t2);
     }
 
-    //  --------------- Layout-Animation --------------->
+
+    //  --------------- Layout --------------->
     public static void expand(final View v) {
         int matchParentMeasureSpec = View.MeasureSpec.makeMeasureSpec(((View) v.getParent()).getWidth(), View.MeasureSpec.EXACTLY);
         int wrapContentMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
@@ -915,7 +1007,25 @@ public class CustomUtility {
     public interface ChangeLayout {
         void runChangeLayout(View view);
     }
-    //  <--------------- Layout-Animation ---------------
+
+    public static void setDimensions(View view, boolean width, boolean height) {
+        ViewGroup.LayoutParams lp = view.getLayoutParams();
+        if (lp == null) {
+            view.setLayoutParams(
+                    new ViewGroup.LayoutParams(width ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT, height ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT));
+            return;
+        }
+        if (width)
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        else
+            lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        if (height)
+            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+        else
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        view.setLayoutParams(lp);
+    }
+    //  <--------------- Layout ---------------
 
 
     //  --------------- getViews --------------->
@@ -944,6 +1054,31 @@ public class CustomUtility {
 
     public interface ApplyToAll<T extends View> {
         void runApplyToAll(T t);
+    }
+
+    public static <S extends View, T extends View> void replaceView(S oldView, T newView, @Nullable TransferState<S, T> transferState) {
+        ViewGroup parent = (ViewGroup) oldView.getParent();
+        int index = parent.indexOfChild(oldView);
+        parent.removeView(oldView);
+        parent.addView(newView, index);
+        if (transferState != null)
+            transferState.runTransferState(oldView, newView);
+    }
+
+    public static <S extends View, T extends View> void replaceView_children(S oldView, T newView, @Nullable TransferState<S, T> transferState) {
+        replaceView(oldView, newView, transferState);
+        if (oldView instanceof ViewGroup && newView instanceof ViewGroup) {
+            ViewGroup viewGroup = (ViewGroup) oldView;
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                View child = viewGroup.getChildAt(i);
+                viewGroup.removeView(child);
+                ((ViewGroup) newView).addView(child);
+            }
+        }
+    }
+
+    public interface TransferState<S, T> {
+        void runTransferState(S source, T target);
     }
     //  <--------------- getViews ---------------
 
@@ -1009,6 +1144,10 @@ public class CustomUtility {
                 .solidColor(color)
                 .build();
     }
+
+    public static int setAlphaOfColor(int color, int alpha) {
+        return (color & 0x00ffffff) | (alpha << 24);
+    }
     //  <--------------- DrawableBuilder ---------------
 
 
@@ -1061,6 +1200,10 @@ public class CustomUtility {
         } catch (NullPointerException e) {
             return false;
         }
+    }
+
+    public static <T> T returnIfNull(T object, T returnIfNull) {
+        return object != null ? object : returnIfNull;
     }
     //  <------------------------- ifNotNull -------------------------
 
@@ -1177,6 +1320,26 @@ public class CustomUtility {
 
     public static <T> T isNotNullOrElse(T input, GenericReturnOnlyInterface<T> orElse){
         return input != null ? input : orElse.runGenericInterface();
+    }
+
+    public static <T> T isNotValueOrElse(T input, T value, T orElse){
+        return !Objects.equals(input, value) ? input : orElse;
+    }
+
+    public static <T> T isNotValueOrElse(T input, T value, GenericReturnOnlyInterface<T> orElse){
+        return !Objects.equals(input, value) ? input : orElse.runGenericInterface();
+    }
+
+    public static <T> T isValueOrElse(T input, T value, T orElse){
+        return Objects.equals(input, value) ? input : orElse;
+    }
+
+    public static <T> T isValueOrElse(T input, T value, GenericReturnOnlyInterface<T> orElse){
+        return Objects.equals(input, value) ? input : orElse.runGenericInterface();
+    }
+
+    public static <T, R> R isNullReturnOrElse(T input, R returnValue, GenericReturnInterface<T, R> orElse){
+        return Objects.equals(input, null) ? returnValue : orElse.runGenericInterface(input);
     }
     //  <------------------------- EasyLogic -------------------------
 
@@ -1474,5 +1637,157 @@ public class CustomUtility {
         imageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(oldBitmap, radius));
     }
     //  <------------------------- ImageView -------------------------
+
+
+    //  ------------------------- ExpendableToolbar ------------------------->
+    public static Runnable applyExpendableToolbar_recycler(Context context, RecyclerView recycler, Toolbar toolbar, AppBarLayout appBarLayout, CollapsingToolbarLayout collapsingToolbarLayout, TextView noItem, String title) {
+        final boolean[] canExpand = {true};
+        int tolerance = 50;
+        recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                if (newState == 0) {
+                    canExpand[0] = recycler.computeVerticalScrollOffset() <= tolerance;
+                    recycler.setNestedScrollingEnabled(canExpand[0]);
+                }
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (canExpand[0] && recycler.computeVerticalScrollOffset() > tolerance) {
+                    canExpand[0] = false;
+                    recycler.setNestedScrollingEnabled(canExpand[0]);
+                }
+                super.onScrolled(recyclerView, dx, dy);
+            }
+        });
+        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) appBarLayout.getLayoutParams();
+        if (params.getBehavior() == null)
+            params.setBehavior(new AppBarLayout.Behavior());
+        AppBarLayout.Behavior behaviour = (AppBarLayout.Behavior) params.getBehavior();
+        behaviour.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
+            @Override
+            public boolean canDrag(@NonNull AppBarLayout appBarLayout) {
+                return canExpand[0];
+            }
+        });
+
+        return generateApplyToolBarTitle(context, toolbar, appBarLayout, collapsingToolbarLayout, noItem, title);
+    }
+
+    public static void applyExpendableToolbar_scrollView(Context context, NestedScrollView scrollView, AppBarLayout appBarLayout) {
+        final boolean[] canExpand = {true};
+        final boolean[] touched = {false};
+        final boolean[] scrolled = {false};
+        Runnable[] check = {() -> {
+        }};
+        NestedScrollView newScrollView = new NestedScrollView(context) {
+            @Override
+            public boolean dispatchTouchEvent(MotionEvent ev) {
+                if (ev.getAction() == MotionEvent.ACTION_DOWN)
+                    touched[0] = true;
+                else if (ev.getAction() == MotionEvent.ACTION_UP)
+                    touched[0] = false;
+
+                check[0].run();
+                return super.dispatchTouchEvent(ev);
+            }
+
+        };
+        CustomUtility.replaceView(scrollView, newScrollView, (source, target) -> {
+            target.setId(source.getId());
+            target.setLayoutParams(source.getLayoutParams());
+            while (source.getChildCount() > 0) {
+                View child = source.getChildAt(0);
+                source.removeViewAt(0);
+                target.addView(child);
+            }
+        });
+
+        int tolerance = 50;
+        check[0] = () -> {
+            if (!canExpand[0] && !scrolled[0] && !touched[0]) {
+                canExpand[0] = true;
+                newScrollView.setNestedScrollingEnabled(canExpand[0]);
+            } else if (canExpand[0] && scrolled[0] && touched[0]) {
+                canExpand[0] = false;
+                newScrollView.setNestedScrollingEnabled(canExpand[0]);
+            }
+        };
+
+        newScrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            scrolled[0] = scrollY > tolerance;
+            check[0].run();
+        });
+
+        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) appBarLayout.getLayoutParams();
+        if (params.getBehavior() == null)
+            params.setBehavior(new AppBarLayout.Behavior());
+        AppBarLayout.Behavior behaviour = (AppBarLayout.Behavior) params.getBehavior();
+        behaviour.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
+            @Override
+            public boolean canDrag(@NonNull AppBarLayout appBarLayout) {
+                return canExpand[0];
+            }
+        });
+    }
+
+    private static Runnable generateApplyToolBarTitle(Context context, Toolbar toolbar, AppBarLayout appBarLayout, CollapsingToolbarLayout collapsingToolbarLayout, TextView noItem, String title) {
+        return () -> {
+            final float[] maxOffset = {-1};
+            float distance = noItem.getY() - appBarLayout.getBottom();
+            int stepCount = 5;
+            final int[] prevPart = {-1};
+
+            List<String> ellipsedList = new ArrayList<>();
+
+            appBarLayout.addOnOffsetChangedListener((appBarLayout1, verticalOffset) -> {
+                if (maxOffset[0] == -1) {
+                    maxOffset[0] = -appBarLayout.getTotalScrollRange();
+                    int maxWidth = CustomUtility.getViewsByType(toolbar, ActionMenuView.class).get(0).getLeft() - CustomUtility.getViewsByType(toolbar, AppCompatImageButton.class).get(0).getRight(); //320
+                    for (int i = 0; i <= stepCount; i++)
+                        ellipsedList.add(CustomUtility.getEllipsedString(context, title, maxWidth - CustomUtility.dpToPx(3) - (int) (55 * ((stepCount - i) / (double) stepCount)), 18 + (int) (16 * (i / (double) stepCount))));
+                }
+
+                int part = stepCount - Math.round(verticalOffset / (maxOffset[0] / stepCount));
+                if (part != prevPart[0])
+                    collapsingToolbarLayout.setTitle(ellipsedList.get(prevPart[0] = part));
+
+                float alpha = 1f - ((verticalOffset - maxOffset[0]) / distance);
+                noItem.setAlpha(Math.max(alpha, 0f));
+            });
+        };
+    }
+    //  <------------------------- ExpendableToolbar -------------------------
+
+
+    //  ------------------------- Arrays ------------------------->
+    public static int getIndexByString(Context context, int arrayId, String language){
+        String[] array = context.getResources().getStringArray(arrayId);
+        for (int i = 0; i < array.length; i++) {
+            if (array[i].equals(language))
+                return i;
+        }
+        return 0;
+    }
+
+    public static String getStringByIndex(Context context, int arrayId, int index){
+        return context.getResources().getStringArray(arrayId)[index];
+    }
+
+    // --------------- VarArgs
+
+    public static <T> boolean easyVarArgs(T[] varArg, int index, CustomUtility.GenericInterface<T> ifExists) {
+        if (varArg.length >= (index + 1)) {
+            T t;
+            if ((t = varArg[index]) != null) {
+                ifExists.runGenericInterface(t);
+                return true;
+            }
+        }
+        return false;
+    }
+    //  <------------------------- Arrays -------------------------
 
 }
