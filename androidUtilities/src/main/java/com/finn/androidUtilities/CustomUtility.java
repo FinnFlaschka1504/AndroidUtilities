@@ -393,7 +393,7 @@ public class CustomUtility {
             applyListener();
         }
 
-        public static KeyboardChangeListener bind(Activity activity){
+        public static KeyboardChangeListener bind(Activity activity) {
             return new KeyboardChangeListener(activity);
         }
         //  <------------------------- Constructor -------------------------
@@ -426,10 +426,12 @@ public class CustomUtility {
         private void applyListener() {
             activity.getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
                 @Override
-                public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {}
+                public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+                }
 
                 @Override
-                public void onActivityStarted(@NonNull Activity activity) {}
+                public void onActivityStarted(@NonNull Activity activity) {
+                }
 
                 @Override
                 public void onActivityResumed(@NonNull Activity activity) {
@@ -460,13 +462,16 @@ public class CustomUtility {
                 }
 
                 @Override
-                public void onActivityPaused(@NonNull Activity activity) {}
+                public void onActivityPaused(@NonNull Activity activity) {
+                }
 
                 @Override
-                public void onActivityStopped(@NonNull Activity activity) {}
+                public void onActivityStopped(@NonNull Activity activity) {
+                }
 
                 @Override
-                public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {}
+                public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
+                }
 
                 @Override
                 public void onActivityDestroyed(@NonNull Activity activity) {
@@ -639,7 +644,7 @@ public class CustomUtility {
         centeredToast(context, text).show();
     }
 
-    public static void showOnClickToast(Context context, String text, View.OnClickListener onClickListener){
+    public static void showOnClickToast(Context context, String text, View.OnClickListener onClickListener) {
         Toast toast = centeredToast(context, text);
         View view = toast.getView().findViewById(android.R.id.message);
         if (view != null) view.setOnClickListener(onClickListener);
@@ -810,11 +815,11 @@ public class CustomUtility {
 
     }
 
-    public static String removeTrailingZeros(String s){
+    public static String removeTrailingZeros(String s) {
         return (s.contains(".") || s.contains(",")) ? s.replaceAll("0*$", "").replaceAll("[,.]$", "") : s;
     }
 
-    public static Pair<Integer,Integer> getTextWithAndHeight(Context context, String text, int size, int... typefaces){
+    public static Pair<Integer, Integer> getTextWithAndHeight(Context context, String text, int size, int... typefaces) {
         TextView textView = new TextView(context);
         textView.setTextSize(size);
         for (int typeface : typefaces)
@@ -844,7 +849,7 @@ public class CustomUtility {
         return "";
     }
 
-    public static String subString(String text, int start, int ende){
+    public static String subString(String text, int start, int ende) {
         if (start < 0)
             start = text.length() + start;
         if (ende < 0)
@@ -852,7 +857,7 @@ public class CustomUtility {
         return text.substring(start, ende);
     }
 
-    public static String subString(String text, int start){
+    public static String subString(String text, int start) {
         if (start < 0)
             start = text.length() + start;
         return text.substring(start);
@@ -862,7 +867,7 @@ public class CustomUtility {
         return source.substring(0, start) + replacement + source.substring(end);
     }
 
-    public static String formatDuration(Duration duration, @Nullable String format){
+    public static String formatDuration(Duration duration, @Nullable String format) {
         if (format == null)
             format = "'%w% Woche§n§~, ~''%d% Tag§e§~, ~''%h% Stunde§n§~, ~''%m% Minute§n§~, ~''%s% Sekunde§n§~, ~'";
         com.finn.androidUtilities.CustomList<Pair<String, Integer>> patternList = new com.finn.androidUtilities.CustomList<>(Pair.create("%w%", 604800), Pair.create("%d%", 86400), Pair.create("%h%", 3600), Pair.create("%m%", 60), Pair.create("%s%", 1));
@@ -1243,6 +1248,7 @@ public class CustomUtility {
         return false;
 
     }
+
     public static <T> boolean boolOr(T what, T... to) {
         if (to.length == 0)
             throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
@@ -1268,6 +1274,7 @@ public class CustomUtility {
         }
         return found;
     }
+
     public static <T> boolean boolXOr(T what, T... to) {
         if (to.length == 0)
             throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
@@ -1293,6 +1300,7 @@ public class CustomUtility {
         }
         return true;
     }
+
     public static <T> boolean boolAnd(GenericReturnInterface<T, Boolean> what, T... to) {
         if (to.length == 0)
             throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
@@ -1314,31 +1322,47 @@ public class CustomUtility {
         return stringExists(s) ? s : orElse;
     }
 
-    public static <T> T isNotNullOrElse(T input, T orElse){
+    public static <T> T isNotNullOrElse(T input, T orElse) {
         return input != null ? input : orElse;
     }
 
-    public static <T> T isNotNullOrElse(T input, GenericReturnOnlyInterface<T> orElse){
+    public static <T> T isNotNullOrElse(T input, GenericReturnOnlyInterface<T> orElse) {
         return input != null ? input : orElse.runGenericInterface();
     }
 
-    public static <T> T isNotValueOrElse(T input, T value, T orElse){
+    public static <T> T isNotValueOrElse(T input, T value, T orElse) {
         return !Objects.equals(input, value) ? input : orElse;
     }
 
-    public static <T> T isNotValueOrElse(T input, T value, GenericReturnOnlyInterface<T> orElse){
-        return !Objects.equals(input, value) ? input : orElse.runGenericInterface();
+    public static <T> T isNotValueOrElse(T input, T value, GenericReturnInterface<T, T> orElse) {
+        return !Objects.equals(input, value) ? input : orElse.runGenericInterface(input);
     }
 
-    public static <T> T isValueOrElse(T input, T value, T orElse){
+    public static <T, R> R isNotValueReturnOrElse(T input, T value, R returnValue, R orElse) {
+        return !Objects.equals(input, value) ? returnValue : orElse;
+    }
+
+    public static <T, R> R isNotValueReturnOrElse(T input, T value, GenericReturnInterface<T, R> returnValue, GenericReturnInterface<T, R> orElse) {
+        return !Objects.equals(input, value) ? returnValue.runGenericInterface(input) : orElse.runGenericInterface(input);
+    }
+
+    public static <T> T isValueOrElse(T input, T value, T orElse) {
         return Objects.equals(input, value) ? input : orElse;
     }
 
-    public static <T> T isValueOrElse(T input, T value, GenericReturnOnlyInterface<T> orElse){
-        return Objects.equals(input, value) ? input : orElse.runGenericInterface();
+    public static <T> T isValueOrElse(T input, T value, GenericReturnInterface<T, T> orElse) {
+        return Objects.equals(input, value) ? input : orElse.runGenericInterface(input);
     }
 
-    public static <T, R> R isNullReturnOrElse(T input, R returnValue, GenericReturnInterface<T, R> orElse){
+    public static <T, R> R isValueReturnOrElse(T input, T value, R returnValue, R orElse) {
+        return Objects.equals(input, value) ? returnValue : orElse;
+    }
+
+    public static <T, R> R isValueReturnOrElse(T input, T value, GenericReturnInterface<T, R> returnValue, GenericReturnInterface<T, R> orElse) {
+        return Objects.equals(input, value) ? returnValue.runGenericInterface(input) : orElse.runGenericInterface(input);
+    }
+
+    public static <T, R> R isNullReturnOrElse(T input, R returnValue, GenericReturnInterface<T, R> orElse) {
         return Objects.equals(input, null) ? returnValue : orElse.runGenericInterface(input);
     }
     //  <------------------------- EasyLogic -------------------------
@@ -1763,7 +1787,7 @@ public class CustomUtility {
 
 
     //  ------------------------- Arrays ------------------------->
-    public static int getIndexByString(Context context, int arrayId, String language){
+    public static int getIndexByString(Context context, int arrayId, String language) {
         String[] array = context.getResources().getStringArray(arrayId);
         for (int i = 0; i < array.length; i++) {
             if (array[i].equals(language))
@@ -1772,7 +1796,7 @@ public class CustomUtility {
         return 0;
     }
 
-    public static String getStringByIndex(Context context, int arrayId, int index){
+    public static String getStringByIndex(Context context, int arrayId, int index) {
         return context.getResources().getStringArray(arrayId)[index];
     }
 
