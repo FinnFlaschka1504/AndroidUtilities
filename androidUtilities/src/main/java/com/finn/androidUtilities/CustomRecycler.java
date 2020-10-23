@@ -119,6 +119,7 @@ public class CustomRecycler<T> {
     private ItemTouchHelper itemTouchHelper;
     private boolean reloading;
     private boolean trackReloading;
+    private OnExpandedStateChangeListener<T> onExpandedStateChangeListener;
 
 
     public CustomRecycler(AppCompatActivity context) {
@@ -293,6 +294,12 @@ public class CustomRecycler<T> {
         this.onGenerate = onGenerate;
         return this;
     }
+
+    public CustomRecycler<T> setOnExpandedStateChangeListener(OnExpandedStateChangeListener<T> onExpandedStateChangeListener) {
+        this.onExpandedStateChangeListener = onExpandedStateChangeListener;
+        return this;
+    }
+
 
     //  --------------- Drag & Swipe --------------->
     public CustomRecycler<T> enableDragAndDrop(OnDragAndDrop<T> onDragAndDrop) {
@@ -926,7 +933,10 @@ public class CustomRecycler<T> {
 
 
     //  --------------- Expandable --------------->
-    private CustomRecycler.OnClickListener<CustomRecycler.Expandable<T>> expandableOnClickListener = (customRecycler1, itemView, expandable, index) -> {
+    private CustomRecycler.OnClickListener<T> expandableOnClickListener = (customRecycler1, itemView, o, index) -> {
+        if (!(o instanceof Expandable))
+            return;
+        Expandable expandable = (Expandable) o;
         if (!expandable.canExpand())
             return;
         View expansion = itemView.findViewById(R.id.listItem_expandable_expansionLayout);
@@ -954,13 +964,20 @@ public class CustomRecycler<T> {
         }
 
         expandable.setExpended(!expanded);
+        if (onExpandedStateChangeListener != null)
+            onExpandedStateChangeListener.runExpandedStateChangeListener(this, itemView, (T) expandable, !expanded);
     };
-    private CustomRecycler.OnClickListener<CustomRecycler.Expandable<T>> expandableOnClickListener_change = (customRecycler1, itemView, expandable, index) -> {
+    private CustomRecycler.OnClickListener<T> expandableOnClickListener_change = (customRecycler1, itemView, o, index) -> {
+        if (!(o instanceof Expandable))
+            return;
+        Expandable expandable = (Expandable) o;
         if (!expandable.canExpand())
             return;
         boolean expanded = expandable.isExpended();
         CustomUtility.changeHeight(itemView, view -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(this, view, expandable.getObject(), !expandable.isExpended()));
         expandable.setExpended(!expanded);
+        if (onExpandedStateChangeListener != null)
+            onExpandedStateChangeListener.runExpandedStateChangeListener(this, itemView, (T) expandable, !expanded);
     };
 
     private Map<CustomRecycler, Expandable> subRecyclerMap = new HashMap<>();
@@ -1066,6 +1083,10 @@ public class CustomRecycler<T> {
 
     public interface ExpandMatching<E> {
         boolean runExpandMatching(Expandable<E> expandable);
+    }
+
+    public interface OnExpandedStateChangeListener<T> {
+        void  runExpandedStateChangeListener(CustomRecycler<T> customRecycler, View itemView, T  expandable, boolean expanded);
     }
 
     // ToDo:
@@ -1548,7 +1569,6 @@ public class CustomRecycler<T> {
             throw new IllegalStateException("Reload Tracking muss erst mit 'enableTrackReloading', oder 'setOnReload' aktiviert werden!");
         return reloading;
     }
-
     //  <----- Generate -----
 
 

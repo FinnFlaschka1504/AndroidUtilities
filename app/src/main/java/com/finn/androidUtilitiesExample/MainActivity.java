@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                .addButton("Fünf", customDialog -> customDialog.getButton(eButtonId).setVisibility(View.GONE), eButtonId, false)
 //                .hideLastAddedButton()
                 .addButton(R.drawable.ic_broken_image, customDialog -> customDialog.getButton(fButtonId).setVisibility(View.GONE), fButtonId, false)
+                .markLastAddedButtonAsActionButton()
 //                .addButton("Sechs", customDialog -> customDialog.getButton(fButtonId).setVisibility(View.GONE), fButtonId, false)
 //                .hideLastAddedButton()
                 .addButton("Sieben", customDialog -> {
@@ -210,11 +211,11 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                         .runToExpandableList(playerList, null))
 //                .setSetItemContent((customRecycler, itemView, player) -> ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName()))
                 .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<Player>(R.layout.list_item_player, (customRecycler1, itemView, player, expanded) -> {
-//                    if (!expanded)
+                    if (!expanded)
                         ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName() + (customRecycler1.isReloading() ? " Ja" : " Nein"));
-//                    else {
-//                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText("Mip\n" + player.getName() + "\n\nExpand");
-//                    }
+                    else {
+                        ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText("Mip\n" + player.getName() + "\n\nExpand");
+                    }
                     String imageUrl = imageUrlList.get(playerList.indexOf(player) % imageUrlList.size());
                     CustomUtility.loadUrlIntoImageView(this, itemView.findViewById(R.id.listItem_player_imageView) , imageUrl, imageUrl);
                     itemView.findViewById(R.id.listItem_player_delete).setEnabled(expanded);
@@ -236,6 +237,10 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                    View inflate = LayoutInflater.from(this).inflate(R.layout.popup_set_amount, null);
 //                    new CustomPopupWindow(this, itemView, inflate).show();
 //                }, true)
+                .setOnExpandedStateChangeListener((customRecycler, itemView, expandable, expanded) -> {
+
+                    Toast.makeText(this, expandable.getObject().getName() + " " + expanded, Toast.LENGTH_SHORT).show();
+                })
                 .generate();
 
 

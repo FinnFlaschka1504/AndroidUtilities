@@ -488,7 +488,7 @@ public class CustomUtility {
     }
     //  <------------------------- Keyboard -------------------------
 
-    public static void restartApp(Context context, Class startClass) {
+    public static void restartApp(Context context, Class<? extends AppCompatActivity> startClass) {
         Intent mStartActivity = new Intent(context, startClass);
         int mPendingIntentId = 123456;
         PendingIntent mPendingIntent = PendingIntent.getActivity(context, mPendingIntentId, mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -496,6 +496,11 @@ public class CustomUtility {
         mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
         System.exit(0);
     }
+
+    public static void restartApp(AppCompatActivity context) {
+        restartApp(context, context.getClass());
+    }
+
 
     public static void openUrl(Context context, String url, boolean select) {
         if (!url.contains("http://") && !url.contains("https://"))
@@ -573,7 +578,7 @@ public class CustomUtility {
         });
     }
 
-    interface InterceptOnClick {
+    public interface InterceptOnClick {
         boolean runInterceptOnClick(View view);
     }
     //  <--------------- OnClickListener ---------------

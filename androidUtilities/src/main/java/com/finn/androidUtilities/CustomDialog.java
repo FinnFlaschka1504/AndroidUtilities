@@ -116,8 +116,7 @@ public class CustomDialog {
     }
 
     public static CustomDialog Builder(Context context) {
-        CustomDialog customDialog = new CustomDialog(context);
-        return customDialog;
+        return new CustomDialog(context);
     }
 
 
@@ -313,7 +312,7 @@ public class CustomDialog {
         return this;
     }
 
-   public CustomDialog enableDynamicWrapHeight(View rootView) {
+    public CustomDialog enableDynamicWrapHeight(View rootView) {
        View dialogRootView = dialog.getWindow().getDecorView();
        ViewTreeObserver.OnGlobalLayoutListener layoutListener = () -> {
            Rect r = new Rect();
@@ -639,6 +638,27 @@ public class CustomDialog {
         return CustomUtility.getViewsByType(dialog_custom_root, View.class, true)
                 .stream().filter(view1 -> ((LinearLayout) view1.getParent()).getVisibility() == View.VISIBLE).collect(Collectors.toCollection(CustomList::new));
 
+    }
+
+    public TextView getViewTitle() {
+        if (dialog != null)
+            return dialog.findViewById(R.id.dialog_custom_title);
+        else
+            return null;
+    }
+
+    public TextView getViewText() {
+        if (dialog != null)
+            return dialog.findViewById(R.id.dialog_custom_text);
+        else
+            return null;
+    }
+
+    public TextInputLayout getViewEditLayout() {
+        if (dialog != null)
+            return dialog.findViewById(R.id.dialog_custom_edit_editLayout);
+        else
+            return null;
     }
 
     public CustomDialog removeBackground() {
