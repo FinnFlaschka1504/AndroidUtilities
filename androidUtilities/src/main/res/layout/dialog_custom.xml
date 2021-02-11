@@ -8,6 +8,7 @@
     android:gravity="end"
     android:orientation="vertical">
 
+
     <FrameLayout
         android:id="@+id/dialog_custom_title_layout"
         android:layout_width="match_parent"
@@ -57,29 +58,40 @@
 
     </FrameLayout>
 
-    <LinearLayout
+    <com.finn.androidUtilities.MaxDimensionsLayout
         android:id="@+id/dialog_custom_text_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:enabled="true"
         android:orientation="vertical"
         android:visibility="gone"
+        app:maxHeight="175dp"
         tools:visibility="visible">
 
-        <TextView
-            android:id="@+id/dialog_custom_text"
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            tools:text="text" />
+            android:layout_weight="1"
+            android:fadingEdgeLength="12dp"
+            android:fillViewport="true"
+            android:requiresFadingEdge="vertical">
+
+            <TextView
+                android:id="@+id/dialog_custom_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                tools:text="1. Zeile\n2. Zeile\n3. Zeile\n4. Zeile\n5. Zeile\n6. Zeile\n7. Zeile\n8. Zeile\n9. Zeile\n10. Zeile\n11. Zeile\n12. Zeile\n13. Zeile\n14. Zeile\n15. Zeile\n16. Zeile\n17. Zeile\n18. Zeile\n19. Zeile\n20. Zeile\n21. Zeile\n22. Zeile\n23. Zeile\n24. Zeile\n25. Zeile\n26. Zeile\n27. Zeile\n28. Zeile\n29. Zeile\n30. Zeile\n31. Zeile\n32. Zeile\n33. Zeile\n34. Zeile\n35. Zeile\n36. Zeile\n37. Zeile\n38. Zeile\n39. Zeile\n40. Zeile\n41. Zeile\n42. Zeile\n43. Zeile\n44. Zeile\n45. Zeile\n46. Zeile\n47. Zeile\n48. Zeile\n49. Zeile\n50. Zeile\nletzte" />
+        </ScrollView>
 
         <View
             android:id="@+id/dialog_custom_dividerText"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="16dp"
             android:background="@color/colorDivider" />
-    </LinearLayout>
+    </com.finn.androidUtilities.MaxDimensionsLayout>
 
     <LinearLayout
         android:id="@+id/dialog_custom_edit_layout"
@@ -103,10 +115,10 @@
                 android:id="@+id/dialog_custom_edit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:completionThreshold="0"
                 android:inputType="textCapSentences"
                 android:selectAllOnFocus="true"
                 android:singleLine="true"
-                android:completionThreshold="0"
                 tools:hint="Hint.." />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -121,7 +133,7 @@
     <LinearLayout
         android:id="@+id/dialog_custom_layout_view"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
         android:orientation="vertical"
         android:visibility="gone"
@@ -130,11 +142,19 @@
         <ScrollView
             android:id="@+id/dialog_custom_layout_view_interface"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:fillViewport="true"
             android:visibility="gone"
-            tools:visibility="visible" />
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:visibility="gone"
+                tools:src="@tools:sample/avatars"
+                tools:visibility="visible" />
+        </ScrollView>
 
         <LinearLayout
             android:id="@+id/dialog_custom_layout_view_interface_restrained"
@@ -143,7 +163,7 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:visibility="gone"
-            tools:visibility="visible" />
+            tools:visibility="gone" />
 
 
         <View

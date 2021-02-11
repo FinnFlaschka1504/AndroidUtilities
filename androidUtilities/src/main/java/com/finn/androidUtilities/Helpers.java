@@ -4,10 +4,13 @@ import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.InputType;
+import android.text.ParcelableSpan;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
@@ -17,6 +20,7 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 
 import com.google.android.material.textfield.TextInputLayout;
@@ -24,9 +28,11 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Helpers {
@@ -600,61 +606,133 @@ public class Helpers {
     //  --------------- SpannableString --------------->
     public static class SpannableStringHelper {
         public enum SPAN_TYPE {
-            BOLD(new StyleSpan(Typeface.BOLD)), ITALIC(new StyleSpan(Typeface.ITALIC)), BOLD_ITALIC(new StyleSpan(Typeface.BOLD_ITALIC)), STRIKE_THROUGH(new StrikethroughSpan()),
-            UNDERLINED(new UnderlineSpan()), NONE(null);
+            BOLD(o -> new StyleSpan(Typeface.BOLD)), ITALIC(o -> new StyleSpan(Typeface.ITALIC)), BOLD_ITALIC(o -> new StyleSpan(Typeface.BOLD_ITALIC)), STRIKE_THROUGH(o -> new StrikethroughSpan()),
+            UNDERLINED(o -> new UnderlineSpan()), COLOR(color -> new ForegroundColorSpan((Integer) color)), RELATIVE_SIZE(size -> new RelativeSizeSpan((Float) size)), NONE(o -> null);
 
-            Object what;
+            CustomUtility.GenericReturnInterface<Object, ParcelableSpan> what;
 
-            SPAN_TYPE(Object what) {
+            SPAN_TYPE(CustomUtility.GenericReturnInterface<Object, ParcelableSpan> what) {
                 this.what = what;
             }
 
-            public Object getWhat() {
-                return what;
+            public ParcelableSpan getWhat() {
+                return what.runGenericInterface(null);
+            }
+
+            public ParcelableSpan getWhat(Object o) {
+                return what.runGenericInterface(o);
+            }
+        }
+
+        public static class MultipleSpans {
+            Set<ParcelableSpan> spanSet = new HashSet<>();
+
+            public MultipleSpans bold() {
+                spanSet.add(SPAN_TYPE.BOLD.getWhat());
+                return this;
+            }
+
+            public MultipleSpans italic() {
+                spanSet.add(SPAN_TYPE.ITALIC.getWhat());
+                return this;
+            }
+
+            public MultipleSpans boldItalic() {
+                spanSet.add(SPAN_TYPE.BOLD_ITALIC.getWhat());
+                return this;
+            }
+
+            public MultipleSpans strikeThrough() {
+                spanSet.add(SPAN_TYPE.STRIKE_THROUGH.getWhat());
+                return this;
+            }
+
+            public MultipleSpans underlined() {
+                spanSet.add(SPAN_TYPE.UNDERLINED.getWhat());
+                return this;
+            }
+
+            public MultipleSpans color(@ColorInt int color) {
+                spanSet.add(SPAN_TYPE.COLOR.getWhat(color));
+                return this;
+            }
+
+            public MultipleSpans relativeSize(float size) {
+                spanSet.add(SPAN_TYPE.RELATIVE_SIZE.getWhat(size));
+                return this;
+            }
+
+            // ---------------
+
+            private void apply(String text, SpannableStringBuilder builder) {
+                int previousLength = builder.length();
+                int textLength = text.length();
+                builder.append(text);
+                for (ParcelableSpan span : spanSet) {
+                    builder.setSpan(span, previousLength, previousLength + textLength, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
             }
         }
 
         private SpannableStringBuilder builder = new SpannableStringBuilder();
 
+
+        //  ------------------------- Append ------------------------->
         public SpannableStringHelper append(String text) {
             builder.append(text);
             return this;
         }
 
-        public SpannableStringHelper append(String text, SPAN_TYPE span_type) {
-            builder.append(text, span_type.getWhat(), Spannable.SPAN_COMPOSING);
+        public SpannableStringHelper append(String text, ParcelableSpan span) {
+            builder.append(text, span, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return this;
+        }
+
+        public SpannableStringHelper appendMultiple(String text, CustomUtility.GenericReturnInterface<MultipleSpans, MultipleSpans> multipleSpans) {
+            multipleSpans.runGenericInterface(new MultipleSpans()).apply(text, builder);
             return this;
         }
 
         public SpannableStringHelper appendBold(String text) {
-            builder.append(text, SPAN_TYPE.BOLD.getWhat(), Spannable.SPAN_COMPOSING);
+            builder.append(text, SPAN_TYPE.BOLD.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
         public SpannableStringHelper appendItalic(String text) {
-            builder.append(text, SPAN_TYPE.ITALIC.getWhat(), Spannable.SPAN_COMPOSING);
+            builder.append(text, SPAN_TYPE.ITALIC.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
         public SpannableStringHelper appendBoldItalic(String text) {
-            builder.append(text, SPAN_TYPE.BOLD_ITALIC.getWhat(), Spannable.SPAN_COMPOSING);
+            builder.append(text, SPAN_TYPE.BOLD_ITALIC.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
         public SpannableStringHelper appendStrikeThrough(String text) {
-            builder.append(text, SPAN_TYPE.STRIKE_THROUGH.getWhat(), Spannable.SPAN_COMPOSING);
+            builder.append(text, SPAN_TYPE.STRIKE_THROUGH.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
         public SpannableStringHelper appendUnderlined(String text) {
-            builder.append(text, SPAN_TYPE.UNDERLINED.getWhat(), Spannable.SPAN_COMPOSING);
+            builder.append(text, SPAN_TYPE.UNDERLINED.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
-        public SpannableStringHelper appendColor(String text, int color) {
-            builder.append(text, new ForegroundColorSpan(color), Spannable.SPAN_COMPOSING);
+        public SpannableStringHelper appendColor(String text, @ColorInt int color) {
+            builder.append(text, SPAN_TYPE.COLOR.getWhat(color), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
+
+        public SpannableStringHelper appendRelativeSize(String text, float size) {
+            builder.append(text, SPAN_TYPE.RELATIVE_SIZE.getWhat(size), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return this;
+        }
+
+        public SpannableStringHelper appendCustom(CustomUtility.GenericInterface<SpannableStringBuilder> applyCustomSpan) {
+            applyCustomSpan.runGenericInterface(builder);
+            return this;
+        }
+        //  <------------------------- Append -------------------------
 
         public SpannableStringBuilder get() {
             return builder;
@@ -699,6 +777,16 @@ public class Helpers {
             return spannableStringBuilder;
         }
         //  <--------------- Quick... ---------------
+
+        //  ------------------------- Builder ------------------------->
+        public  interface SpannableStringHelperInterface {
+            SpannableStringHelper get(SpannableStringHelper spanBuilder);
+        }
+
+        public static SpannableStringBuilder Builder(SpannableStringHelperInterface spanBuilderInterface) {
+            return spanBuilderInterface.get(new SpannableStringHelper()).get();
+        }
+        //  <------------------------- Builder -------------------------
     }
     //  <--------------- SpannableString ---------------
 

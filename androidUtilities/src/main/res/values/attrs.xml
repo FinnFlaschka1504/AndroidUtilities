@@ -15,4 +15,9 @@
         </attr>
         <attr name="aspectRatio" format="float"/>
     </declare-styleable>
+    <declare-styleable name="MaxDimensionsLayout">
+        <attr name="maxWidth" format="dimension"/>
+        <attr name="maxHeight" format="dimension"/>
+        <attr name="android:enabled" format="boolean"/>
+    </declare-styleable>
 </resources>

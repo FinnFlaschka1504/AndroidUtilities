@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -20,6 +21,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +32,7 @@ import androidx.annotation.IntDef;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -50,10 +53,7 @@ public class CustomDialog {
     }
 
     public enum BUTTON_TYPE {
-        YES_BUTTON("Ja", R.drawable.ic_check), NO_BUTTON("Nein", R.drawable.ic_cancel), SAVE_BUTTON("Speichern", R.drawable.ic_save)
-        , CANCEL_BUTTON("Abbrechen", R.drawable.ic_cancel), BACK_BUTTON("Zurück", R.drawable.ic_arrow_back), OK_BUTTON("Ok", R.drawable.ic_check)
-        , DELETE_BUTTON("Löschen", R.drawable.ic_delete), GO_TO_BUTTON("Gehe zu", R.drawable.ic_search), EDIT_BUTTON("Bearbeiten", R.drawable.ic_edit)
-        , DETAIL_BUTTON("Details", R.drawable.ic_info), ADD_BUTTON("Hinzufügen", R.drawable.ic_add), CLOSE_BUTTON("Schließen", R.drawable.ic_cancel); // ToDo: Button oben Links & Rechts
+        YES_BUTTON("Ja", R.drawable.ic_check), NO_BUTTON("Nein", R.drawable.ic_cancel), SAVE_BUTTON("Speichern", R.drawable.ic_save), CANCEL_BUTTON("Abbrechen", R.drawable.ic_cancel), BACK_BUTTON("Zurück", R.drawable.ic_arrow_back), OK_BUTTON("Ok", R.drawable.ic_check), DELETE_BUTTON("Löschen", R.drawable.ic_delete), GO_TO_BUTTON("Gehe zu", R.drawable.ic_search), EDIT_BUTTON("Bearbeiten", R.drawable.ic_edit), DETAIL_BUTTON("Details", R.drawable.ic_info), ADD_BUTTON("Hinzufügen", R.drawable.ic_add), CLOSE_BUTTON("Schließen", R.drawable.ic_cancel); // ToDo: Button oben Links & Rechts
 
         String label;
         int iconId;
@@ -85,28 +85,30 @@ public class CustomDialog {
     private boolean removeLastDivider;
     private boolean titleBackButton;
     private OnDialogCallback titleBackButton_clickListener;
-    private CustomList<Pair<Boolean,OnDialogCallback>> onDismissListenerList = new CustomList<>();
-    private CustomList<Pair<Boolean,OnDialogCallback>> onShowListenerList = new CustomList<>();
+    private CustomList<Pair<Boolean, OnDialogCallback>> onDismissListenerList = new CustomList<>();
+    private CustomList<Pair<Boolean, OnDialogCallback>> onShowListenerList = new CustomList<>();
     private boolean removeBackground;
     private boolean removeMargin;
     private Drawable backgroundDrawable;
     private boolean coloredActionButtons = true;
     private OnBackPressedListener onBackPressedListener;
     private OnDialogCallback onTouchOutside;
+    private View activityRootView;
+    private ViewTreeObserver.OnGlobalLayoutListener activityRootViewListener;
 
     public static final int VISIBLE = 0x00000000;
     public static final int INVISIBLE = 0x00000004;
     public static final int GONE = 0x00000008;
+
     @IntDef({VISIBLE, INVISIBLE, GONE})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface Visibility {}
-
+    public @interface Visibility {
+    }
 
 
     private SetViewContent setViewContent;
 
     private CustomList<ButtonHelper> buttonHelperList = new CustomList<>();
-
 
 
     public CustomDialog(Context context) {
@@ -312,21 +314,47 @@ public class CustomDialog {
         return this;
     }
 
+    public CustomDialog enableDynamicWrapHeight(AppCompatActivity activity) {
+        return enableDynamicWrapHeight(activity.findViewById(android.R.id.content).getRootView());
+    }
+
     public CustomDialog enableDynamicWrapHeight(View rootView) {
-       View dialogRootView = dialog.getWindow().getDecorView();
-       ViewTreeObserver.OnGlobalLayoutListener layoutListener = () -> {
-           Rect r = new Rect();
-           rootView.getWindowVisibleDisplayFrame(r);
+        activityRootView = rootView;
+        View dialogRootView = dialog.getWindow().getDecorView();
+        activityRootViewListener = () -> {
+            Rect r = new Rect();
+            activityRootView.getWindowVisibleDisplayFrame(r);
 
-           int availableSpace = r.bottom - r.top;
-           int neededSpace = dialogRootView.getHeight();
+            int availableSpace = r.bottom - r.top;
+            dialogRootView.measure(View.MeasureSpec.makeMeasureSpec(dialogRootView.getWidth(), View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(dialogRootView.getHeight(), View.MeasureSpec.UNSPECIFIED));
+            int neededSpace = dialogRootView.getMeasuredHeight();
 
-           setDialogLayoutParameters(dialog, true, availableSpace < neededSpace);
-       };
-       rootView.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
-       addOnDialogDismiss_system(customDialog -> rootView.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener));
-       return this;
-   }
+            boolean heightMatchParent = availableSpace < neededSpace;
+
+            if (heightMatchParent != (dialog.getWindow().getAttributes().height == WindowManager.LayoutParams.MATCH_PARENT))
+                setDialogLayoutParameters(dialog, true, heightMatchParent);
+        };
+        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(activityRootViewListener);
+        addOnDialogDismiss_system(customDialog -> activityRootView.getViewTreeObserver().removeOnGlobalLayoutListener(activityRootViewListener));
+        return this;
+    }
+
+    public CustomDialog enableAutoUpdateDynamicWrapHeight() {
+        if (activityRootView != null && activityRootViewListener != null) {
+            View dialogRootView = dialog.getWindow().getDecorView();
+            dialogRootView.getViewTreeObserver().addOnGlobalLayoutListener(activityRootViewListener);
+        } else
+            throw new RuntimeException("'enableDynamicWrapHeight' muss zuvor aufgerufen worden sein");
+        return this;
+    }
+
+    public CustomDialog updateDynamicWrapHeight() {
+        if (activityRootView != null && activityRootViewListener != null) {
+            activityRootViewListener.onGlobalLayout();
+        } else
+            throw new RuntimeException("'enableDynamicWrapHeight' muss zuvor aufgerufen worden sein");
+        return this;
+    }
 
     public CustomDialog addOptionalModifications(OnDialogCallback optionalModifications) {
         optionalModifications.runOnDialogCallback(this);
@@ -380,7 +408,7 @@ public class CustomDialog {
         return this;
     }
 
-    public CustomDialog removeOnDialogShown (OnDialogCallback onDialogCallback) {
+    public CustomDialog removeOnDialogShown(OnDialogCallback onDialogCallback) {
         onShowListenerList.remove(Pair.create(false, onDialogCallback));
         return this;
     }
@@ -397,7 +425,7 @@ public class CustomDialog {
         void runOnClick(CustomDialog customDialog);
     }
 
-    public interface SetViewContent{
+    public interface SetViewContent {
         void runSetViewContent(CustomDialog customDialog, View view, boolean reload);
     }
 
@@ -405,7 +433,7 @@ public class CustomDialog {
         void runOnDialogCallback(CustomDialog customDialog);
     }
 
-    public interface GoToFilter<T>{
+    public interface GoToFilter<T> {
         boolean runGoToFilter(String search, T t);
     }
 
@@ -466,6 +494,7 @@ public class CustomDialog {
             this.textValidation = textValidation;
             return this;
         }
+
         public EditBuilder setValidation(String regEx) {
             this.regEx = regEx;
             return this;
@@ -528,7 +557,7 @@ public class CustomDialog {
         //       <-------------------- DropDown --------------------
     }
 
-    public static class TextBuilder{
+    public static class TextBuilder {
         private String text;
         private int color = -1;
         private int size = -1;
@@ -588,7 +617,7 @@ public class CustomDialog {
 
 
         //  ------------------------- Convenience ------------------------->
-        public TextBuilder useDarkTitle (Context context) {
+        public TextBuilder useDarkTitle(Context context) {
             color = context.getColor(R.color.colorPrimaryDark);
             return this;
         }
@@ -599,9 +628,9 @@ public class CustomDialog {
 
     //  ----- Convenience ----->
     public CustomDialog dismiss() {
-    dialog.dismiss();
-    return this;
-}
+        dialog.dismiss();
+        return this;
+    }
 
     public <T extends View> T findViewById(@IdRes int id) {
         return dialog.findViewById(id);
@@ -665,6 +694,7 @@ public class CustomDialog {
         removeBackground = true;
         return this;
     }
+
     public CustomDialog removeBackground_and_margin() {
         removeBackground = true;
         removeMargin = true;
@@ -738,7 +768,6 @@ public class CustomDialog {
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
                 button.setLayoutParams(params);
             }
-
 
 
             if (label != null)
@@ -872,47 +901,59 @@ public class CustomDialog {
     public CustomDialog addButton(String buttonName) {
         return addButton_complete(buttonName, null, null, null, null, true);
     }
+
     public CustomDialog addButton(String buttonName, OnClick onClick) {
         return addButton_complete(buttonName, null, null, onClick, null, true);
     }
+
     public CustomDialog addButton(String buttonName, OnClick onClick, int buttonId) {
         return addButton_complete(buttonName, null, null, onClick, buttonId, true);
     }
-    public CustomDialog addButton(String buttonName, OnClick onClick, boolean dismissDialog){
+
+    public CustomDialog addButton(String buttonName, OnClick onClick, boolean dismissDialog) {
         return addButton_complete(buttonName, null, null, onClick, null, dismissDialog);
     }
-    public CustomDialog addButton(String buttonName, OnClick onClick, int buttonId, boolean dismissDialog){
+
+    public CustomDialog addButton(String buttonName, OnClick onClick, int buttonId, boolean dismissDialog) {
         return addButton_complete(buttonName, null, null, onClick, buttonId, dismissDialog);
     }
 
     public CustomDialog addButton(BUTTON_TYPE button_type) {
-        return addButton_complete(null , button_type, null, null, null, true);
+        return addButton_complete(null, button_type, null, null, null, true);
     }
+
     public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick) {
-        return addButton_complete(null , button_type, null, onClick, null, true);
+        return addButton_complete(null, button_type, null, onClick, null, true);
     }
+
     public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick, int buttonId) {
-        return addButton_complete(null , button_type, null, onClick, buttonId, true);
+        return addButton_complete(null, button_type, null, onClick, buttonId, true);
     }
-    public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick, boolean dismissDialog){
-        return addButton_complete(null , button_type, null, onClick, null, dismissDialog);
+
+    public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick, boolean dismissDialog) {
+        return addButton_complete(null, button_type, null, onClick, null, dismissDialog);
     }
-    public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick, int buttonId, boolean dismissDialog){
-        return addButton_complete(null , button_type, null, onClick, buttonId, dismissDialog);
+
+    public CustomDialog addButton(BUTTON_TYPE button_type, OnClick onClick, int buttonId, boolean dismissDialog) {
+        return addButton_complete(null, button_type, null, onClick, buttonId, dismissDialog);
     }
 
     public CustomDialog addButton(@DrawableRes int drawableResId) {
         return addButton_complete(null, null, drawableResId, null, null, true);
     }
+
     public CustomDialog addButton(@DrawableRes int drawableResId, OnClick onClick) {
         return addButton_complete(null, null, drawableResId, onClick, null, true);
     }
+
     public CustomDialog addButton(@DrawableRes int drawableResId, OnClick onClick, Integer buttonId) {
         return addButton_complete(null, null, drawableResId, onClick, buttonId, true);
     }
+
     public CustomDialog addButton(@DrawableRes int drawableResId, OnClick onClick, boolean dismissDialog) {
         return addButton_complete(null, null, drawableResId, onClick, null, dismissDialog);
     }
+
     public CustomDialog addButton(@DrawableRes int drawableResId, OnClick onClick, int buttonId, boolean dismissDialog) {
         return addButton_complete(null, null, drawableResId, onClick, buttonId, dismissDialog);
     }
@@ -920,6 +961,7 @@ public class CustomDialog {
     public CustomDialog addOnLongClickToLastAddedButton(OnClick onLongClick) {
         return addOnLongClickToLastAddedButton(onLongClick, null);
     }
+
     public CustomDialog addOnLongClickToLastAddedButton(OnClick onLongClick, Boolean dismissDialog) {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
             buttonHelper.onLongClick = onLongClick;
@@ -936,28 +978,32 @@ public class CustomDialog {
         return this;
     }
 
-    public CustomDialog colorLastAddedButton(){
+    public CustomDialog colorLastAddedButton() {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.colored = true, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
         return this;
     }
-    public CustomDialog hideLastAddedButton(){
+
+    public CustomDialog hideLastAddedButton() {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.hidden = true, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
         return this;
     }
-    public CustomDialog disableLastAddedButton(){
+
+    public CustomDialog disableLastAddedButton() {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.disabled = true, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
         return this;
     }
+
     public CustomDialog alignPreviousButtonsLeft() {
         buttonHelperList.forEach(buttonHelper -> buttonHelper.alignLeft = true);
         return this;
     }
+
     public CustomDialog transformPreviousButtonToImageButton() {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
             buttonHelper.iconId = buttonHelper.buttonType.iconId;
@@ -967,6 +1013,7 @@ public class CustomDialog {
         });
         return this;
     }
+
     public CustomDialog doubleClickLastAddedButton(@NonNull String message, @Nullable CustomUtility.GenericReturnInterface<CustomDialog, Boolean> enableDoubleClick) {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
             buttonHelper.doubleClickMessage = message;
@@ -976,6 +1023,7 @@ public class CustomDialog {
         });
         return this;
     }
+
     public CustomDialog markLastAddedButtonAsActionButton() {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> buttonHelper.actionButton = true, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
@@ -984,7 +1032,7 @@ public class CustomDialog {
     }
 
     public CustomDialog addGoToButton(CustomRecycler.GoToFilter goToFilter, CustomRecycler customRecycler) {
-        return addButton_complete(null , BUTTON_TYPE.GO_TO_BUTTON, null, customDialog -> customRecycler.goTo(goToFilter, null), null, false);
+        return addButton_complete(null, BUTTON_TYPE.GO_TO_BUTTON, null, customDialog -> customRecycler.goTo(goToFilter, null), null, false);
     }
 
     class NoButtonAdded extends Exception {
@@ -997,12 +1045,12 @@ public class CustomDialog {
 
     //  ----- Actions ----->
     public Dialog show_dialog() {
-    show();
-    return dialog;
-}
+        show();
+        return dialog;
+    }
 
     public CustomDialog show() {
-        if (!firstTime){
+        if (!firstTime) {
             dialog.show();
             return this;
         }
@@ -1017,8 +1065,24 @@ public class CustomDialog {
         }
 
         if (text != null) {
-            ((TextView) dialog.findViewById(R.id.dialog_custom_text)).setText(this.text);
-            dialog.findViewById(R.id.dialog_custom_text_layout).setVisibility(View.VISIBLE);
+            TextView textView = dialog.findViewById(R.id.dialog_custom_text);
+            textView.setText(this.text);
+            MaxDimensionsLayout dialog_custom_text_layout = dialog.findViewById(R.id.dialog_custom_text_layout);
+            dialog_custom_text_layout.setVisibility(View.VISIBLE);
+
+//            dialog_custom_text_layout.setEnabled(false/*view != null*/);
+
+//            dialog_custom_text_layout.setMaxHeight(CustomUtility.dpToPx(view != null || editBuilder != null ? 175: 600));
+            if (view == null && editBuilder == null) {
+                dialog_custom_text_layout.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+                dialog_custom_text_layout.setEnabled(false);
+            } else
+                dialog_custom_text_layout.setMaxHeight(CustomUtility.dpToPx(175));
+
+//            boolean isLast = buttonHelperList.isEmpty() && view == null;
+//            if (!dividerVisibility || /*removeLastDivider &&*/ isLast)
+//                CustomUtility.setPadding(textView, -1, -1, -1, 16);
+
         } else if (text_builder != null) {
             applyText(dialog.findViewById(R.id.dialog_custom_text), text_builder);
             dialog.findViewById(R.id.dialog_custom_text_layout).setVisibility(View.VISIBLE);
@@ -1034,6 +1098,7 @@ public class CustomDialog {
                     ViewGroup.LayoutParams.MATCH_PARENT);
             if (scroll) {
                 ScrollView dialog_custom_layout_view_interface = dialog.findViewById(R.id.dialog_custom_layout_view_interface);
+                dialog_custom_layout_view_interface.removeAllViews(); // <--------------------------------------------------------------------------------------
                 dialog_custom_layout_view_interface.addView(view, layoutParams);
                 dialog_custom_layout_view_interface.setVisibility(View.VISIBLE);
             } else {
@@ -1132,7 +1197,7 @@ public class CustomDialog {
             if (window != null) {
                 window.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
                 if (!removeMargin)
-                    CustomUtility.setMargins(dialog.findViewById(R.id.dialog_custom_root),16);
+                    CustomUtility.setMargins(dialog.findViewById(R.id.dialog_custom_root), 16);
             }
         }
 
@@ -1236,8 +1301,7 @@ public class CustomDialog {
                 if (textInputHelper1.isValid() && finalButton != null)
                     finalButton.callOnClick();
             });
-        }
-        else
+        } else
             textInputHelper.addActionListener(textInputLayout, editBuilder.onActionActionPair.first, editBuilder.onActionActionPair.second);
 
         if (!editBuilder.text.isEmpty())

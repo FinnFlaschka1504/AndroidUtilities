@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
-    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(500).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
+    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(0).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
     CustomRecycler<CustomRecycler.Expandable<Player>> recycler;
     List<Pair<String, String>> pairList;
 
@@ -67,6 +68,16 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .setView(R.layout.dialog_filter_by_rating)
 //                .setDimensionsFullscreen()
                 .setTitle("Double Click Test")
+                .setText(Helpers.SpannableStringHelper.Builder(spanBuilder ->
+                        spanBuilder
+                                .appendBold("Dick ")
+                                .appendBoldItalic("DickSchräg ")
+                                .appendColor("Farbe ", 0xffff0000)
+                                .appendBold("NochmalDick ")
+                                .appendStrikeThrough("Unterstrichen ")
+                                .appendColor("NochmalFarbe ", 0xff00ff00)
+                                .appendMultiple("Mehrere", multipleSpans -> multipleSpans.bold().italic().underlined().color(0xff0000ff).relativeSize(2f))
+                ))
                 .enableDoubleClickOutsideToDismiss(customDialog -> false, "eins", "zwei", "drei")
                 .enableTitleBackButton(customDialog -> {
                     Toast.makeText(this, "Test", Toast.LENGTH_SHORT).show();
@@ -116,7 +127,30 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .hideLastAddedButton()
                 .addButton("Zehn", customDialog -> customDialog.getButton(jButtonId).setVisibility(View.GONE), jButtonId, false)
                 .hideLastAddedButton()
-                .setSetViewContent((customDialog, view, reload) -> customDialog.getActionButton().setEnabled(true))
+                .enableDynamicWrapHeight(this)
+                .enableAutoUpdateDynamicWrapHeight()
+                .setSetViewContent((customDialog, view, reload) -> {
+                    ImageView dialog_bigImage = customDialog.findViewById(R.id.dialog_bigImage);
+                    customDialog.findViewById(R.id.dialog_bigImage_toggle).setOnClickListener(v -> {
+                        if (dialog_bigImage.getVisibility() == View.GONE)
+                            dialog_bigImage.setVisibility(View.VISIBLE);
+                        else
+                            dialog_bigImage.setVisibility(View.GONE);
+                    });
+                    customDialog.getActionButton().setEnabled(true);
+                });
+//                .show();
+
+        String text1 = Stream.iterate(1, count -> count + 1).limit(60).map(integer -> integer + ". Zeile").collect(Collectors.joining("\n")) + "\nletzte";
+        CustomDialog.Builder(this)
+                .setTitle("Text Test")
+//                .setView(R.layout.dialog_filter_by_rating)
+//                .standardEdit()
+//                .hideDividers()
+//                .setDimensionsFullscreen()
+                .setText(text1)
+                .setOnBackPressedListener(customDialog -> true)
+                .addButton("Mip")
                 .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);
@@ -217,7 +251,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                         ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText("Mip\n" + player.getName() + "\n\nExpand");
                     }
                     String imageUrl = imageUrlList.get(playerList.indexOf(player) % imageUrlList.size());
-                    CustomUtility.loadUrlIntoImageView(this, itemView.findViewById(R.id.listItem_player_imageView) , imageUrl, imageUrl);
+                    CustomUtility.loadUrlIntoImageView(this, itemView.findViewById(R.id.listItem_player_imageView), imageUrl, imageUrl);
                     itemView.findViewById(R.id.listItem_player_delete).setEnabled(expanded);
 
                 })
@@ -229,8 +263,11 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 })
                 .setOnReload(customRecycler -> Toast.makeText(this, "Neu Geladen", Toast.LENGTH_SHORT).show())
                 .enableTrackReloading()
-                .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler, objectList) -> {
-                }, true)
+                .addOptionalModifications(customRecycler -> {
+                    customRecycler
+                            .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler1, objectList) -> {
+                            }, true);
+                })
 //                .setOrientation(CustomRecycler.ORIENTATION.HORIZONTAL)
 //                .addSubOnClickListener(R.id.listItem_player_drag, (customRecycler, itemView, playerExpandable, index) -> {
 //                    Toast.makeText(this, playerExpandable.getName(), Toast.LENGTH_SHORT).show();

@@ -300,6 +300,11 @@ public class CustomRecycler<T> {
         return this;
     }
 
+    public CustomRecycler<T> addOptionalModifications(CustomRecyclerInterface<T> optionalModifications) {
+        optionalModifications.run(this);
+        return this;
+    }
+
 
     //  --------------- Drag & Swipe --------------->
     public CustomRecycler<T> enableDragAndDrop(OnDragAndDrop<T> onDragAndDrop) {

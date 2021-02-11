@@ -805,6 +805,27 @@ public class CustomUtility {
             v.requestLayout();
         }
     }
+
+    public static void setPadding(View v, int padding) {
+        padding = dpToPx(padding);
+        v.setPadding(padding, padding, padding, padding);
+    }
+
+    public static void setPadding(View v, int horizontal, int vertical) {
+            v.setPadding(
+                    horizontal == -1 ? v.getPaddingLeft() : dpToPx(horizontal),
+                    vertical == -1 ? v.getPaddingTop() : dpToPx(vertical),
+                    horizontal == -1 ? v.getPaddingRight() : dpToPx(horizontal),
+                    vertical == -1 ? v.getPaddingBottom() : dpToPx(vertical));
+    }
+
+    public static void setPadding(View v, int left, int top, int right, int bottom) {
+        v.setPadding(
+                left == -1 ? v.getPaddingLeft() : dpToPx(left),
+                top == -1 ? v.getPaddingTop() : dpToPx(top),
+                right == -1 ? v.getPaddingRight() : dpToPx(right),
+                bottom == -1 ? v.getPaddingBottom() : dpToPx(bottom));
+    }
     //  <----- Pixels -----
 
     //  ------------------------- Text ------------------------->
