@@ -1,7 +1,9 @@
 package com.finn.androidUtilities;
 
+import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.ParcelableSpan;
@@ -16,9 +18,15 @@ import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
 import android.util.Pair;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
@@ -29,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -461,6 +470,11 @@ public class Helpers {
 
         public TextInputHelper setInputType(TextInputLayout textInputLayout, INPUT_TYPE inputType) {
             textInputLayout.getEditText().setInputType(inputType.code);
+            return this;
+        }
+
+        public TextInputHelper setInputType(TextInputLayout textInputLayout, int inputType) {
+            textInputLayout.getEditText().setInputType(inputType);
             return this;
         }
 
@@ -1011,4 +1025,393 @@ public class Helpers {
 
     }
     //  <------------------------- SortHelper -------------------------
+
+
+    //  ------------------------- WebViewHelper ------------------------->
+    public static class WebViewHelper {
+        public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36";
+
+        private String userAgent = USER_AGENT;
+        private boolean debug;
+        private boolean loadInvisibleDialog;
+        private boolean destroyOnSuccess = true;
+        private WebView webView;
+        private com.finn.androidUtilities.CustomDialog customDialog;
+        private Context context;
+        private boolean mobileVersion;
+        private String[] urls;
+        private int openJs;
+        private boolean dialogCanceled;
+        private List<Pair<String, CustomUtility.GenericInterface<String>>> requestList = new ArrayList<>();
+        private ExecuteBeforeJavaScript executeBeforeJavaScript;
+        private boolean alreadyLoaded;
+        private boolean isRedirekted;
+        private CustomUtility.GenericInterface<WebSettings> setSettings;
+        private boolean showToasts = true;
+        private int urlsIndex;
+        private Runnable onAllComplete;
+        private boolean destroyed;
+        private boolean loadImages;
+
+        //  ------------------------- Constructor ------------------------->
+        public WebViewHelper(Context context, String... urls) {
+            this.context = context;
+            this.urls = urls;
+        }
+
+        public WebViewHelper(Context context, WebView webView, String... urls) {
+            this.webView = webView;
+            this.context = context;
+            this.urls = urls;
+        }
+        //  <------------------------- Constructor -------------------------
+
+
+        private void buildWebView() {
+            if (showToasts)
+                Toast.makeText(context, "Einen Moment bitte..", Toast.LENGTH_SHORT).show();
+
+            webView = new WebView(context);
+            if (!debug)
+                webView.setAlpha(0f);
+            WebSettings settings = webView.getSettings();
+            settings.setJavaScriptEnabled(true);
+            if (!mobileVersion) {
+                settings.setUserAgentString(userAgent);
+                settings.setUseWideViewPort(true);
+                settings.setLoadWithOverviewMode(true);
+            }
+            settings.setSupportZoom(true);
+            settings.setBuiltInZoomControls(true);
+            settings.setDisplayZoomControls(false);
+            settings.setRenderPriority(WebSettings.RenderPriority.HIGH);
+            settings.setLoadWithOverviewMode(true);
+            settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+            settings.setDomStorageEnabled(true);
+
+            if (!loadImages) {
+//                settings.setBlockNetworkLoads(true);
+                settings.setLoadsImagesAutomatically(false);
+                settings.setBlockNetworkImage(true);
+            }
+
+            CustomUtility.runGenericInterface(setSettings, settings);
+
+            webView.setWebViewClient(new WebViewClient() {
+//                @Override
+//                public void onPageStarted(WebView view, String url, Bitmap favicon) {
+//                    isRedirekted = false;
+////                    super.onPageStarted(view, url, favicon);
+//                }
+//
+//                @Override
+//                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+//                    isRedirekted = true;
+//                    view.loadUrl(request.getUrl().toString());
+//                    return true;
+////                    return super.shouldOverrideUrlLoading(view, request);
+//                }
+
+                @Override
+                public void onPageFinished(WebView view, String url) { // ToDo: https://stackoverflow.com/questions/18282892/android-webview-onpagefinished-called-twice
+                    if (!dialogCanceled /*&& !isRedirekted && !alreadyLoaded*/ && view.getProgress() == 100) { // && openJs != 0 && ) {
+//                        alreadyLoaded = true;
+                        if (executeBeforeJavaScript == null)
+                            onPageLoaded();
+                        else
+                            executeBeforeJavaScript();
+                    }
+//                    super.onPageFinished(view, url);
+                }
+            });
+
+            loadNextPage();
+
+            if (debug || loadInvisibleDialog)
+                buildDialog();
+        }
+
+        private void loadNextPage() {
+            if (destroyed) return;
+            openJs = requestList.size();
+            alreadyLoaded = false;
+            webView.loadUrl(urls[urlsIndex]);
+            urlsIndex++;
+        }
+
+        public WebViewHelper addRequest(String javaScript, CustomUtility.GenericInterface<String> onParseResult) {
+            requestList.add(Pair.create(javaScript, onParseResult));
+            return this;
+        }
+
+        public WebViewHelper addCommand(String javaScript) {
+            requestList.add(Pair.create(javaScript, null));
+            return this;
+        }
+
+        private void onPageLoaded() {
+            Iterator<Pair<String, CustomUtility.GenericInterface<String>>> iterator = requestList.iterator();
+            new Runnable() {
+                @Override
+                public void run() {
+                    if (destroyed) return;
+                    if (iterator.hasNext()) {
+                        Pair<String, CustomUtility.GenericInterface<String>> pair = iterator.next();
+                        WebViewHelper.this.evaluateJavaScript(pair.first, pair.second, this, 0);
+                    }
+                }
+            }.run();
+
+//            for (Pair<String, CustomUtility.GenericInterface<String>> pair : requestList) {
+//            }
+        }
+
+        private void evaluateJavaScript(String rawScript, CustomUtility.GenericInterface<String> onParseResult, Runnable onComplete, int tryCount) {
+            if (destroyed) return;
+            String script = rawScript;
+            if (script.startsWith("{") && script.endsWith("}")) {
+                script = "(function() " + script + ")();";
+
+            } else {
+                if (!script.endsWith(";"))
+                    script += ";";
+            }
+
+            Runnable onSuccess = () -> {
+                if (openJs <= 1) {
+                    openJs--;
+                    if (urlsIndex < urls.length) {
+                        loadNextPage();
+                    } else {
+                        if (onAllComplete != null)
+                            onAllComplete.run();
+                        if (!debug && destroyOnSuccess) {
+                            webView.destroy();
+                            if (customDialog != null) {
+                                customDialog.dismiss();
+                                customDialog = null;
+                            }
+                        }
+                    }
+                } else {
+                    openJs--;
+                    onComplete.run();
+                }
+            };
+
+
+            webView.evaluateJavascript(script, t -> {
+                if (destroyed) return;
+                if (onParseResult != null) {
+                    if (t.startsWith("\"") && t.endsWith("\""))
+                        t = CustomUtility.subString(t, 1, -1);
+
+                    if (t.matches("null") && tryCount < 50) {
+                        new Handler().postDelayed(() -> evaluateJavaScript(rawScript, onParseResult, onComplete, tryCount + 1), 100);
+                    } else {
+                        onParseResult.runGenericInterface(t + (tryCount < 50 ? "" : " (" + tryCount + ")"));
+                        onSuccess.run();
+                    }
+                } else
+                    onSuccess.run();
+            });
+
+        }
+
+        private void buildDialog() {
+            customDialog = com.finn.androidUtilities.CustomDialog.Builder(context)
+                    .setView(webView)
+                    .addOptionalModifications(customDialog1 -> {
+                        if (debug) {
+                            customDialog1
+                                    .setDimensions(true, true);
+                        } else {
+                            customDialog1
+                                    .setDimensions(true, true)
+                                    .removeBackground_and_margin()
+                                    .enableDoubleClickOutsideToDismiss(customDialog -> true, "Daten werden geladen");
+                        }
+                    })
+                    .setOnDialogDismiss(customDialog -> {
+                        dialogCanceled = true;
+                        ((ViewGroup) customDialog.findViewById(R.id.dialog_custom_layout_view_interface)).removeAllViews();
+                    })
+                    .disableScroll()
+                    .show();
+
+            Toast toast = Toast.makeText(context, "Daten werden geladen", Toast.LENGTH_SHORT);
+            com.finn.androidUtilities.Helpers.DoubleClickHelper doubleClickHelper = com.finn.androidUtilities.Helpers.DoubleClickHelper.create()
+                    .setOnFailed(toast::show)
+                    .setOnSuccess(() -> {
+                        toast.cancel();
+                        Toast.makeText(context, "Abgebrochen", Toast.LENGTH_SHORT).show();
+                    });
+            webView.setOnTouchListener((v, event) -> {
+                if (!debug && event.getAction() == MotionEvent.ACTION_UP) {
+                    if (doubleClickHelper.check()) {
+                        customDialog.dismiss();
+                        dialogCanceled = true;
+                    }
+                    return true;
+                } else
+                    return false;
+            });
+        }
+
+        public WebViewHelper go() {
+            dialogCanceled = false;
+            if (webView == null)
+                buildWebView();
+            else {
+                if (debug || loadInvisibleDialog)
+                    buildDialog();
+
+                if (executeBeforeJavaScript == null)
+                    onPageLoaded();
+                else
+                    executeBeforeJavaScript();
+            }
+            return this;
+        }
+
+        public void destroy() {
+            destroyed = true;
+            if (!debug) {
+                webView.destroy();
+                if (customDialog != null) {
+                    customDialog.dismiss();
+                    customDialog = null;
+                }
+            }
+        }
+
+
+        //  ------------------------- ExecuteBeforeJavaScript ------------------------->
+        public interface ExecuteBeforeJavaScript {
+            void runExecuteBeforeJavaScript(com.finn.androidUtilities.CustomDialog internetDialog, WebView webView, Runnable resume);
+        }
+
+        private void executeBeforeJavaScript() {
+            executeBeforeJavaScript.runExecuteBeforeJavaScript(customDialog, webView, this::onPageLoaded);
+        }
+        //  <------------------------- ExecuteBeforeJavaScript -------------------------
+
+
+        //  ------------------------- Getter & Setter ------------------------->
+        public String getUserAgent() {
+            return userAgent;
+        }
+
+        public WebViewHelper setUserAgent(String userAgent) {
+            this.userAgent = userAgent;
+            return this;
+        }
+
+        public boolean isDebug() {
+            return debug;
+        }
+
+        public WebViewHelper setDebug(boolean debug) {
+            this.debug = debug;
+            return this;
+        }
+
+        public boolean isLoadInvisibleDialog() {
+            return loadInvisibleDialog;
+        }
+
+        public WebViewHelper setLoadInvisibleDialog(boolean loadInvisibleDialog) {
+            this.loadInvisibleDialog = loadInvisibleDialog;
+            return this;
+        }
+
+        public boolean isDestroyOnSuccess() {
+            return destroyOnSuccess;
+        }
+
+        public WebViewHelper setDestroyOnSuccess(boolean destroyOnSuccess) {
+            this.destroyOnSuccess = destroyOnSuccess;
+            return this;
+        }
+
+        public WebView getWebView() {
+            return webView;
+        }
+
+        public WebViewHelper setWebView(WebView webView) {
+            this.webView = webView;
+            return this;
+        }
+
+        public com.finn.androidUtilities.CustomDialog getCustomDialog() {
+            return customDialog;
+        }
+
+        public WebViewHelper setCustomDialog(com.finn.androidUtilities.CustomDialog customDialog) {
+            this.customDialog = customDialog;
+            return this;
+        }
+
+        public Context getContext() {
+            return context;
+        }
+
+        public WebViewHelper setContext(Context context) {
+            this.context = context;
+            return this;
+        }
+
+        public boolean isMobileVersion() {
+            return mobileVersion;
+        }
+
+        public WebViewHelper setMobileVersion(boolean mobileVersion) {
+            this.mobileVersion = mobileVersion;
+            return this;
+        }
+
+        public String[] getUrls() {
+            return urls;
+        }
+
+        public WebViewHelper setUrls(String... urls) {
+            this.urls = urls;
+            return this;
+        }
+
+        public WebViewHelper setExecuteBeforeJavaScript(ExecuteBeforeJavaScript executeBeforeJavaScript) {
+            this.executeBeforeJavaScript = executeBeforeJavaScript;
+            return this;
+        }
+
+        public WebViewHelper setSetSettings(CustomUtility.GenericInterface<WebSettings> setSettings) {
+            this.setSettings = setSettings;
+            return this;
+        }
+
+        public Runnable getOnAllComplete() {
+            return onAllComplete;
+        }
+
+        public WebViewHelper setOnAllComplete(Runnable onAllComplete) {
+            this.onAllComplete = onAllComplete;
+            return this;
+        }
+
+        public WebViewHelper enableLoadImages() {
+            this.loadImages = true;
+            return this;
+        }
+        //  <------------------------- Getter & Setter -------------------------
+
+
+        //  ------------------------- Convenience ------------------------->
+        public WebViewHelper addOptional(CustomUtility.GenericInterface<WebViewHelper> addOptional) {
+            addOptional.runGenericInterface(this);
+            return this;
+        }
+        //  <------------------------- Convenience -------------------------
+    }
+    //  <------------------------- WebViewHelper -------------------------
+
 }

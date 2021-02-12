@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -144,13 +145,26 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         String text1 = Stream.iterate(1, count -> count + 1).limit(60).map(integer -> integer + ". Zeile").collect(Collectors.joining("\n")) + "\nletzte";
         CustomDialog.Builder(this)
                 .setTitle("Text Test")
-//                .setView(R.layout.dialog_filter_by_rating)
+                .setView(R.layout.dialog_filter_by_rating)
 //                .standardEdit()
 //                .hideDividers()
 //                .setDimensionsFullscreen()
                 .setText(text1)
+                .setEdit(new CustomDialog.EditBuilder().setInputType(InputType.TYPE_CLASS_NUMBER))
                 .setOnBackPressedListener(customDialog -> true)
+                .addButton("ID", customDialog -> {}, 123)
+                .addOnLongClickToLastAddedButton(customDialog -> Toast.makeText(this, "LongClick", Toast.LENGTH_SHORT).show())
+                .alignPreviousButtonsLeft()
                 .addButton("Mip")
+                .addButton(R.drawable.ic_add)
+                .addButton(CustomDialog.BUTTON_TYPE.DELETE_BUTTON)
+                .setSetViewContent((customDialog, view, reload) -> {
+                    customDialog.getButton(123).setEnabled(false);
+                    customDialog.getButton(123).longClick();
+                    customDialog.getButtonByName("Mip").setEnabled(false);
+                    customDialog.getButtonByIcon(R.drawable.ic_add).setEnabled(false);
+                    customDialog.getButtonByType(CustomDialog.BUTTON_TYPE.DELETE_BUTTON).setEnabled(false);
+                })
                 .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);

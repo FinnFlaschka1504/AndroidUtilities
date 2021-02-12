@@ -145,6 +145,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:fillViewport="true"
+            android:requiresFadingEdge="vertical"
             android:visibility="gone"
             tools:visibility="visible">
 

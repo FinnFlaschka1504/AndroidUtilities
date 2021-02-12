@@ -43,6 +43,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -168,10 +169,6 @@ public class CustomDialog {
         return this;
     }
 
-    public View getView() {
-        return view;
-    }
-
     public CustomDialog setButtonConfiguration(BUTTON_CONFIGURATION buttonConfiguration) {
         this.buttonConfiguration = buttonConfiguration;
         return this;
@@ -209,14 +206,6 @@ public class CustomDialog {
         this.editBuilder = new EditBuilder();
         showEdit = true;
         return this;
-    }
-
-    public Dialog getDialog() {
-        return dialog;
-    }
-
-    public Object getPayload() {
-        return payload;
     }
 
     public CustomDialog setPayload(Object payload) {
@@ -360,6 +349,32 @@ public class CustomDialog {
         optionalModifications.runOnDialogCallback(this);
         return this;
     }
+
+    // ---------------
+
+    public Dialog getDialog() {
+        return dialog;
+    }
+
+    public Object getPayload() {
+        return payload;
+    }
+
+    public View getView() {
+        return view;
+    }
+
+    public TextView getTitleTextView() {
+        return dialog.findViewById(R.id.dialog_custom_title);
+    }
+
+    public TextView getTextTextView() {
+        return dialog.findViewById(R.id.dialog_custom_text);
+    }
+
+    public TextInputLayout getEditLayout() {
+        return dialog.findViewById(R.id.dialog_custom_edit_editLayout);
+    }
     //  <----- Getters & Setters -----
 
 
@@ -463,6 +478,7 @@ public class CustomDialog {
         private AdapterView.OnItemClickListener onItemClickListener;
 
         private Helpers.TextInputHelper.INPUT_TYPE inputType = Helpers.TextInputHelper.INPUT_TYPE.CAP_SENTENCES;
+        private Integer inputTypeInt;
         Helpers.TextInputHelper.TextValidation textValidation;
 
         public EditBuilder setText(String text) {
@@ -482,6 +498,11 @@ public class CustomDialog {
 
         public EditBuilder disableSelectAll() {
             this.selectAll = false;
+            return this;
+        }
+
+        public EditBuilder setInputType(Integer inputType) {
+            inputTypeInt = inputType;
             return this;
         }
 
@@ -657,7 +678,28 @@ public class CustomDialog {
 
     public ButtonHelper getButton(int id) {
         Optional<ButtonHelper> optional = buttonHelperList.stream()
-                .filter(buttonHelper -> buttonHelper.id == id)
+                .filter(buttonHelper -> Objects.equals(buttonHelper.id, id))
+                .findFirst();
+        return optional.orElse(null);
+    }
+
+    public ButtonHelper getButtonByName(String name) {
+        Optional<ButtonHelper> optional = buttonHelperList.stream()
+                .filter(buttonHelper -> Objects.equals(buttonHelper.label, name))
+                .findFirst();
+        return optional.orElse(null);
+    }
+
+    public ButtonHelper getButtonByIcon(@DrawableRes int iconId) {
+        Optional<ButtonHelper> optional = buttonHelperList.stream()
+                .filter(buttonHelper -> Objects.equals(buttonHelper.iconId, iconId))
+                .findFirst();
+        return optional.orElse(null);
+    }
+
+    public ButtonHelper getButtonByType(BUTTON_TYPE buttonType) {
+        Optional<ButtonHelper> optional = buttonHelperList.stream()
+                .filter(buttonHelper -> Objects.equals(buttonHelper.buttonType, buttonType))
                 .findFirst();
         return optional.orElse(null);
     }
@@ -882,6 +924,18 @@ public class CustomDialog {
 
         public boolean isImageButton() {
             return iconId != null;
+        }
+
+        public void click() {
+            if (onClick != null) {
+                button.callOnClick();
+            }
+        }
+
+        public void longClick() {
+            if (onLongClick != null) {
+                button.performLongClick();
+            }
         }
     }
 
@@ -1286,8 +1340,10 @@ public class CustomDialog {
             else if (editBuilder.textValidation != null)
                 textInputHelper.setValidation(textInputLayout, editBuilder.textValidation);
 
-            if (editBuilder.inputType != null)
+            if (editBuilder.inputType != null && editBuilder.inputTypeInt == null)
                 textInputHelper.setInputType(textInputLayout, editBuilder.inputType);
+            else if (editBuilder.inputTypeInt != null)
+                textInputHelper.setInputType(textInputLayout, editBuilder.inputTypeInt);
 
             if (editBuilder.allowEmpty)
                 textInputHelper.allowEmpty(textInputLayout);
