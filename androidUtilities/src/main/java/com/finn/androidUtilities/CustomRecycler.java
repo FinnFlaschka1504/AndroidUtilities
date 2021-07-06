@@ -332,9 +332,9 @@ public class CustomRecycler<T> {
             dragFlags = orientation == RecyclerView.VERTICAL ? (ItemTouchHelper.UP | ItemTouchHelper.DOWN) : (ItemTouchHelper.START | ItemTouchHelper.END);
         if (onSwiped != null) {
             if (leftRightSwipe_pair.first)
-                swipeFlags += ItemTouchHelper.START;
+                swipeFlags += orientation ==  RecyclerView.VERTICAL ? ItemTouchHelper.START : ItemTouchHelper.UP;
             if (leftRightSwipe_pair.second)
-                swipeFlags += ItemTouchHelper.END;
+                swipeFlags += orientation ==  RecyclerView.VERTICAL ? ItemTouchHelper.END : ItemTouchHelper.DOWN;
         }
         ItemTouchHelper.Callback itemTouchHelperCallback = new ItemTouchHelper.SimpleCallback(dragFlags, swipeFlags) {
             @Override

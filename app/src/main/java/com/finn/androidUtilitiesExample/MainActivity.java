@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
-    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(0).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
+    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(20).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
     CustomRecycler<CustomRecycler.Expandable<Player>> recycler;
     List<Pair<String, String>> pairList;
 
@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                .setDimensionsFullscreen()
                 .setText(text1)
                 .setEdit(new CustomDialog.EditBuilder().setInputType(InputType.TYPE_CLASS_NUMBER))
-                .setOnBackPressedListener(customDialog -> true)
+//                .setOnBackPressedListener(customDialog -> true)
                 .addButton("ID", customDialog -> {}, 123)
                 .addOnLongClickToLastAddedButton(customDialog -> Toast.makeText(this, "LongClick", Toast.LENGTH_SHORT).show())
                 .alignPreviousButtonsLeft()
@@ -165,6 +165,19 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                     customDialog.getButtonByIcon(R.drawable.ic_add).setEnabled(false);
                     customDialog.getButtonByType(CustomDialog.BUTTON_TYPE.DELETE_BUTTON).setEnabled(false);
                 })
+                .addButton(CustomDialog.BUTTON_TYPE.DELETE_BUTTON, customDialog -> Toast.makeText(this, "Gelöscht", Toast.LENGTH_SHORT).show())
+                .addConfirmationDialogToLastAddedButton("Löschen", "Möchten sie wirklich das Element löschen?", customDialog -> {
+                    customDialog
+                            .addButton(CustomDialog.BUTTON_TYPE.DELETE_BUTTON)
+                            .transformPreviousButtonToImageButton();
+                    CustomList<CustomDialog.ButtonHelper> helperList = customDialog.getButtonHelperList();
+                    CustomDialog.ButtonHelper last = helperList.getLast();
+                    last.enableAlignLeft();
+                    helperList.remove(last);
+                    helperList.add(0, last);
+
+                })
+//                .disableFadingEdge()
                 .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);
@@ -277,10 +290,12 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 })
                 .setOnReload(customRecycler -> Toast.makeText(this, "Neu Geladen", Toast.LENGTH_SHORT).show())
                 .enableTrackReloading()
+                .setOrientation(CustomRecycler.ORIENTATION.VERTICAL)
+                .enableSwiping((objectList, direction, playerExpandable) -> {}, false, true)
                 .addOptionalModifications(customRecycler -> {
                     customRecycler
                             .enableDragAndDrop(R.id.listItem_player_drag, (customRecycler1, objectList) -> {
-                            }, true);
+                            }, false);
                 })
 //                .setOrientation(CustomRecycler.ORIENTATION.HORIZONTAL)
 //                .addSubOnClickListener(R.id.listItem_player_drag, (customRecycler, itemView, playerExpandable, index) -> {

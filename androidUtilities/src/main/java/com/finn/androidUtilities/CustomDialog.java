@@ -350,6 +350,11 @@ public class CustomDialog {
         return this;
     }
 
+    public CustomDialog disableFadingEdge() {
+        dialog.findViewById(R.id.dialog_custom_layout_view_interface).setVerticalFadingEdgeEnabled(false);
+        return this;
+    }
+
     // ---------------
 
     public Dialog getDialog() {
@@ -374,6 +379,10 @@ public class CustomDialog {
 
     public TextInputLayout getEditLayout() {
         return dialog.findViewById(R.id.dialog_custom_edit_editLayout);
+    }
+
+    public CustomList<ButtonHelper> getButtonHelperList() {
+        return buttonHelperList;
     }
     //  <----- Getters & Setters -----
 
@@ -914,6 +923,11 @@ public class CustomDialog {
             return this;
         }
 
+        public ButtonHelper enableAlignLeft() {
+            alignLeft = true;
+            return this;
+        }
+
         public View getButton() {
             return button;
         }
@@ -1087,6 +1101,40 @@ public class CustomDialog {
 
     public CustomDialog addGoToButton(CustomRecycler.GoToFilter goToFilter, CustomRecycler customRecycler) {
         return addButton_complete(null, BUTTON_TYPE.GO_TO_BUTTON, null, customDialog -> customRecycler.goTo(goToFilter, null), null, false);
+    }
+
+    public CustomDialog addConfirmationDialogToLastAddedButton(String title, String text) {
+        return addConfirmationDialogToLastAddedButton(title, text, null);
+    }
+
+    public CustomDialog addConfirmationDialogToLastAddedButton(String title, String text, @Nullable CustomUtility.GenericInterface<CustomDialog> optionalModifications) {
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
+            OnClick onClick = buttonHelper.onClick;
+            boolean dismiss = buttonHelper.dismiss;
+            buttonHelper.dismiss = false;
+            buttonHelper.onClick = customDialog -> {
+                CustomDialog.Builder(context)
+                        .setPayload(customDialog)
+                        .setTitle(title)
+                        .setText(text)
+                        .setButtonConfiguration(BUTTON_CONFIGURATION.YES_NO)
+                        .addButton(BUTTON_TYPE.YES_BUTTON, customDialog1 -> {
+                            if (onClick != null)
+                                onClick.runOnClick(customDialog);
+                            if (dismiss)
+                                customDialog.dismiss();
+                        })
+                        .addOptionalModifications(customDialog1 -> {
+                            if (optionalModifications != null)
+                                optionalModifications.runGenericInterface(customDialog1);
+                        })
+                        .show();
+            };
+        }, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
+
+        return this;
     }
 
     class NoButtonAdded extends Exception {
