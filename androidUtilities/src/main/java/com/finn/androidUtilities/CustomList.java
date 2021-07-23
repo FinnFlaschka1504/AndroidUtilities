@@ -239,9 +239,13 @@ public class CustomList<E> extends ArrayList<E> {
     }
 
     public CustomList<E> distinct() {
-        Stream<E> distinct = stream().distinct();
-        clear();
-        addAll(distinct.collect(Collectors.toCollection(CustomList::new)));
+        replaceWith(stream().distinct().collect(Collectors.toList()));
+        return this;
+    }
+
+    public CustomList addAllDistinct(@NonNull Collection<? extends E> c) {
+        addAll(c);
+        distinct();
         return this;
     }
     //  <----- Stream -----

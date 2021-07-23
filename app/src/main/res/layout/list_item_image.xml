@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/listItem_image_imgaeView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="1dp"
+        android:adjustViewBounds="true"
+        tools:srcCompat="@drawable/images" />
+
+
+        <ImageView
+            android:id="@+id/listItem_image_videoIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginBottom="5dp"
+            app:srcCompat="@drawable/ic_play_arrow"
+            android:layout_gravity="bottom|start"
+            android:background="@drawable/grey_rounded_corners"/>
+</FrameLayout>

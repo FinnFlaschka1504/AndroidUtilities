@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.finn.androidUtilitiesExample">
 
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -19,6 +20,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ActivityResultHelper"
+            android:label="Dummy"
+            android:theme="@style/DialogActivityTheme.NoTitle" />
+        <activity
+            android:name=".MyFragmentGallery"
+            android:label="Dummy"
+            android:theme="@style/AppTheme" />
     </application>
 
 </manifest>

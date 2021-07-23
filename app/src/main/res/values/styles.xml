@@ -19,4 +19,11 @@
         <item name="drawerArrowStyle">@style/Widget.AppCompat.DrawerArrowToggle</item>
     </style>
 
+    <style name="DialogActivityTheme.NoTitle" parent="Theme.AppCompat.DayNight.Dialog.MinWidth">
+        <item name="windowNoTitle">true</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:excludeFromRecents">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
+
 </resources>

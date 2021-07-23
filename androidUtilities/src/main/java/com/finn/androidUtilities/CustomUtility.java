@@ -14,6 +14,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
@@ -28,6 +29,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Pair;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -87,6 +89,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -826,7 +829,17 @@ public class CustomUtility {
                 right == -1 ? v.getPaddingRight() : dpToPx(right),
                 bottom == -1 ? v.getPaddingBottom() : dpToPx(bottom));
     }
+
+    public static Pair<Integer, Integer> getScreenSize(AppCompatActivity context) {
+        Display display = context.getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getRealSize(size);
+        int width = size.x;
+        int height = size.y;
+        return Pair.create(width, height);
+    }
     //  <----- Pixels -----
+
 
     //  ------------------------- Text ------------------------->
     public static void sendText(AppCompatActivity activity, String text) {
@@ -1391,6 +1404,16 @@ public class CustomUtility {
     public static <T, R> R isNullReturnOrElse(T input, R returnValue, GenericReturnInterface<T, R> orElse) {
         return Objects.equals(input, null) ? returnValue : orElse.runGenericInterface(input);
     }
+
+    public static <T, R> R isCheckReturnOrElse(T input, GenericReturnInterface<T, Boolean> check, @Nullable GenericReturnInterface<T, R> returnValue, GenericReturnInterface<T, R> orElse) {
+        if (check.runGenericInterface(input)) {
+            if (returnValue == null)
+                return (R) input;
+            else
+                return returnValue.runGenericInterface(input);
+        } else
+            return orElse.runGenericInterface(input);
+    }
     //  <------------------------- EasyLogic -------------------------
 
 
@@ -1840,4 +1863,14 @@ public class CustomUtility {
     }
     //  <------------------------- Arrays -------------------------
 
+
+    //  ------------------------- Maps ------------------------->
+    public static <T, E> Set<T> getKeysByValue(Map<T, E> map, E value) {
+        return map.entrySet()
+                .stream()
+                .filter(entry -> Objects.equals(entry.getValue(), value))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+    }
+    //  <------------------------- Maps -------------------------
 }

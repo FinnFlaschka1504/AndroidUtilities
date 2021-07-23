@@ -1,47 +1,65 @@
 package com.finn.androidUtilitiesExample;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.text.InputType;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Pair;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 import com.finn.androidUtilities.CustomDialog;
 import com.finn.androidUtilities.CustomInternetHelper;
 import com.finn.androidUtilities.CustomList;
-import com.finn.androidUtilities.CustomPopupWindow;
 import com.finn.androidUtilities.CustomRecycler;
 import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.Helpers;
-import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.textfield.TextInputLayout;
+import com.veinhorn.scrollgalleryview.MediaInfo;
+import com.veinhorn.scrollgalleryview.ScrollGalleryView;
+import com.veinhorn.scrollgalleryview.builder.GallerySettings;
+import com.veinhorn.scrollgalleryview.loader.MediaLoader;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import ogbe.ozioma.com.glideimageloader.GlideImageLoader;
+import ogbe.ozioma.com.glideimageloader.GlideMediaHelper;
+
+import static ogbe.ozioma.com.glideimageloader.dsl.DSL.image;
+import static ogbe.ozioma.com.glideimageloader.dsl.DSL.video;
+
 public class MainActivity extends AppCompatActivity implements CustomInternetHelper.InternetStateReceiverListener {
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
-    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(20).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
+    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(0).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
     CustomRecycler<CustomRecycler.Expandable<Player>> recycler;
     List<Pair<String, String>> pairList;
 
@@ -53,6 +71,108 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
         setContentView(R.layout.activity_main);
 //        setSupportActionBar(findViewById(R.id.toolbar));
+
+        CustomList<Integer> list = new CustomList<>(1, 2, 3, 1, 5);
+        list.distinct();
+        CustomList<Integer> list2 = new CustomList<>(1, 3, 4, 6, 7);
+        list.addAllDistinct(list2);
+
+        Integer checkReturnOrElse = CustomUtility.isCheckReturnOrElse(list, integers -> integers.size() > 7, integers -> integers.get(5), integers -> integers.get(0));
+
+        if (true)
+            return;
+
+        if (Environment.isExternalStorageManager()) {
+//            ActivityResultHelper.addFileChooserRequest(this, "image/*", intent -> {
+//                String path = ActivityResultHelper.getPath(this, intent.getData());
+//                Toast.makeText(this, path, Toast.LENGTH_SHORT).show();
+//                showImage(path);
+//            });
+            ActivityResultHelper.addMultiFileChooserRequest(this, "image/* video/*", intent -> {
+                List<String> pathList = new ArrayList<>();
+                if(intent.getClipData() != null) {
+                    int count = intent.getClipData().getItemCount();
+                    for (int i = 0; i < count; i++) {
+                        Uri imageUri = intent.getClipData().getItemAt(i).getUri();
+                        String path = ActivityResultHelper.getPath(this, imageUri);
+                        pathList.add(path);
+                    }
+                } else if(intent.getData() != null) {
+                    String imagePath = intent.getData().getPath();
+                    pathList.add(imagePath);
+                }
+                CustomDialog.Builder(this)
+                        .setDimensionsFullscreen()
+                        .disableScroll()
+                        .setView(new CustomRecycler<String>(this)
+                                .setItemLayout(R.layout.list_item_image)
+                                .setObjectList(pathList)
+                                .setSetItemContent((customRecycler, itemView, path) -> {
+                                    File imgFile = new File(path);
+                                    Uri imageUri = Uri.fromFile(imgFile);
+                                    RequestOptions myOptions = new RequestOptions()
+                                            .override(700, 700)
+                                            .centerCrop();
+
+                                    ImageView imageView = (ImageView) itemView.findViewById(R.id.listItem_image_imgaeView);
+                                    Glide.with(this)
+                                            .load(imageUri)
+                                            .apply(myOptions)
+                                            .into(imageView);
+
+                                    ImageView videoIndicator = itemView.findViewById(R.id.listItem_image_videoIndicator);
+
+                                    if (path.endsWith(".mp4"))
+                                        videoIndicator.setVisibility(View.VISIBLE);
+                                    else
+                                        videoIndicator.setVisibility(View.GONE);
+
+                                    imageView.setOnClickListener(v -> {
+                                        startActivity(new Intent(this, MyFragmentGallery.class));
+//                                        CustomDialog.Builder(this)
+//                                                .setView(R.layout.dialog_scroll_gallery)
+//                                                .setDimensionsFullscreen()
+////                                                .removeBackground_and_margin()
+//                                                .disableScroll()
+//                                                .setSetViewContent((customDialog, view, reload) -> {
+//                                                    ScrollGalleryView scrollGallery = customDialog.findViewById(R.id.dialog_scrollGallery_view);
+//                                                    ScrollGalleryView
+//                                                            .from(scrollGallery)
+//                                                            .settings(
+//                                                                    GallerySettings
+//                                                                            .from(getSupportFragmentManager())
+//                                                                            .thumbnailSize(100)
+//                                                                            .enableZoom(true)
+//                                                                            .build()
+//                                                            )
+////                                                            .add(image("https://www.anti-bias.eu/wp-content/uploads/2015/01/shutterstock_92612287-e1420280083718.jpg"))
+//                                                            .add(MediaInfo.mediaLoader(new CustomGlideImageLoader("https://www.anti-bias.eu/wp-content/uploads/2015/01/shutterstock_92612287-e1420280083718.jpg") {
+//
+//                                                            }))
+////                                                            .add(image("http://povodu.ru/wp-content/uploads/2016/04/pochemu-korabl-derzitsa-na-vode.jpg"))
+////                                                            .add(video("http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_1mb.mp4", R.drawable.placeholder_image))
+//                                                            .build();
+//                                                })
+//                                                .show();
+                                    });
+
+                                })
+                                .setRowOrColumnCount(2)
+                                .generateRecyclerView()
+                        )
+                        .show();
+            });
+        } else {
+            //request for the permission
+            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+            Uri uri = Uri.fromParts("package", getPackageName(), null);
+            intent.setData(uri);
+            startActivity(intent);
+        }
+
+
+        if (true)
+            return;
 
         int aButtonId = View.generateViewId();
         int bButtonId = View.generateViewId();
@@ -493,6 +613,29 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //
 //        }, this);
     }
+
+    private void showImage(String path) {
+        File imgFile = new File(path);
+
+        if(imgFile.exists()){
+
+            ImageView imageView = new ImageView(this);
+
+            Uri imageUri = Uri.fromFile(imgFile);
+
+            Glide.with(this)
+                    .load(imageUri)
+                    .into(imageView);
+
+            CustomDialog.Builder(this)
+                    .setDimensionsFullscreen()
+                    .setView(imageView)
+                    .show();
+        }
+
+    }
+
+
 
     private void showButtonTest() {
         int deleteButtonId = View.generateViewId();
