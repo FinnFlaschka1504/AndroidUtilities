@@ -77,6 +77,9 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         CustomList<Integer> list2 = new CustomList<>(1, 3, 4, 6, 7);
         list.addAllDistinct(list2);
 
+        String join = list.join(", ");
+        String join1 = list2.join(" & ", integer -> "" + (integer + 1));
+
         Integer checkReturnOrElse = CustomUtility.isCheckReturnOrElse(list, integers -> integers.size() > 7, integers -> integers.get(5), integers -> integers.get(0));
 
         if (true)
@@ -548,9 +551,9 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                                     validator.setInvalid("Die Passwörter müssen gleich sein");
                             });
 
-                    helper.interceptForValidation(customDialog.getButton(validateButtonId).getButton(),
-                            () -> Toast.makeText(this, "Invalid", Toast.LENGTH_SHORT).show(),
-                            () -> Toast.makeText(this, "Valide", Toast.LENGTH_SHORT).show());
+                    helper.interceptForValidation(customDialog.getButton(validateButtonId).getButton(), false,
+                            helper1 -> Toast.makeText(this, "Invalid", Toast.LENGTH_SHORT).show(),
+                            helper1 -> Toast.makeText(this, "Valide", Toast.LENGTH_SHORT).show());
                 })
                 .addOptionalModifications(customDialog -> {
                     if (Math.round(Math.random()) != 0)

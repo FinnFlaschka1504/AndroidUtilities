@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 
 public class CustomList<E> extends ArrayList<E> {
 
-//  ----- Constructors ----->
+    //  ----- Constructors ----->
     public CustomList() {
     }
 
@@ -28,16 +28,19 @@ public class CustomList<E> extends ArrayList<E> {
         super(initialCapacity);
     }
 
-//    public CustomList(E[] objects) {
-//        if (objects != null)
-//            addAll(Arrays.asList(objects));
-//    }
-
     public CustomList(E... objects) {
         if (objects != null)
             addAll(Arrays.asList(objects));
     }
-//  <----- Constructors -----
+
+    public static <E> CustomList<E> cast(@NonNull Collection<? extends E> c){
+        return new CustomList<>(c);
+    }
+
+    public static <E> CustomList<E> cast(E[] objects){
+        return new CustomList<>(objects);
+    }
+    //  <----- Constructors -----
 
 
     //  ------------------------- Random ------------------------->
@@ -243,10 +246,18 @@ public class CustomList<E> extends ArrayList<E> {
         return this;
     }
 
-    public CustomList addAllDistinct(@NonNull Collection<? extends E> c) {
+    public CustomList<E> addAllDistinct(@NonNull Collection<? extends E> c) {
         addAll(c);
         distinct();
         return this;
+    }
+
+    public String join(String delimiter) {
+        return stream().map(Object::toString).collect(Collectors.joining(delimiter));
+    }
+
+    public String join(String delimiter, Function<? super E, ? extends CharSequence> toString) {
+        return stream().map(toString).collect(Collectors.joining(delimiter));
     }
     //  <----- Stream -----
 

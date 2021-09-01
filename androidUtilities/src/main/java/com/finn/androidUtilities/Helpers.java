@@ -8,9 +8,11 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.ParcelableSpan;
 import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextWatcher;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
@@ -30,9 +32,11 @@ import android.widget.Toast;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -105,12 +109,12 @@ public class Helpers {
         public TextInputHelper() {}
 
         //  ----- Validation ----->
-        public Validator.STATUS validate(TextInputLayout... layoutLists) {
+        public Validator.STATUS validate(@Nullable TextInputLayout... layoutLists) {
             List<TextInputLayout> inputLayoutList = new CustomList<>(layoutLists);
             status = Validator.STATUS.VALID;
             for (Map.Entry<TextInputLayout, Validator> entry : inputValidationMap.entrySet()) {
                 Validator.STATUS validate = entry.getValue().validate(entry.getKey().getEditText().getText().toString().trim(),
-                        layoutLists.length == 0 ? null : inputLayoutList.contains(entry.getKey()));
+                        layoutList != null && inputLayoutList.size() == 0 ? null : inputLayoutList.contains(entry.getKey()));
                 if (validate.getLevel() > status.getLevel())
                     status = validate;
             }
@@ -270,6 +274,9 @@ public class Helpers {
 //                    if (changeErrorMessage)
                         message = "Das Feld ist leer!";
                     status = STATUS.WARNING;
+                } else if (text.isEmpty() && allowEmpty){
+                    message = null;
+                    status = STATUS.VALID;
                 } else {
                     switch (mode) {
                         case BLACK_LIST:
@@ -519,22 +526,23 @@ public class Helpers {
             return null;
         }
 
-        public TextInputHelper interceptDialogActionForValidation(CustomDialog customDialog, Runnable... onIntercept_onAllow) {
-            return interceptForValidation(customDialog.getActionButton().getButton(), onIntercept_onAllow);
+        public TextInputHelper interceptDialogActionForValidation(CustomDialog customDialog, boolean allowLongPress, CustomUtility.GenericInterface<TextInputHelper>... onIntercept_onAllow) {
+            return interceptForValidation(customDialog.getActionButton().getButton(), allowLongPress, onIntercept_onAllow);
         }
-        public TextInputHelper interceptForValidation(View view, Runnable... onIntercept_onAllow) {
+
+        public TextInputHelper interceptForValidation(View view, boolean allowLongPress, CustomUtility.GenericInterface<TextInputHelper>... onIntercept_onAllow) {
             final long[] time = {0};
-            CustomUtility.interceptOnClick(view, view1 -> {
+            CustomUtility.interceptOnClick(view, allowLongPress, view1 -> {
                 long currentTime = System.currentTimeMillis();
                 boolean alwaysValid = validate().isAlwaysValid();
                 if (currentTime - time[0] > 400 && !alwaysValid) {
                     time[0] = currentTime;
                     if (onIntercept_onAllow.length > 0)
-                        onIntercept_onAllow[0].run();
+                        onIntercept_onAllow[0].run(this);
                     return true;
                 }
                 if (onIntercept_onAllow.length > 1)
-                    onIntercept_onAllow[1].run();
+                    onIntercept_onAllow[1].run(this);
                 return false;
             });
             return this;
@@ -550,6 +558,11 @@ public class Helpers {
                     messageList.add(message);
             }
             return messageList;
+        }
+
+        public TextInputHelper addOptionalModifications(CustomUtility.GenericInterface<TextInputHelper> optionalModifications) {
+            optionalModifications.run(this);
+            return this;
         }
         //  <----- Convenience -----
     }
@@ -630,11 +643,11 @@ public class Helpers {
             }
 
             public ParcelableSpan getWhat() {
-                return what.runGenericInterface(null);
+                return what.run(null);
             }
 
             public ParcelableSpan getWhat(Object o) {
-                return what.runGenericInterface(o);
+                return what.run(o);
             }
         }
 
@@ -678,7 +691,7 @@ public class Helpers {
 
             // ---------------
 
-            private void apply(String text, SpannableStringBuilder builder) {
+            private void apply(CharSequence text, SpannableStringBuilder builder) {
                 int previousLength = builder.length();
                 int textLength = text.length();
                 builder.append(text);
@@ -692,58 +705,63 @@ public class Helpers {
 
 
         //  ------------------------- Append ------------------------->
-        public SpannableStringHelper append(String text) {
+        public SpannableStringHelper append(CharSequence text) {
             builder.append(text);
             return this;
         }
 
-        public SpannableStringHelper append(String text, ParcelableSpan span) {
+        public SpannableStringHelper append(CharSequence text, SPAN_TYPE span) {
+            builder.append(text, span.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return this;
+        }
+
+        public SpannableStringHelper append(CharSequence text, ParcelableSpan span) {
             builder.append(text, span, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
-        public SpannableStringHelper appendMultiple(String text, CustomUtility.GenericReturnInterface<MultipleSpans, MultipleSpans> multipleSpans) {
-            multipleSpans.runGenericInterface(new MultipleSpans()).apply(text, builder);
+        public SpannableStringHelper appendMultiple(CharSequence text, CustomUtility.GenericReturnInterface<MultipleSpans, MultipleSpans> multipleSpans) {
+            multipleSpans.run(new MultipleSpans()).apply(text, builder);
             return this;
         }
 
-        public SpannableStringHelper appendBold(String text) {
+        public SpannableStringHelper appendBold(CharSequence text) {
             builder.append(text, SPAN_TYPE.BOLD.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
-        public SpannableStringHelper appendItalic(String text) {
+        public SpannableStringHelper appendItalic(CharSequence text) {
             builder.append(text, SPAN_TYPE.ITALIC.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
-        public SpannableStringHelper appendBoldItalic(String text) {
+        public SpannableStringHelper appendBoldItalic(CharSequence text) {
             builder.append(text, SPAN_TYPE.BOLD_ITALIC.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
-        public SpannableStringHelper appendStrikeThrough(String text) {
+        public SpannableStringHelper appendStrikeThrough(CharSequence text) {
             builder.append(text, SPAN_TYPE.STRIKE_THROUGH.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
-        public SpannableStringHelper appendUnderlined(String text) {
+        public SpannableStringHelper appendUnderlined(CharSequence text) {
             builder.append(text, SPAN_TYPE.UNDERLINED.getWhat(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
-        public SpannableStringHelper appendColor(String text, @ColorInt int color) {
+        public SpannableStringHelper appendColor(CharSequence text, @ColorInt int color) {
             builder.append(text, SPAN_TYPE.COLOR.getWhat(color), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
-        public SpannableStringHelper appendRelativeSize(String text, float size) {
+        public SpannableStringHelper appendRelativeSize(CharSequence text, float size) {
             builder.append(text, SPAN_TYPE.RELATIVE_SIZE.getWhat(size), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             return this;
         }
 
         public SpannableStringHelper appendCustom(CustomUtility.GenericInterface<SpannableStringBuilder> applyCustomSpan) {
-            applyCustomSpan.runGenericInterface(builder);
+            applyCustomSpan.run(builder);
             return this;
         }
         //  <------------------------- Append -------------------------
@@ -761,31 +779,31 @@ public class Helpers {
             return this;
         }
 
-        public SpannableStringBuilder quick(String text) {
+        public SpannableStringBuilder quick(CharSequence text) {
             SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
             spannableStringBuilder.setSpan(quickWhat, 0, text.length(), 0);
             return spannableStringBuilder;
         }
 
-        public SpannableStringBuilder quick(String text, Object what) {
+        public SpannableStringBuilder quick(CharSequence text, Object what) {
             SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
             spannableStringBuilder.setSpan(what, 0, text.length(), 0);
             return spannableStringBuilder;
         }
 
-        public SpannableStringBuilder quickBold(String text) {
+        public SpannableStringBuilder quickBold(CharSequence text) {
             SpannableStringBuilder spannableString = new SpannableStringBuilder(text);
             spannableString.setSpan(SPAN_TYPE.BOLD.getWhat(), 0, text.length(), 0);
             return spannableString;
         }
 
-        public SpannableStringBuilder quickItalic(String text) {
+        public SpannableStringBuilder quickItalic(CharSequence text) {
             SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
             spannableStringBuilder.setSpan(SPAN_TYPE.ITALIC.getWhat(), 0, text.length(), 0);
             return spannableStringBuilder;
         }
 
-        public SpannableStringBuilder quickStrikeThrough(String text) {
+        public SpannableStringBuilder quickStrikeThrough(CharSequence text) {
             SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
             spannableStringBuilder.setSpan(SPAN_TYPE.STRIKE_THROUGH.getWhat(), 0, text.length(), 0);
             return spannableStringBuilder;
@@ -801,6 +819,27 @@ public class Helpers {
             return spanBuilderInterface.get(new SpannableStringHelper()).get();
         }
         //  <------------------------- Builder -------------------------
+
+        public static CharSequence highlightText(String search, String originalText) {
+            if (CustomUtility.stringExists(search) && CustomUtility.stringExists(originalText)) {
+                search = search.toLowerCase();
+                String normalizedText = Normalizer.normalize(originalText, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "").toLowerCase();
+                int start = normalizedText.indexOf(search);
+                if (start < 0) {
+                    return originalText;
+                } else {
+                    Spannable highlighted = new SpannableString(originalText);
+                    while (start >= 0) {
+                        int spanStart = Math.min(start, originalText.length());
+                        int spanEnd = Math.min(start + search.length(), originalText.length());
+                        highlighted.setSpan(new BackgroundColorSpan(0x40FFD03F), spanStart, spanEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        start = normalizedText.indexOf(search, spanEnd);
+                    }
+                    return highlighted;
+                }
+            }
+            return originalText;
+        }
     }
     //  <--------------- SpannableString ---------------
 
@@ -1209,7 +1248,7 @@ public class Helpers {
                     if (t.matches("null") && tryCount < 50) {
                         new Handler().postDelayed(() -> evaluateJavaScript(rawScript, onParseResult, onComplete, tryCount + 1), 100);
                     } else {
-                        onParseResult.runGenericInterface(t + (tryCount < 50 ? "" : " (" + tryCount + ")"));
+                        onParseResult.run(t + (tryCount < 50 ? "" : " (" + tryCount + ")"));
                         onSuccess.run();
                     }
                 } else
@@ -1407,7 +1446,7 @@ public class Helpers {
 
         //  ------------------------- Convenience ------------------------->
         public WebViewHelper addOptional(CustomUtility.GenericInterface<WebViewHelper> addOptional) {
-            addOptional.runGenericInterface(this);
+            addOptional.run(this);
             return this;
         }
         //  <------------------------- Convenience -------------------------

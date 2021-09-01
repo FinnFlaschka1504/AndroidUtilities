@@ -44,7 +44,7 @@ public class ActivityResultHelper extends AppCompatActivity {
             return;
 
         if (requestMap.containsKey(uuid))
-            requestMap.get(uuid).first.runGenericInterface(this);
+            requestMap.get(uuid).first.run(this);
     }
 
 
@@ -72,7 +72,7 @@ public class ActivityResultHelper extends AppCompatActivity {
 //                Uri uri = data.getData();
 //                if (uri != null)
 //                    context.getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-//                oldInterface.runGenericInterface(o);
+//                oldInterface.run(o);
 //            };
 //        }
         requestMap.put(uuid, Pair.create(dummyActivity -> {
@@ -107,7 +107,7 @@ public class ActivityResultHelper extends AppCompatActivity {
 //                Uri uri = data.getData();
 //                if (uri != null)
 //                    context.getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-//                oldInterface.runGenericInterface(o);
+//                oldInterface.run(o);
 //            };
 //        }
         requestMap.put(uuid, Pair.create(dummyActivity -> {
@@ -154,10 +154,10 @@ public class ActivityResultHelper extends AppCompatActivity {
                 CustomUtility.GenericInterface<Object>[] interfaces = (CustomUtility.GenericInterface<Object>[]) requestMap.get(uuid).second;
                 if (resultCode == RESULT_OK) {
                     if (interfaces.length > 0)
-                        interfaces[0].runGenericInterface(data);
+                        interfaces[0].run(data);
                 } else {
                     if (interfaces.length > 1)
-                        interfaces[1].runGenericInterface(null);
+                        interfaces[1].run(null);
                 }
                 break;
             default:

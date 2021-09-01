@@ -63,6 +63,14 @@ public class CustomDialog {
             this.label = label;
             this.iconId = iconId;
         }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public int getIconId() {
+            return iconId;
+        }
     }
 
     private Dialog dialog;
@@ -127,6 +135,10 @@ public class CustomDialog {
     public CustomDialog setContext(Context context) {
         this.context = context;
         return this;
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     public CustomDialog setTitle(String title) {
@@ -285,7 +297,7 @@ public class CustomDialog {
         Helpers.DoubleClickHelper doubleClickHelper = Helpers.DoubleClickHelper.create();
         Toast toast = Toast.makeText(context, onFirstClick_onSecondClick_onDisabled.length > 0 && onFirstClick_onSecondClick_onDisabled[0] != null ? onFirstClick_onSecondClick_onDisabled[0] : "Doppelklick zum Schließen", Toast.LENGTH_SHORT);
         Runnable runCheck = () -> {
-            boolean isDoubleClickEnabled = enableDoubleClick == null || enableDoubleClick.runGenericInterface(this);
+            boolean isDoubleClickEnabled = enableDoubleClick == null || enableDoubleClick.run(this);
             if (doubleClickHelper.check() || !isDoubleClickEnabled) {
                 dismiss();
                 toast.cancel();
@@ -881,7 +893,7 @@ public class CustomDialog {
                 Toast toast = Toast.makeText(context, doubleClickMessage, Toast.LENGTH_SHORT);
                 View.OnClickListener doubleClickListener = v -> {
                     if (enableDoubleClick != null) {
-                        if (!enableDoubleClick.runGenericInterface(CustomDialog.this)) {
+                        if (!enableDoubleClick.run(CustomDialog.this)) {
                             toast.cancel();
                             onClickListener.onClick(v);
                             return;
@@ -920,6 +932,11 @@ public class CustomDialog {
         public ButtonHelper setVisibility(/*@Visibility*/ int visibility) {
             button.setVisibility(visibility);
             alignButtons();
+            return this;
+        }
+
+        public ButtonHelper setOnClick(OnClick onClick) {
+            this.onClick = onClick;
             return this;
         }
 
@@ -1075,7 +1092,7 @@ public class CustomDialog {
     public CustomDialog transformPreviousButtonToImageButton() {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
             buttonHelper.iconId = buttonHelper.buttonType.iconId;
-            buttonHelper.buttonType = null;
+//            buttonHelper.buttonType = null;
         }, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
@@ -1126,7 +1143,7 @@ public class CustomDialog {
                         })
                         .addOptionalModifications(customDialog1 -> {
                             if (optionalModifications != null)
-                                optionalModifications.runGenericInterface(customDialog1);
+                                optionalModifications.run(customDialog1);
                         })
                         .show();
             };

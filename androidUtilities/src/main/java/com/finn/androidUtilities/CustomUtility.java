@@ -12,11 +12,9 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -28,9 +26,9 @@ import android.os.Handler;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Pair;
-import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -46,6 +44,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -451,7 +450,7 @@ public class CustomUtility {
 
                         if (result != prevState || ignorePrevState) {
                             if (onChange != null)
-                                onChange.runGenericInterface(result);
+                                onChange.run(result);
 
                             if (result && onShown != null)
                                 onShown.run();
@@ -532,9 +531,9 @@ public class CustomUtility {
         Drawable drawable = ContextCompat.getDrawable(context, iconId).mutate();
         ColorStateList colours;
         if (colored)
-            colours = button.getResources().getColorStateList(R.color.button_state_list_colored, null);
+            colours = button.getResources().getColorStateList(com.finn.androidUtilities.R.color.button_state_list_colored, null);
         else
-            colours = button.getResources().getColorStateList(R.color.button_state_list_image, null);
+            colours = button.getResources().getColorStateList(com.finn.androidUtilities.R.color.button_state_list_image, null);
         button.setColorFilter(colours.getColorForState(button.getDrawableState(), Color.GREEN), PorterDuff.Mode.SRC_IN);
 //        new PorterDuffColorFilter(ContextCompat.getColor(context, R.color.color_black), PorterDuff.Mode.SRC_ATOP);
 //        new ColorFilter()
@@ -542,6 +541,11 @@ public class CustomUtility {
 //        TypedValue typedValue = new TypedValue();
 //        context.getTheme().res
     }
+
+    public static void colorMenuItemIcon(Menu menu, @IdRes int id, int color){
+        menu.findItem(id).setIconTintList(new ColorStateList(new int[][]{new int[]{android.R.attr.state_enabled}}, new int[]{color}));
+    }
+
 
     //  --------------- OnClickListener --------------->
     public static View.OnClickListener getOnClickListener(View view) {
@@ -574,11 +578,20 @@ public class CustomUtility {
     }
 
     public static void interceptOnClick(View view, InterceptOnClick interceptOnClick) {
+        interceptOnClick(view, false, interceptOnClick);
+    }
+
+    public static void interceptOnClick(View view, boolean skipWithLongClick, InterceptOnClick interceptOnClick) {
         View.OnClickListener oldListener = getOnClickListener(view);
         view.setOnClickListener(v -> {
             if (!interceptOnClick.runInterceptOnClick(view))
                 oldListener.onClick(view);
         });
+        if (skipWithLongClick)
+            view.setOnLongClickListener(v -> {
+                oldListener.onClick(v);
+                return true;
+            });
     }
 
     public interface InterceptOnClick {
@@ -1281,7 +1294,7 @@ public class CustomUtility {
             throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
 
         for (T o : to) {
-            if (what.runGenericInterface(o))
+            if (what.run(o))
                 return true;
         }
         return false;
@@ -1305,7 +1318,7 @@ public class CustomUtility {
 
         boolean found = false;
         for (T o : to) {
-            if (what.runGenericInterface(o)) {
+            if (what.run(o)) {
                 if (found)
                     return false;
                 found = true;
@@ -1345,7 +1358,7 @@ public class CustomUtility {
             throw new NoArgumentException(NoArgumentException.DEFAULT_MESSAGE);
 
         for (T o : to) {
-            if (!what.runGenericInterface(o))
+            if (!what.run(o))
                 return false;
         }
         return true;
@@ -1366,7 +1379,7 @@ public class CustomUtility {
     }
 
     public static <T> T isNotNullOrElse(T input, GenericReturnOnlyInterface<T> orElse) {
-        return input != null ? input : orElse.runGenericInterface();
+        return input != null ? input : orElse.run();
     }
 
     public static <T> T isNotValueOrElse(T input, T value, T orElse) {
@@ -1374,7 +1387,7 @@ public class CustomUtility {
     }
 
     public static <T> T isNotValueOrElse(T input, T value, GenericReturnInterface<T, T> orElse) {
-        return !Objects.equals(input, value) ? input : orElse.runGenericInterface(input);
+        return !Objects.equals(input, value) ? input : orElse.run(input);
     }
 
     public static <T, R> R isNotValueReturnOrElse(T input, T value, R returnValue, R orElse) {
@@ -1382,7 +1395,7 @@ public class CustomUtility {
     }
 
     public static <T, R> R isNotValueReturnOrElse(T input, T value, GenericReturnInterface<T, R> returnValue, GenericReturnInterface<T, R> orElse) {
-        return !Objects.equals(input, value) ? returnValue.runGenericInterface(input) : orElse.runGenericInterface(input);
+        return !Objects.equals(input, value) ? returnValue.run(input) : orElse.run(input);
     }
 
     public static <T> T isValueOrElse(T input, T value, T orElse) {
@@ -1390,7 +1403,7 @@ public class CustomUtility {
     }
 
     public static <T> T isValueOrElse(T input, T value, GenericReturnInterface<T, T> orElse) {
-        return Objects.equals(input, value) ? input : orElse.runGenericInterface(input);
+        return Objects.equals(input, value) ? input : orElse.run(input);
     }
 
     public static <T, R> R isValueReturnOrElse(T input, T value, R returnValue, R orElse) {
@@ -1398,21 +1411,21 @@ public class CustomUtility {
     }
 
     public static <T, R> R isValueReturnOrElse(T input, T value, GenericReturnInterface<T, R> returnValue, GenericReturnInterface<T, R> orElse) {
-        return Objects.equals(input, value) ? returnValue.runGenericInterface(input) : orElse.runGenericInterface(input);
+        return Objects.equals(input, value) ? returnValue.run(input) : orElse.run(input);
     }
 
     public static <T, R> R isNullReturnOrElse(T input, R returnValue, GenericReturnInterface<T, R> orElse) {
-        return Objects.equals(input, null) ? returnValue : orElse.runGenericInterface(input);
+        return Objects.equals(input, null) ? returnValue : orElse.run(input);
     }
 
     public static <T, R> R isCheckReturnOrElse(T input, GenericReturnInterface<T, Boolean> check, @Nullable GenericReturnInterface<T, R> returnValue, GenericReturnInterface<T, R> orElse) {
-        if (check.runGenericInterface(input)) {
+        if (check.run(input)) {
             if (returnValue == null)
                 return (R) input;
             else
-                return returnValue.runGenericInterface(input);
+                return returnValue.run(input);
         } else
-            return orElse.runGenericInterface(input);
+            return orElse.run(input);
     }
     //  <------------------------- EasyLogic -------------------------
 
@@ -1503,20 +1516,52 @@ public class CustomUtility {
 
     //  ------------------------- Interfaces ------------------------->
     public interface GenericInterface<T> {
-        void runGenericInterface(T t);
+        void run(T t);
     }
 
     public interface GenericReturnInterface<T, R> {
-        R runGenericInterface(T t);
+        R run(T t);
+    }
+
+    public interface DoubleGenericInterface<T, T2> {
+        void run(T t, T2 t2);
+    }
+
+    public interface DoubleGenericReturnInterface<T, T2, R> {
+        R run(T t, T2 t2);
+    }
+
+    public interface TripleGenericInterface<T, T2, T3> {
+        void run(T t, T2 t2, T3 t3);
+    }
+
+    public interface TripleGenericReturnInterface<T, T2, T3, R> {
+        R run(T t, T2 t2, T3 t3);
     }
 
     public interface GenericReturnOnlyInterface<T> {
-        T runGenericInterface();
+        T run();
     }
 
     public static <T> boolean runGenericInterface(GenericInterface<T> genericInterface, T parameter) {
         if (genericInterface != null) {
-            genericInterface.runGenericInterface(parameter);
+            genericInterface.run(parameter);
+            return true;
+        }
+        return false;
+    }
+
+    public static <T,T2> boolean runDoubleGenericInterface(DoubleGenericInterface<T,T2> genericInterface, T parameter, T2 parameter2) {
+        if (genericInterface != null) {
+            genericInterface.run(parameter, parameter2);
+            return true;
+        }
+        return false;
+    }
+
+    public static <T,T2, T3> boolean runTripleGenericInterface(TripleGenericInterface<T,T2, T3> genericInterface, T parameter, T2 parameter2, T3 parameter3) {
+        if (genericInterface != null) {
+            genericInterface.run(parameter, parameter2, parameter3);
             return true;
         }
         return false;
@@ -1529,6 +1574,47 @@ public class CustomUtility {
         }
         return false;
     }
+
+    public static boolean runVarArgRunnable(int index, Runnable... varArg){
+        if (varArg != null && index >= 0) {
+            if (varArg.length > index && varArg[index] != null)
+                varArg[index].run();
+            else
+                return false;
+        } else
+            return false;
+        return true;
+    }
+
+    public static <T> boolean runVarArgGenericInterface(int index, T input, GenericInterface<T>... varArg){
+        if (varArg != null && index >= 0) {
+            if (varArg.length > index && varArg[index] != null)
+                varArg[index].run(input);
+            else
+                return false;
+        } else
+            return false;
+        return true;
+    }
+
+    // --------------- Recursion
+
+    public interface RecursiveGenericInterface<T> {
+        void run(T t, RecursiveGenericInterface<T> recursiveInterface);
+    }
+
+    public static <T> void runRecursiveGenericInterface(T t, RecursiveGenericInterface<T> recursiveInterface) {
+        recursiveInterface.run(t, recursiveInterface);
+    }
+
+    public interface RecursiveGenericReturnInterface<T,R> {
+        R run(T t, RecursiveGenericReturnInterface<T, R> recursiveInterface);
+    }
+
+    public static <T, R> R runRecursiveGenericReturnInterface(T t, Class<R> returnType, RecursiveGenericReturnInterface<T, R> recursiveInterface) {
+        return recursiveInterface.run(t, recursiveInterface);
+    }
+
     //  <------------------------- Interfaces -------------------------
 
 
@@ -1557,8 +1643,8 @@ public class CustomUtility {
                         }
 
                     })
-                    .error(R.drawable.ic_broken_image)
-                    .placeholder(R.drawable.ic_download)
+                    .error(com.finn.androidUtilities.R.drawable.ic_broken_image)
+                    .placeholder(com.finn.androidUtilities.R.drawable.ic_download)
                     .into(new DrawableImageViewTarget(imageView) {
                         @Override
                         protected void setResource(@Nullable Drawable resource) {
@@ -1578,9 +1664,9 @@ public class CustomUtility {
             if (onFail_onSuccess_onFullscreen.length > 2 && onFail_onSuccess_onFullscreen[2] != null)
                 onFail_onSuccess_onFullscreen[2].run();
             CustomDialog.Builder(context)
-                    .setView(R.layout.dialog_poster)
+                    .setView(com.finn.androidUtilities.R.layout.dialog_poster)
                     .setSetViewContent((customDialog1, view1, reload1) -> {
-                        ImageView dialog_poster_poster = view1.findViewById(R.id.dialog_poster_poster);
+                        ImageView dialog_poster_poster = view1.findViewById(com.finn.androidUtilities.R.id.dialog_poster_poster);
                         if (fullScreenPath.endsWith(".png") || fullScreenPath.endsWith(".svg"))
                             dialog_poster_poster.setPadding(0, 0, 0, 0);
 
@@ -1590,8 +1676,8 @@ public class CustomUtility {
                             Glide
                                     .with(context)
                                     .load(fullScreenPath)
-                                    .error(R.drawable.ic_broken_image)
-                                    .placeholder(R.drawable.ic_download)
+                                    .error(com.finn.androidUtilities.R.drawable.ic_broken_image)
+                                    .placeholder(com.finn.androidUtilities.R.drawable.ic_download)
                                     .into(dialog_poster_poster);
                         }
                         dialog_poster_poster.setOnContextClickListener(v1 -> {
@@ -1626,7 +1712,7 @@ public class CustomUtility {
         Runnable runOnFailure = () -> {
             if (context instanceof Activity) {
                 ((Activity) context).runOnUiThread(() -> {
-                    target.setImageResource(R.drawable.ic_broken_image);
+                    target.setImageResource(com.finn.androidUtilities.R.drawable.ic_broken_image);
                     if (onFail_onSuccess.length > 0 && onFail_onSuccess[0] != null) {
                         onFail_onSuccess[0].run();
                     }
@@ -1852,14 +1938,25 @@ public class CustomUtility {
     // --------------- VarArgs
 
     public static <T> boolean easyVarArgs(T[] varArg, int index, CustomUtility.GenericInterface<T> ifExists) {
-        if (varArg.length >= (index + 1)) {
+        if (varArg.length > index) {
             T t;
             if ((t = varArg[index]) != null) {
-                ifExists.runGenericInterface(t);
+                ifExists.run(t);
                 return true;
             }
         }
         return false;
+    }
+
+    public static <T> T easyVarArgsOrElse(int index, @Nullable CustomUtility.GenericReturnOnlyInterface<T> orElse, T... varArg) {
+        if (varArg != null) {
+            if (varArg.length > index) {
+                T t;
+                if ((t = varArg[index]) != null)
+                    return t;
+            }
+        }
+        return orElse == null ? null : orElse.run();
     }
     //  <------------------------- Arrays -------------------------
 

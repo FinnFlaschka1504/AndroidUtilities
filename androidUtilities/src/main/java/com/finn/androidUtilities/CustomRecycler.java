@@ -162,6 +162,10 @@ public class CustomRecycler<T> {
         return objectList;
     }
 
+    public T getObject(int index) {
+        return objectList.get(index);
+    }
+
     public interface GetActiveObjectList<T> {
         List<T> runGetActiveObjectList(CustomRecycler<T> customRecycler);
     }
