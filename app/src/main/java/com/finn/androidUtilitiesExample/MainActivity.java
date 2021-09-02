@@ -18,7 +18,9 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -71,6 +73,36 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
         setContentView(R.layout.activity_main);
 //        setSupportActionBar(findViewById(R.id.toolbar));
+
+        CustomDialog.Builder(this)
+                .addButton(CustomDialog.BUTTON_TYPE.ADD_BUTTON, customDialog -> {
+                    CustomDialog.ButtonHelper buttonHelper = customDialog.getButtonByType(CustomDialog.BUTTON_TYPE.DELETE_BUTTON);
+                    buttonHelper.setEnabled(!buttonHelper.isEnabled());
+                }, false)
+                .addButton(CustomDialog.BUTTON_TYPE.DELETE_BUTTON, customDialog -> {
+                    Toast.makeText(this, "Klick", Toast.LENGTH_SHORT).show();
+                }, false)
+//                .transformPreviousButtonToImageButton()
+                .disableLastAddedButton()
+                .addOnDisabledClickToLastAddedButton(customDialog -> {
+                    Toast.makeText(this, "Button Disabled", Toast.LENGTH_SHORT).show();
+                })
+//                .addOnDialogShown(customDialog -> {
+//                    CustomDialog.ButtonHelper buttonByType = customDialog.getButtonByType(CustomDialog.BUTTON_TYPE.SAVE_BUTTON);
+//                    CustomDialog.ButtonHelper button = customDialog.getActionButton();
+//                    button.getButton().setOnTouchListener((v, event) -> {
+//                        String BREAKPOINT = null;
+//                        return false;
+//                    });
+//                    ((View) button.getButton().getParent()).setOnTouchListener((v, event) -> {
+//                        String BREAKPOINT = null;
+//                        return false;
+//                    });
+//                })
+                .show();
+
+        if (true)
+            return;
 
         CustomList<Integer> list = new CustomList<>(1, 2, 3, 1, 5);
         list.distinct();
@@ -752,5 +784,4 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         }
         return true;
     }
-
 }

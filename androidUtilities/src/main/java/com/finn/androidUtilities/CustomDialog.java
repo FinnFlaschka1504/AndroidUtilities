@@ -1,5 +1,6 @@
 package com.finn.androidUtilities;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Rect;
@@ -7,6 +8,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Pair;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -776,6 +778,7 @@ public class CustomDialog {
         private OnClick onClick;
         private boolean dismiss;
         private OnClick onLongClick;
+        private OnClick onDisabledClick;
         private Boolean dismissOnLong;
         private View button;
         private boolean alignLeft;
@@ -784,7 +787,6 @@ public class CustomDialog {
         private boolean colored;
         private String doubleClickMessage;
         private CustomUtility.GenericReturnInterface<CustomDialog, Boolean> enableDoubleClick;
-
 
         public ButtonHelper(BUTTON_TYPE buttonType) {
             this.buttonType = buttonType;
@@ -807,15 +809,34 @@ public class CustomDialog {
             this.dismiss = dismiss;
         }
 
+        @SuppressLint("AppCompatCustomView")
         public View generateButton() {
+            GestureDetector gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public boolean onSingleTapConfirmed(MotionEvent e) {
+                    if (disabled && onDisabledClick != null)
+                        onDisabledClick.runOnClick(CustomDialog.this);
+                    return false;
+                }
+            });
+
 //            View button;
             if (iconId == null) {
-                if ((coloredActionButtons && isActionButton()) || colored)
-                    button = new Button(context, null, 0, R.style.ActionButtonStyle);
-                else
-                    button = new Button(context, null, 0, R.style.ColoredBorderlessButtonStyle);
+                button = new Button(context, null, 0, ((coloredActionButtons && isActionButton()) || colored) ? R.style.ActionButtonStyle : R.style.ColoredBorderlessButtonStyle) {
+                        @Override
+                        public boolean onTouchEvent(MotionEvent event) {
+                            gestureDetector.onTouchEvent(event);
+                            return super.onTouchEvent(event);
+                        }
+                    };
             } else {
-                button = new ImageView(context, null, 0, R.style.ImageButtonStyle_Wide);
+                button = new ImageView(context, null, 0, R.style.ImageButtonStyle_Wide) {
+                    @Override
+                    public boolean onTouchEvent(MotionEvent event) {
+                        gestureDetector.onTouchEvent(event);
+                        return super.onTouchEvent(event);
+                    }
+                };
                 ImageView imageView = (ImageView) button;
                 imageView.setImageResource(iconId);
 
@@ -835,7 +856,7 @@ public class CustomDialog {
 
             if (label != null)
                 ((Button) button).setText(label);
-            else if (buttonType != null)
+            else if (buttonType != null && iconId == null)
                 ((Button) button).setText(buttonType.label);
 
             if (id != null)
@@ -923,10 +944,15 @@ public class CustomDialog {
         }
 
         public ButtonHelper setEnabled(boolean enabled) {
+            this.disabled = !enabled;
             button.setEnabled(enabled);
             if (button instanceof ImageView)
                 CustomUtility.tintImageButton((ImageView) button, colored, context, iconId);
             return this;
+        }
+
+        public boolean isEnabled() {
+            return button.isEnabled();
         }
 
         public ButtonHelper setVisibility(/*@Visibility*/ int visibility) {
@@ -1051,6 +1077,15 @@ public class CustomDialog {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
             buttonHelper.onLongClick = onLongClick;
             buttonHelper.dismissOnLong = dismissDialog;
+        }, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
+        return this;
+    }
+
+    public CustomDialog addOnDisabledClickToLastAddedButton(OnClick onDisabledClick) {
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
+            buttonHelper.onDisabledClick = onDisabledClick;
         }, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
