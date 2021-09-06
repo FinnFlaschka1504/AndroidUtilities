@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Pair;
+import android.view.ActionMode;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.Menu;
@@ -39,8 +40,10 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -71,7 +74,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -969,6 +974,68 @@ public class CustomUtility {
 
         return format;
     }
+
+    public static void addSelectionMenuItem(TextView textView, String itemName, GenericInterface<CharSequence> onClick) {
+        if (textView == null)
+            return;
+
+        textView.setTextIsSelectable(true);
+        textView.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
+
+
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                menu.add(itemName);
+                return true;
+            }
+
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                return true;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                if (item.getTitle().equals(itemName)) {
+                    int min = 0;
+                    int max = textView.getText().length();
+                    if (textView.isFocused()) {
+                        final int selStart = textView.getSelectionStart();
+                        final int selEnd = textView.getSelectionEnd();
+
+                        min = Math.max(0, Math.min(selStart, selEnd));
+                        max = Math.max(0, Math.max(selStart, selEnd));
+                    }
+                    final CharSequence selectedText = textView.getText().subSequence(min, max);
+                    onClick.run(selectedText);
+                    mode.finish();
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+                String BREAKPOINT = null;
+            }
+        });
+    }
+
+    public static void searchQueryOnInternet(AppCompatActivity activity, CharSequence query) {
+        try {
+            query = URLEncoder.encode(query.toString(), "UTF-8");
+        } catch (UnsupportedEncodingException ignored) {
+        }
+        String url = "https://www.google.de/search?q=" + query;
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        Intent chooser = Intent.createChooser(intent, "Suchen mit...");
+        if (chooser.resolveActivity(activity.getPackageManager()) != null)
+            activity.startActivity(chooser);
+        else
+            Toast.makeText(activity, "Fehler", Toast.LENGTH_SHORT).show();
+    }
     //  <------------------------- Text -------------------------
 
 
@@ -1136,6 +1203,10 @@ public class CustomUtility {
 
     public interface TransferState<S, T> {
         void runTransferState(S source, T target);
+    }
+
+    public static EditText getEditTextFromSearchView(SearchView searchView){
+        return searchView.findViewById(Resources.getSystem().getIdentifier("search_src_text", "id", "android"));
     }
     //  <--------------- getViews ---------------
 
@@ -1374,6 +1445,19 @@ public class CustomUtility {
         return stringExists(s) ? s : orElse;
     }
 
+    public static <T extends CharSequence> void onStringExists(T s, GenericInterface<T> onStringExists) {
+        if (stringExists(s)) {
+            onStringExists.run(s);
+        }
+    }
+
+    public static <T extends CharSequence> void onStringExistsOrElse(T s, GenericInterface<T> onStringExists, Runnable orElse) {
+        if (stringExists(s)) {
+            onStringExists.run(s);
+        } else
+            orElse.run();
+    }
+
     public static <T> T isNotNullOrElse(T input, T orElse) {
         return input != null ? input : orElse;
     }
@@ -1567,6 +1651,27 @@ public class CustomUtility {
         return false;
     }
 
+    public static <T, R> R runGenericReturnInterface(GenericReturnInterface<T, R> genericReturnInterface, T parameter) {
+        if (genericReturnInterface != null) {
+            return genericReturnInterface.run(parameter);
+        }
+        return null;
+    }
+
+    public static <T,T2, R> R runDoubleGenericReturnInterface(DoubleGenericReturnInterface<T,T2, R> genericReturnInterface, T parameter, T2 parameter2) {
+        if (genericReturnInterface != null) {
+            return genericReturnInterface.run(parameter, parameter2);
+        }
+        return null;
+    }
+
+    public static <T,T2, T3, R> R runTripleGenericReturnInterface(TripleGenericReturnInterface<T,T2, T3, R> genericReturnInterface, T parameter, T2 parameter2, T3 parameter3) {
+        if (genericReturnInterface != null) {
+            return genericReturnInterface.run(parameter, parameter2, parameter3);
+        }
+        return null;
+    }
+
     public static boolean runRunnable(Runnable runnable) {
         if (runnable != null) {
             runnable.run();
@@ -1614,7 +1719,6 @@ public class CustomUtility {
     public static <T, R> R runRecursiveGenericReturnInterface(T t, Class<R> returnType, RecursiveGenericReturnInterface<T, R> recursiveInterface) {
         return recursiveInterface.run(t, recursiveInterface);
     }
-
     //  <------------------------- Interfaces -------------------------
 
 

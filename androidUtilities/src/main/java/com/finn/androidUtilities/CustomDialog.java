@@ -106,6 +106,7 @@ public class CustomDialog {
     private OnDialogCallback onTouchOutside;
     private View activityRootView;
     private ViewTreeObserver.OnGlobalLayoutListener activityRootViewListener;
+    private static GlobalCallbacks globalCallbacks;
 
     public static final int VISIBLE = 0x00000000;
     public static final int INVISIBLE = 0x00000004;
@@ -122,15 +123,19 @@ public class CustomDialog {
     private CustomList<ButtonHelper> buttonHelperList = new CustomList<>();
 
 
+    /**  <------------------------- Constructor -------------------------  */
     public CustomDialog(Context context) {
         this.context = context;
         dialog = new Dialog(this.context);
         dialog.setContentView(R.layout.dialog_custom);
+        if (globalCallbacks != null)
+            globalCallbacks.onDialogCreated(this);
     }
 
     public static CustomDialog Builder(Context context) {
         return new CustomDialog(context);
     }
+    /**  ------------------------- Constructor ------------------------->  */
 
 
     //  ----- Getters & Setters ----->
@@ -183,6 +188,8 @@ public class CustomDialog {
         return this;
     }
 
+
+
     public CustomDialog setButtonConfiguration(BUTTON_CONFIGURATION buttonConfiguration) {
         this.buttonConfiguration = buttonConfiguration;
         return this;
@@ -218,6 +225,12 @@ public class CustomDialog {
 
     public CustomDialog standardEdit() {
         this.editBuilder = new EditBuilder();
+        showEdit = true;
+        return this;
+    }
+
+    public CustomDialog standardEdit(CharSequence hint, CharSequence text) {
+        this.editBuilder = new EditBuilder().setHint(hint).setText(text);
         showEdit = true;
         return this;
     }
@@ -369,6 +382,10 @@ public class CustomDialog {
         return this;
     }
 
+    public static void setGlobalCallbacks(GlobalCallbacks globalCallbacks) {
+        CustomDialog.globalCallbacks = globalCallbacks;
+    }
+
     // ---------------
 
     public Dialog getDialog() {
@@ -377,6 +394,14 @@ public class CustomDialog {
 
     public Object getPayload() {
         return payload;
+    }
+
+    public CharSequence getText() {
+        return text;
+    }
+
+    public CharSequence getTitle() {
+        return title;
     }
 
     public View getView() {
@@ -397,6 +422,22 @@ public class CustomDialog {
 
     public CustomList<ButtonHelper> getButtonHelperList() {
         return buttonHelperList;
+    }
+
+    public static GlobalCallbacks getGlobalCallbacks() {
+        return globalCallbacks;
+    }
+
+    public BUTTON_CONFIGURATION getButtonConfiguration() {
+        return buttonConfiguration;
+    }
+
+    public EditBuilder getEditBuilder() {
+        return editBuilder;
+    }
+
+    public boolean isShowEdit() {
+        return showEdit;
     }
     //  <----- Getters & Setters -----
 
@@ -482,13 +523,19 @@ public class CustomDialog {
     public interface SetView {
         View runSetView(CustomDialog customDialog);
     }
+
+    public interface GlobalCallbacks {
+        default void onDialogCreated(CustomDialog customDialog) {}
+        default void onDialogShown(CustomDialog customDialog) {}
+        default void onDialogDismiss(CustomDialog customDialog) {}
+    }
     //  <----- Interfaces -----
 
 
     //  ----- Builder ----->
     public static class EditBuilder {
-        private String text = "";
-        private String hint = "";
+        private CharSequence text = "";
+        private CharSequence hint = "";
         private boolean showKeyboard = true;
         private boolean selectAll = true;
         private boolean disableButtonByDefault;
@@ -504,12 +551,12 @@ public class CustomDialog {
         private Integer inputTypeInt;
         Helpers.TextInputHelper.TextValidation textValidation;
 
-        public EditBuilder setText(String text) {
+        public EditBuilder setText(CharSequence text) {
             this.text = text;
             return this;
         }
 
-        public EditBuilder setHint(String hint) {
+        public EditBuilder setHint(CharSequence hint) {
             this.hint = hint;
             return this;
         }
@@ -734,26 +781,26 @@ public class CustomDialog {
 
     }
 
-    public TextView getViewTitle() {
-        if (dialog != null)
-            return dialog.findViewById(R.id.dialog_custom_title);
-        else
-            return null;
-    }
+//    public TextView getViewTitle() {
+//        if (dialog != null)
+//            return dialog.findViewById(R.id.dialog_custom_title);
+//        else
+//            return null;
+//    }
+//
+//    public TextView getViewText() {
+//        if (dialog != null)
+//            return dialog.findViewById(R.id.dialog_custom_text);
+//        else
+//            return null;
+//    }
 
-    public TextView getViewText() {
-        if (dialog != null)
-            return dialog.findViewById(R.id.dialog_custom_text);
-        else
-            return null;
-    }
-
-    public TextInputLayout getViewEditLayout() {
-        if (dialog != null)
-            return dialog.findViewById(R.id.dialog_custom_edit_editLayout);
-        else
-            return null;
-    }
+//    public TextInputLayout getViewEditLayout() {
+//        if (dialog != null)
+//            return dialog.findViewById(R.id.dialog_custom_edit_editLayout);
+//        else
+//            return null;
+//    }
 
     public CustomDialog removeBackground() {
         removeBackground = true;
@@ -779,6 +826,7 @@ public class CustomDialog {
         private boolean dismiss;
         private OnClick onLongClick;
         private OnClick onDisabledClick;
+        private OnClick onDisabledLongClick;
         private Boolean dismissOnLong;
         private View button;
         private boolean alignLeft;
@@ -817,6 +865,12 @@ public class CustomDialog {
                     if (disabled && onDisabledClick != null)
                         onDisabledClick.runOnClick(CustomDialog.this);
                     return false;
+                }
+
+                @Override
+                public void onLongPress(MotionEvent e) {
+                    if (disabled && onDisabledLongClick != null)
+                        onDisabledLongClick.runOnClick(CustomDialog.this);
                 }
             });
 
@@ -1086,6 +1140,15 @@ public class CustomDialog {
     public CustomDialog addOnDisabledClickToLastAddedButton(OnClick onDisabledClick) {
         CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
             buttonHelper.onDisabledClick = onDisabledClick;
+        }, () -> {
+            throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
+        });
+        return this;
+    }
+
+    public CustomDialog addOnDisabledLongClickToLastAddedButton(OnClick onDisabledLongClick) {
+        CustomUtility.ifNotNull(buttonHelperList.getLast(), buttonHelper -> {
+            buttonHelper.onDisabledLongClick = onDisabledLongClick;
         }, () -> {
             throw new IllegalStateException("Es wurde noch kein Button hinzugefügt", new NoButtonAdded("Es wurde noch kein Button hinzugefügt"));
         });
@@ -1384,6 +1447,11 @@ public class CustomDialog {
         dialog.setOnDismissListener(dialog1 -> onDismissListenerList.forEach(pair -> pair.second.runOnDialogCallback(this)));
         dialog.setOnShowListener(dialog1 -> onShowListenerList.forEach(pair -> pair.second.runOnDialogCallback(this)));
 
+        if (globalCallbacks != null) {
+            addOnDialogShown_system(globalCallbacks::onDialogShown);
+            addOnDialogDismiss_system(globalCallbacks::onDialogDismiss);
+        }
+
         firstTime = false;
         dialog.show();
         return this;
@@ -1425,7 +1493,7 @@ public class CustomDialog {
                 CustomUtility.changeWindowKeyboard(dialog.getWindow(), true);
             }
 
-            if (!editBuilder.text.isEmpty())
+            if (!editBuilder.text.toString().isEmpty())
                 autoCompleteTextView.setText(editBuilder.text);
 
             textInputLayout.setHint(editBuilder.hint);
@@ -1460,7 +1528,7 @@ public class CustomDialog {
         } else
             textInputHelper.addActionListener(textInputLayout, editBuilder.onActionActionPair.first, editBuilder.onActionActionPair.second);
 
-        if (!editBuilder.text.isEmpty())
+        if (!editBuilder.text.toString().isEmpty())
             textInputHelper.validate();
 
         if (editBuilder != null && editBuilder.disableButtonByDefault)
