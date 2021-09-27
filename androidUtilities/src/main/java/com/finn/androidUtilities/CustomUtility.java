@@ -21,6 +21,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextWatcher;
@@ -76,6 +77,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -120,6 +123,10 @@ public class CustomUtility {
     }
 
     static public boolean isOnline() {
+//        if (true)
+//            return true;
+        if (Build.MODEL.contains("Emulator"))
+            return true;
         Runtime runtime = Runtime.getRuntime();
         try {
             Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
@@ -284,6 +291,8 @@ public class CustomUtility {
                 requestList.add(new Triple<>(null, onTrue, onFalse));
             }
 
+            if (Build.MODEL.contains("Emulator"))
+                return true;
 
             Runtime runtime = Runtime.getRuntime();
             try {
@@ -533,13 +542,13 @@ public class CustomUtility {
     }
 
     public static void tintImageButton(@NonNull ImageView button, boolean colored, Context context, int iconId) {
-        Drawable drawable = ContextCompat.getDrawable(context, iconId).mutate();
+//        Drawable drawable = ContextCompat.getDrawable(context, iconId).mutate();
         ColorStateList colours;
         if (colored)
             colours = button.getResources().getColorStateList(com.finn.androidUtilities.R.color.button_state_list_colored, null);
         else
             colours = button.getResources().getColorStateList(com.finn.androidUtilities.R.color.button_state_list_image, null);
-        button.setColorFilter(colours.getColorForState(button.getDrawableState(), Color.GREEN), PorterDuff.Mode.SRC_IN);
+        button.setColorFilter(colours.getColorForState(button.getDrawableState(), Color.BLACK), PorterDuff.Mode.SRC_IN);
 //        new PorterDuffColorFilter(ContextCompat.getColor(context, R.color.color_black), PorterDuff.Mode.SRC_ATOP);
 //        new ColorFilter()
 //        drawable.setColorFilter(colours.getColorForState(button.getDrawableState(), Color.GREEN));
@@ -550,6 +559,23 @@ public class CustomUtility {
     public static void colorMenuItemIcon(Menu menu, @IdRes int id, int color){
         menu.findItem(id).setIconTintList(new ColorStateList(new int[][]{new int[]{android.R.attr.state_enabled}}, new int[]{color}));
     }
+
+
+    /**  <------------------------- Numbers -------------------------  */
+    public static int randomInteger(int min, int max){
+        return (int) (Math.random() * (max - min) + min);
+    }
+
+    public static double clampNumber(double input, double min, double max) {
+        return Math.max(min, Math.min(max, input));
+    }
+    
+    public static double mapNumber(double input, double fromMin, double fromMax, double toMin, double toMax) {
+        double fromRage = fromMax - fromMin;
+        double ratio = clampNumber(((input - fromMin) / fromRage), 0, 1);
+        return toMin + (toMax - toMin) * ratio;
+    }
+    /**  ------------------------- Numbers ------------------------->  */
 
 
     //  --------------- OnClickListener --------------->
@@ -676,8 +702,10 @@ public class CustomUtility {
         if (view != null) view.setOnClickListener(onClickListener);
         toast.show();
     }
-//  <--------------- Toast ---------------
+    //  <--------------- Toast ---------------
 
+
+    /**  <------------------------- Tuple -------------------------  */
     public static class Triple<A, B, C> {
         public A first;
         public B second;
@@ -784,6 +812,15 @@ public class CustomUtility {
         }
         //  <------------------------- Getter & Setter -------------------------
     }
+
+    public static <T> Pair<T, T> swap(T t1, T t2) {
+        T temp = t1;
+        t1 = t2;
+        t2 = temp;
+        return new Pair<>(t1, t2);
+    }
+    /**  ------------------------- Tuple ------------------------->  */
+
 
     //  ----- Pixels ----->
     public static int pxToDp(int px) {
@@ -1022,10 +1059,7 @@ public class CustomUtility {
     }
 
     public static void searchQueryOnInternet(AppCompatActivity activity, CharSequence query) {
-        try {
-            query = URLEncoder.encode(query.toString(), "UTF-8");
-        } catch (UnsupportedEncodingException ignored) {
-        }
+        query = encodeTextForUrl(query);
         String url = "https://www.google.de/search?q=" + query;
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -1036,15 +1070,41 @@ public class CustomUtility {
         else
             Toast.makeText(activity, "Fehler", Toast.LENGTH_SHORT).show();
     }
-    //  <------------------------- Text -------------------------
 
-
-    public static <T> Pair<T, T> swap(T t1, T t2) {
-        T temp = t1;
-        t1 = t2;
-        t2 = temp;
-        return new Pair<>(t1, t2);
+    public static CharSequence encodeTextForUrl(CharSequence text) {
+        try {
+            text = URLEncoder.encode(text.toString(), "UTF-8");
+        } catch (UnsupportedEncodingException ignored) {
+        }
+        return text;
     }
+
+    public static CustomList<String> getAllSubTextMutations(String text) {
+        text = text.toLowerCase();
+        CustomList<String> results = new CustomList<>();
+        CustomList<String> words = new CustomList<>(text.split("[^\\wöäüß]+"));
+//        results.addAll(words);
+
+        int size = words.size();
+        for (int length = 1; length <= size; length++) {
+            for (int i = 0; i < size - (length - 1); i++) {
+                String sub = String.join(" ", words.subList(i, i + length));
+                results.add(sub);
+            }
+        }
+        return results;
+    }
+
+    public static String capitalizeFirstAllFirstLetter(String text){
+        char[] array = text.toCharArray();
+        Matcher matcher = Pattern.compile("\\b[\\wöäüß]").matcher(text);
+        while (matcher.find()) {
+            int i = matcher.toMatchResult().start();
+            array[i] = Character.toUpperCase(array[i]);
+        }
+        return String.valueOf(array);
+    }
+    //  <------------------------- Text -------------------------
 
 
     //  --------------- Layout --------------->
@@ -1285,9 +1345,11 @@ public class CustomUtility {
     }
 
     public static <T, V> List<V> concatenateCollections(Collection<T> tCollection, GetCollections<T, V> getCollections) {
-        List<Collection<V>> collectionList = new ArrayList<>();
-        tCollection.forEach(t -> collectionList.add(getCollections.runGetCollections(t)));
-        return collectionList.stream().flatMap(Collection::stream).collect(Collectors.toList());
+//        List<Collection<V>> collectionList = new ArrayList<>();
+//        tCollection.forEach(t -> collectionList.add(getCollections.runGetCollections(t)));
+//        return collectionList.stream().flatMap(Collection::stream).collect(Collectors.toList());
+//        tCollection.forEach(t -> collectionList.add(getCollections.runGetCollections(t)));
+        return tCollection.stream().map(getCollections::runGetCollections).flatMap(Collection::stream).collect(Collectors.toList());
     }
 
     public static <T> List<T> concatenateCollections(Collection<Collection<T>> collections) {
@@ -1347,6 +1409,31 @@ public class CustomUtility {
         } catch (IllegalAccessException | NoSuchFieldException ignored) {
         }
         return returnList;
+    }
+
+    public static <T, V> void reflectionSet(T t, String fieldName, V value) {
+        try {
+            Field field = t.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(t, value);
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+        }
+    }
+
+    public static <T> void reflectionCall(T t, String methodName, Pair<Class<?>, Object>... paramTypesAndValues) {
+        try {
+            Class<?>[] classes = new Class<?>[paramTypesAndValues.length];
+            Object[] objects = new Object[paramTypesAndValues.length];
+            for (int i = 0; i < paramTypesAndValues.length; i++) {
+                classes[i] = paramTypesAndValues[i].first;
+                objects[i] = paramTypesAndValues[i].second;
+            }
+
+            Method field = t.getClass().getDeclaredMethod(methodName, classes);
+            field.setAccessible(true);
+            field.invoke(t, objects);
+        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException ignored) {
+        }
     }
     //  <------------------------- Reflections -------------------------
 
@@ -2074,4 +2161,46 @@ public class CustomUtility {
                 .collect(Collectors.toSet());
     }
     //  <------------------------- Maps -------------------------
+
+
+
+    /**  ------------------------- Log ------------------------->  */
+    public static void logD(String tag, String msg) {
+        logD(tag, msg, (Object) null);
+//        Log.d(tag + " position", "at " + fullClassName + "." + methodName + );
+
+    }
+
+    private static void logD(String tag, String msg, Object o) {
+        StackTraceElement[] stackTraceElement = Thread.currentThread()
+                .getStackTrace();
+        int currentIndex = -1;
+        for (int i = 0; i < stackTraceElement.length; i++) {
+            if (stackTraceElement[i].getMethodName().compareTo("logD") == 0)
+            {
+                currentIndex = i + 2;
+                break;
+            }
+        }
+
+        String fullClassName = stackTraceElement[currentIndex].getClassName();
+        String className = fullClassName.substring(fullClassName
+                .lastIndexOf(".") + 1).split("\\$")[0];
+//        String methodName = stackTraceElement[currentIndex].getMethodName();
+        String lineNumber = String
+                .valueOf(stackTraceElement[currentIndex].getLineNumber());
+
+        String position = "(" + className + ".java:" + lineNumber + ") ";
+        Log.d(tag, position + msg);
+
+    }
+
+    public static void logD(String tag, String format, Object... args) {
+        try {
+            logD(tag, String.format(Locale.getDefault(), format, args), (Object) null);
+        } catch (Exception e) {
+            logD(tag, "<FEHLER> " + e.getMessage(), (Object) null);
+        }
+    }
+    /**  <------------------------- Log -------------------------  */
 }

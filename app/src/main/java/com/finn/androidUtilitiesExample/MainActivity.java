@@ -12,16 +12,17 @@ import android.provider.Settings;
 import android.text.InputType;
 import android.util.Log;
 import android.util.Pair;
-import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.finn.androidUtilities.CustomDialog;
 import com.finn.androidUtilities.CustomInternetHelper;
@@ -44,8 +45,9 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
     private CustomRecycler<CustomRecycler.Expandable<String>> testRecycler;
     private int amount = 40;
-    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(0).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
+    List<Player> playerList = Stream.iterate(1, count -> count + 1).limit(300).map(count -> new Player("Spieler" + count)).collect(Collectors.toList());
     CustomRecycler<CustomRecycler.Expandable<Player>> recycler;
+    CustomRecycler<Player> recycler2;
     List<Pair<String, String>> pairList;
 
     @Override
@@ -56,6 +58,77 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 
         setContentView(R.layout.activity_main);
 //        setSupportActionBar(findViewById(R.id.toolbar));
+
+        RecyclerView recycler = findViewById(R.id.recycler);
+
+        CustomDialog.Builder(this)
+                .setTitle("Icon And Text Button Test")
+                .addButton("Toggle", customDialog -> {
+                    CustomDialog.ButtonHelper buttonHelper = customDialog.getButtonByName("Test");
+                    buttonHelper.setEnabled(!buttonHelper.isEnabled());
+                }, false)
+                .addButton("Test", customDialog -> {}, false)
+//                .addIconDecorationToLastAddedButton(R.drawable.ic_add, CustomDialog.IconDecorationPosition.LEFT)
+                .addIconDecorationToLastAddedButton(R.drawable.ic_check, CustomDialog.IconDecorationPosition.TOP)
+//                .addIconDecorationToLastAddedButton(R.drawable.ic_cancel, CustomDialog.IconDecorationPosition.RIGHT)
+                .addIconDecorationToLastAddedButton(R.drawable.ic_edit, CustomDialog.IconDecorationPosition.BOTTOM)
+                .colorLastAddedButton()
+                .addButton(CustomDialog.BUTTON_TYPE.EDIT_BUTTON, customDialog -> {}, false)
+//                .transformLastAddedButtonToImageButton()
+//                .addIconDecorationToLastAddedButton(CustomDialog.IconDecorationPosition.LEFT)
+                .addIconDecorationToLastAddedButton()
+                .addButton(CustomDialog.BUTTON_TYPE.CANCEL_BUTTON, customDialog -> {}, false)
+                .addIconDecorationToLastAddedButton(CustomDialog.IconDecorationPosition.RIGHT)
+                .colorLastAddedButton()
+                .removeMargin()
+                .show();
+
+
+        if (true)
+            return;
+
+        CustomList<String> urls = new CustomList<>("https://www.anti-bias.eu/wp-content/uploads/2015/01/shutterstock_92612287-e1420280083718.jpg",
+                "https://povodu.ru/wp-content/uploads/2016/04/pochemu-korabl-derzitsa-na-vode.jpg",
+                "https://www.fotomagazin.de/sites/www.fotomagazin.de/files/styles/landing_lead_mobile/public/fm/2019/aufmacher_fotowettbewerb_haida_landschaft.jpg?itok=yk9rEzGY&timestamp=1562245157",
+                "https://upload.wikimedia.org/wikipedia/commons/a/af/Landschaft_in_Sachsen%2C_Bernsdorf..2H1A4651%D0%A6%D0%A8.jpg",
+                "https://i.pinimg.com/originals/22/7e/36/227e36c82a5341e4efdc9654e802dcdb.jpg",
+                "https://www.reisebüro-sasbachwalden.de/wp-content/uploads/2019/09/Indien1-1024x640.jpg",
+                "https://www.stuttgarter-nachrichten.de/media.media.eb344091-b684-4128-9817-606016cd9179.original1024.jpg",
+                "https://www.zg.ch/behoerden/baudirektion/arv/natur-landschaft/landschaft_block_1/@@images/cd95975d-c541-4d75-aefd-5e05bb252e68.jpeg"
+                );
+
+        recycler2 = new CustomRecycler<Player>(this, recycler)
+                .setItemLayout(R.layout.list_item_image)
+                .setObjectList(playerList)
+                .setSetItemContent((customRecycler, itemView, player, i) -> {
+//                    itemView.findViewById(R.id.listItem_player_drag).setVisibility(View.GONE);
+//                    itemView.findViewById(R.id.listItem_player_delete).setVisibility(View.GONE);
+                    ImageView imageView = itemView.findViewById(R.id.listItem_image_imageView);
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(475, 475);
+//                    params.setMargins(CustomUtility.dpToPx(12), CustomUtility.dpToPx(5), CustomUtility.dpToPx(12), CustomUtility.dpToPx(5));
+                    itemView.setLayoutParams(params);
+
+//                    imageView.setVisibility(View.GONE);
+                    int index = playerList.indexOf(player);
+                    RequestOptions myOptions = new RequestOptions()
+                            .override(475, 475)
+                            .centerCrop();
+
+                    Glide.with(this)
+                            .load(urls.get(index % (urls.size())))
+                            .apply(myOptions)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .skipMemoryCache(true)
+                            .into(imageView);
+//                    ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText("" + (index + 1));
+                })
+                .setRowOrColumnCount(3)
+                .generate();
+
+        recycler2.getLayoutManager().scrollToPositionWithOffset(150 - 1, 0);
+
+        if (true)
+            return;
 
         CustomDialog.setGlobalCallbacks(new CustomDialog.GlobalCallbacks() {
             @Override
@@ -138,14 +211,14 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                         .setView(new CustomRecycler<String>(this)
                                 .setItemLayout(R.layout.list_item_image)
                                 .setObjectList(pathList)
-                                .setSetItemContent((customRecycler, itemView, path) -> {
+                                .setSetItemContent((customRecycler, itemView, path, i) -> {
                                     File imgFile = new File(path);
                                     Uri imageUri = Uri.fromFile(imgFile);
                                     RequestOptions myOptions = new RequestOptions()
                                             .override(700, 700)
                                             .centerCrop();
 
-                                    ImageView imageView = (ImageView) itemView.findViewById(R.id.listItem_image_imgaeView);
+                                    ImageView imageView = (ImageView) itemView.findViewById(R.id.listItem_image_imageView);
                                     Glide.with(this)
                                             .load(imageUri)
                                             .apply(myOptions)
@@ -320,7 +393,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .addConfirmationDialogToLastAddedButton("Löschen", "Möchten sie wirklich das Element löschen?", customDialog -> {
                     customDialog
                             .addButton(CustomDialog.BUTTON_TYPE.DELETE_BUTTON)
-                            .transformPreviousButtonToImageButton();
+                            .transformLastAddedButtonToImageButton();
                     CustomList<CustomDialog.ButtonHelper> helperList = customDialog.getButtonHelperList();
                     CustomDialog.ButtonHelper last = helperList.getLast();
                     last.enableAlignLeft();
@@ -332,7 +405,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .show();
 
 //        NestedScrollView scrollView = findViewById(R.id.scrollView);
-        RecyclerView recycler = findViewById(R.id.recycler);
+        recycler = findViewById(R.id.recycler);
 //        TextView textView = findViewById(R.id.textView);
 //        CollapsingToolbarLayout collapsingToolbarLayout = findViewById(R.id.collapsingToolbarLayout);
 
@@ -422,7 +495,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                         .enableUseExpandMatching(customRecycler)
                         .runToExpandableList(playerList, null))
 //                .setSetItemContent((customRecycler, itemView, player) -> ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName()))
-                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<Player>(R.layout.list_item_player, (customRecycler1, itemView, player, expanded) -> {
+                .setExpandableHelper(customRecycler -> customRecycler.new ExpandableHelper<Player>(R.layout.list_item_player, (customRecycler1, itemView, player, expanded, i) -> {
                     if (!expanded)
                         ((TextView) itemView.findViewById(R.id.listItem_player_name)).setText(player.getName() + (customRecycler1.isReloading() ? " Ja" : " Nein"));
                     else {
@@ -509,7 +582,7 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
 //                                            .removeLastDivider()
 //                                            .disableCustomRipple()
                                             .setItemLayout(R.layout.expandable_content_test)
-                                            .setSetItemContent((customRecycler1, itemView, s) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
+                                            .setSetItemContent((customRecycler1, itemView, s, i) -> ((TextView) itemView.findViewById(R.id.test)).setText(s))
                                             .enableSwiping((objectList, direction, s) -> {
 
                                                 Toast.makeText(this, s + (direction == 16 ? " links" : " rechts"), Toast.LENGTH_SHORT).show();
@@ -678,10 +751,10 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
                 .addButton(R.drawable.ic_arrow_down, customDialog -> Toast.makeText(this, "Test2", Toast.LENGTH_SHORT).show(), false)
                 .alignPreviousButtonsLeft()
                 .addButton(CustomDialog.BUTTON_TYPE.SAVE_BUTTON)
-                .transformPreviousButtonToImageButton()
+                .transformLastAddedButtonToImageButton()
                 .colorLastAddedButton()
                 .addButton(CustomDialog.BUTTON_TYPE.EDIT_BUTTON)
-                .transformPreviousButtonToImageButton()
+                .transformLastAddedButtonToImageButton()
                 .colorLastAddedButton()
                 .show();
     }
@@ -760,8 +833,9 @@ public class MainActivity extends AppCompatActivity implements CustomInternetHel
         switch (id) {
             case R.id.toolbar_main_internetTest:
 //                showButtonTest();
-                recycler.reload();
+//                recycler.reload();
 
+                recycler2.getLayoutManager().scrollToPositionWithOffset(CustomUtility.randomInteger(25, playerList.size() - 25), 0);
 
                 if (true)
                     return true;

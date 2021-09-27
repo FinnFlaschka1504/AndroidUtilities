@@ -6,21 +6,57 @@
     android:layout_height="wrap_content">
 
     <ImageView
-        android:id="@+id/listItem_image_imgaeView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="1dp"
+        android:id="@+id/listItem_image_imageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="2dp"
         android:adjustViewBounds="true"
         tools:srcCompat="@drawable/images" />
 
 
+    <ImageView
+        android:id="@+id/listItem_image_videoIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="10dp"
+        android:background="@drawable/grey_rounded_corners"
+        android:backgroundTint="#8C4A4A4A"
+        app:srcCompat="@drawable/ic_play_arrow" />
+
+<!--    <ImageView-->
+<!--        android:id="@+id/listItem_image_fullScreen"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="bottom|end"-->
+<!--        android:layout_margin="10dp"-->
+<!--        android:background="@drawable/grey_rounded_corners"-->
+<!--        android:backgroundTint="#8C4A4A4A"-->
+<!--        android:tint="#FFFFFF"-->
+<!--        android:visibility="gone"-->
+<!--        app:srcCompat="@drawable/ic_zoom_out"-->
+<!--        tools:visibility="visible" />-->
+
+    <FrameLayout
+        android:id="@+id/listItem_image_selected"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+<!--        <ImageView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:layout_margin="2dp"-->
+<!--            app:srcCompat="@drawable/border" />-->
+
         <ImageView
-            android:id="@+id/listItem_image_videoIndicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="5dp"
-            android:layout_marginBottom="5dp"
-            app:srcCompat="@drawable/ic_play_arrow"
-            android:layout_gravity="bottom|start"
-            android:background="@drawable/grey_rounded_corners"/>
+            android:layout_gravity="top|end"
+            android:layout_margin="10dp"
+            android:background="@drawable/grey_rounded_corners"
+            android:backgroundTint="#8CE81E61"
+            app:srcCompat="@drawable/ic_check" />
+    </FrameLayout>
 </FrameLayout>

@@ -6,6 +6,6 @@
         android:color="@color/colorDisabledButtonForegroundColored" />
 
     <item
-        android:color="@color/colorButtonForeground" />
+        android:color="@color/colorBackgroundLight" />
 
 </selector>

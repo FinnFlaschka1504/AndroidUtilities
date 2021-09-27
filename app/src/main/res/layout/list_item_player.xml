@@ -22,8 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:adjustViewBounds="true"
-        android:minWidth="200dp"
-        android:minHeight="200dp"
+        android:maxHeight="32dp"
         app:srcCompat="@drawable/ic_download" />
 
     <TextView

@@ -9,12 +9,15 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -54,6 +57,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import kotlin.jvm.JvmStatic;
+import me.zhanghai.android.fastscroll.FastScroller;
+import me.zhanghai.android.fastscroll.FastScrollerBuilder;
 
 import static java.util.stream.Collectors.toList;
 
@@ -120,6 +125,7 @@ public class CustomRecycler<T> {
     private boolean reloading;
     private boolean trackReloading;
     private OnExpandedStateChangeListener<T> onExpandedStateChangeListener;
+    private CustomUtility.Quadruple<Pair<Integer[], CustomList<Integer>[]>, Boolean, Pair<Integer, Integer>, CustomUtility.TripleGenericReturnInterface<CustomRecycler<T>,T,Integer,String>> fastScroll;
 
 
     public CustomRecycler(AppCompatActivity context) {
@@ -245,7 +251,7 @@ public class CustomRecycler<T> {
     }
 
     public interface SetItemContent<E> {
-        void runSetCellContent(CustomRecycler<E> customRecycler, View itemView, E e);
+        void runSetCellContent(CustomRecycler<E> customRecycler, View itemView, E e, int index);
     }
 
     public CustomRecycler<T> setSetItemContent(SetItemContent<T> setItemContent) {
@@ -285,6 +291,10 @@ public class CustomRecycler<T> {
         return mAdapter;
     }
 
+    public LinearLayoutManager getLayoutManager() {
+        return (LinearLayoutManager) recycler.getLayoutManager();
+    }
+
     public interface CustomRecyclerInterface<T> {
         void run(CustomRecycler<T> customRecycler);
     }
@@ -309,6 +319,26 @@ public class CustomRecycler<T> {
         return this;
     }
 
+    public CustomRecycler<T> enableFastScroll(@Nullable Pair<Integer[], CustomList<Integer>[]> customHeight, boolean smoothScroll, @Nullable Pair<Integer,Integer> paddingTopAndBottom, @Nullable CustomUtility.TripleGenericReturnInterface<CustomRecycler<T>,T,Integer,String> popupProvider) {
+        fastScroll = CustomUtility.Quadruple.create(customHeight, smoothScroll, paddingTopAndBottom, popupProvider);
+        return this;
+    }
+
+    public CustomRecycler<T> enableFastScroll() {
+        return enableFastScroll(null, false, null, null);
+    }
+
+    public CustomRecycler<T> enableFastScroll(CustomUtility.TripleGenericReturnInterface<CustomRecycler<T>,T,Integer,String> popupProvider) {
+        return enableFastScroll(null, false, null, popupProvider);
+    }
+
+    public CustomRecycler<T> enableFastScroll(Pair<Integer,Integer> paddingTopAndBottom) {
+        return enableFastScroll(null, false, paddingTopAndBottom, null);
+    }
+
+    public CustomRecycler<T> enableFastScroll(Integer[] scrollRange, CustomList<Integer>[] heightList) {
+        return enableFastScroll(Pair.create(scrollRange, heightList), false, null, null);
+    }
 
     //  --------------- Drag & Swipe --------------->
     public CustomRecycler<T> enableDragAndDrop(OnDragAndDrop<T> onDragAndDrop) {
@@ -878,7 +908,7 @@ public class CustomRecycler<T> {
         @Override
         public void onBindViewHolder(ViewHolder viewHolder, int position) {
             if (setItemContent == null) {
-                setItemContent = (customRecycler, itemView, t) -> {
+                setItemContent = (customRecycler, itemView, t, index) -> {
                     if (t instanceof CharSequence)
                         ((TextView) itemView.findViewById(R.id.listItem_standard_title)).setText((CharSequence) t);
                     else if (t instanceof Pair) {
@@ -891,7 +921,7 @@ public class CustomRecycler<T> {
                     }
                 };
             }
-            setItemContent.runSetCellContent(CustomRecycler.this, viewHolder.itemView, dataSet.get(position));
+            setItemContent.runSetCellContent(CustomRecycler.this, viewHolder.itemView, dataSet.get(position), position);
 
             if (dragViewId != -1 && onDragAndDrop != null) {
                 GestureDetector gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
@@ -983,7 +1013,7 @@ public class CustomRecycler<T> {
         if (!expandable.canExpand())
             return;
         boolean expanded = expandable.isExpended();
-        CustomUtility.changeHeight(itemView, view -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(this, view, expandable.getObject(), !expandable.isExpended()));
+        CustomUtility.changeHeight(itemView, view -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(this, view, expandable.getObject(), !expandable.isExpended(), index));
         expandable.setExpended(!expanded);
         if (onExpandedStateChangeListener != null)
             onExpandedStateChangeListener.runExpandedStateChangeListener(this, itemView, (T) expandable, !expanded);
@@ -1005,7 +1035,7 @@ public class CustomRecycler<T> {
     }
 
     public interface SetExpandableItemContent<E> {
-        void runSetExpandableItemContent(CustomRecycler<E> customRecycler, View itemView, E e, boolean expanded);
+        void runSetExpandableItemContent(CustomRecycler<E> customRecycler, View itemView, E e, boolean expanded, int index);
     }
 
     public class ExpandableHelper<E> {
@@ -1020,7 +1050,7 @@ public class CustomRecycler<T> {
         private ExpandMatching<E> expandMatching;
 
         public ExpandableHelper() {
-            setItemContent = (customRecycler, itemView, e) -> {
+            setItemContent = (customRecycler, itemView, e, index) -> {
             };
         }
 
@@ -1390,7 +1420,7 @@ public class CustomRecycler<T> {
         if (this.recycler == null)
             recycler = new RecyclerView(context);
 
-        RecyclerView.LayoutManager layoutManager;
+        LinearLayoutManager layoutManager;
         if (rowOrColumnCount > 1)
             layoutManager = new GridLayoutManager(context, rowOrColumnCount, orientation, false);
         else
@@ -1416,7 +1446,7 @@ public class CustomRecycler<T> {
             }
             if (expandableHelper.setItemContent != null) {
                 layoutId = R.layout.list_item_expandable;
-                setSetItemContent((customRecycler, itemView, t) -> {
+                setSetItemContent((customRecycler, itemView, t, index) -> {
                     Expandable<T> expandable = (Expandable<T>) t;
                     ((TextView) itemView.findViewById(R.id.listItem_expandable_name)).setText(expandable.getName());
                     itemView.findViewById(R.id.listItem_expandable_arrow).setVisibility(expandable.showArrow ? View.VISIBLE : View.GONE);
@@ -1434,7 +1464,7 @@ public class CustomRecycler<T> {
                         listItem_expandable_content.addView(v);
                     }
                     if (expandableHelper.setItemContent != null && expandable.canExpand())
-                        expandableHelper.setItemContent.runSetCellContent(CustomRecycler.this, itemView, expandable.getObject());
+                        expandableHelper.setItemContent.runSetCellContent(CustomRecycler.this, itemView, expandable.getObject(), index);
 
                     itemView.findViewById(R.id.listItem_expandable_expansionLayout).setVisibility(expandable.isExpended() ? View.VISIBLE : View.GONE);
                     ((ImageView) itemView.findViewById(expandableHelper.getArrowId()))
@@ -1444,7 +1474,7 @@ public class CustomRecycler<T> {
 //                onClickListener = (OnClickListener<T>) expandableOnClickListener;
             } else if (expandableHelper.setExpandableItemContent != null) {
                 layoutId = expandableHelper.contentLayoutId;
-                setSetItemContent((customRecycler, itemView, t) -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(this, itemView, ((Expandable) t).getObject(), ((Expandable) t).isExpended()));
+                setSetItemContent((customRecycler, itemView, t, index) -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(this, itemView, ((Expandable) t).getObject(), ((Expandable) t).isExpended(), index));
                 onClickListener = (OnClickListener<T>) expandableOnClickListener_change;
             }
         }
@@ -1500,6 +1530,59 @@ public class CustomRecycler<T> {
                             recycler.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                         }
                     });
+        }
+
+        if (fastScroll != null) {
+            FastScroller[] fastScroller = {null};
+            FastScrollRecyclerViewHelper viewHelper;
+            if (fastScroll.first == null)
+                viewHelper = new FastScrollRecyclerViewHelper(this, fastScroller, fastScroll.second, fastScroll.third, fastScroll.fourth != null ? position -> fastScroll.fourth.run(this, objectList.get(position), position) : null);
+            else
+                viewHelper = new FastScrollRecyclerViewHelper(this, fastScroller, fastScroll.first.first, fastScroll.first.second, fastScroll.second, fastScroll.third, fastScroll.fourth != null ? position -> fastScroll.fourth.run(this, objectList.get(position), position) : null);
+
+            FastScrollerBuilder fastScrollerBuilder = new FastScrollerBuilder(recycler)
+                    .setThumbDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.fast_scroll_thumb)))
+                    .setTrackDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.fast_scroll_track)))
+                    .setPadding(0, 20, 0, 100)
+                    .setViewHelper(viewHelper);
+
+            if (fastScroll != null && fastScroll.fourth != null)
+                fastScrollerBuilder.setPopupStyle(popupView -> {
+//                    Resources resources = popupView.getResources();
+//                    int minimumSize = resources.getDimensionPixelSize(R.dimen.afs_popup_min_size);
+//                    popupView.setMinimumWidth(minimumSize);
+//                    popupView.setMinimumHeight(minimumSize);
+                    FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)
+                            popupView.getLayoutParams();
+                    layoutParams.setMargins(0, 0, CustomUtility.dpToPx(20), 0);
+                    layoutParams.width = FrameLayout.LayoutParams.WRAP_CONTENT; //CustomUtility.dpToPx(150);
+                    layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT;
+
+                    popupView.setMaxWidth(CustomUtility.dpToPx(150));
+
+                    CustomUtility.setPadding(popupView, 15, 11, 25, 10);
+                    layoutParams.gravity = Gravity.RIGHT | Gravity.BOTTOM;
+//                    layoutParams.setMarginEnd(resources.getDimensionPixelOffset(R.dimen.afs_popup_margin_end));
+                    popupView.setLayoutParams(layoutParams);
+                    popupView.setTypeface(Typeface.DEFAULT_BOLD);
+                    popupView.setBackgroundResource(R.drawable.ic_tear);
+//                    Context context = popupView.getContext();
+//                    popupView.setBackground(new AutoMirrorDrawable(Utils.getGradientDrawableWithTintAttr(
+//                            R.drawable.afs_popup_background, R.attr.colorControlActivated, context)));
+                    popupView.setEllipsize(TextUtils.TruncateAt.END);
+                    popupView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+//                    popupView.setGravity(Gravity.CENTER);
+//                    popupView.setIncludeFontPadding(false);
+                    popupView.setSingleLine(true);
+                    popupView.setTextColor(Color.WHITE);
+//                    popupView.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimensionPixelSize(
+//                            R.dimen.afs_popup_text_size));
+
+                });
+
+            fastScroller[0] = fastScrollerBuilder
+                    .build();
+
         }
         return recycler;
     }
@@ -1682,7 +1765,7 @@ public class CustomRecycler<T> {
                     if (currentObject[0] == null)
                         layoutView.setVisibility(View.GONE);
                     else {
-                        setItemContent.runSetCellContent(CustomRecycler.this, layoutView, currentObject[0]);
+                        setItemContent.runSetCellContent(CustomRecycler.this, layoutView, currentObject[0], filterdObjectList.indexOf(currentObject[0]));
                         layoutView.setVisibility(View.VISIBLE);
                     }
                 })
@@ -1735,6 +1818,7 @@ public class CustomRecycler<T> {
 //        } else
 //            recycler.scrollToPosition(index + middleHeight);
 
+//        recycler.getLayoutManager().scrollToPosition(index);
         recycler.scrollToPosition(index);
         if (index >= firstVisiblePosition && index <= lastVisiblePosition)
             recycler.getLayoutManager().findViewByPosition(index).setPressed(ripple);

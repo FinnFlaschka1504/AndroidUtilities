@@ -84,6 +84,16 @@ public class Helpers {
         private Validator.STATUS status;
 
 
+        public TextInputHelper(TextInputLayout... inputLayouts) {
+            this.layoutList = new CustomList<>(inputLayouts);
+            inputValidationMap = this.layoutList.stream().collect(Collectors.toMap(o -> o, Validator::new));
+            applyValidationListeners();
+            layoutList.forEach(textInputLayout -> {
+                if (textInputLayout.getEditText().getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE))
+                    textInputLayout.getEditText().setInputType(defaultInputType.code);
+            });
+        }
+
         public TextInputHelper(Button buttonToBind, TextInputLayout... inputLayouts) {
             this.onValidationResult = buttonToBind::setEnabled;
             this.layoutList = new CustomList<>(inputLayouts);
@@ -114,7 +124,7 @@ public class Helpers {
             status = Validator.STATUS.VALID;
             for (Map.Entry<TextInputLayout, Validator> entry : inputValidationMap.entrySet()) {
                 Validator.STATUS validate = entry.getValue().validate(entry.getKey().getEditText().getText().toString().trim(),
-                        layoutList != null && inputLayoutList.size() == 0 ? null : inputLayoutList.contains(entry.getKey()));
+                        layoutLists != null && inputLayoutList.size() == 0 ? null : inputLayoutList.contains(entry.getKey()));
                 if (validate.getLevel() > status.getLevel())
                     status = validate;
             }
@@ -179,6 +189,10 @@ public class Helpers {
             return valid;
         }
 
+        public Validator.STATUS getStatus() {
+            return status;
+        }
+
         public TextInputHelper removeStandardValidation(TextInputLayout... textInputLayouts) {
             for (TextInputLayout textInputLayout : textInputLayouts) {
                 inputValidationMap.get(textInputLayout).alwaysUseDefaultValidation = false;
@@ -205,7 +219,7 @@ public class Helpers {
         }
 
         public static class Validator {
-            enum STATUS {
+            public enum STATUS {
                 NONE(false, false, 3), VALID(true, true, 0), INVALID(false, false, 2), WARNING(true, false, 1);
 
                 private boolean valid;
@@ -265,14 +279,12 @@ public class Helpers {
                 mode = defaultMode;
             }
 
-            private void defaultValidation(String text, boolean changeErrorMessage) {
+            private void defaultValidation(String text) {
                 if (text.isEmpty() && !allowEmpty && !warnIfEmpty) {
-//                    if (changeErrorMessage)
-                        message = "Das Feld darf nicht leer sein!";
+                    message = "Das Feld darf nicht leer sein!";
                     status = STATUS.INVALID;
                 } else if (text.isEmpty() && !allowEmpty && warnIfEmpty){
-//                    if (changeErrorMessage)
-                        message = "Das Feld ist leer!";
+                    message = "Das Feld ist leer!";
                     status = STATUS.WARNING;
                 } else if (text.isEmpty() && allowEmpty){
                     message = null;
@@ -280,13 +292,11 @@ public class Helpers {
                 } else {
                     switch (mode) {
                         case BLACK_LIST:
-//                            if (changeErrorMessage)
-                                message = null;
+                            message = null;
                             status = STATUS.VALID;
                             break;
                         case WHITE_LIST:
-//                            if (changeErrorMessage)
-                                message = "Ungültige Eingabe";
+                            message = "Ungültige Eingabe";
                             status = STATUS.INVALID;
                             break;
                     }
@@ -318,7 +328,7 @@ public class Helpers {
                 }
 
                 if (status == STATUS.NONE && useDefaultValidation)
-                    defaultValidation(text, changeErrorMessage);
+                    defaultValidation(text);
 
                 if (force && status != STATUS.VALID)
                     alreadyEdited = true;
@@ -785,25 +795,25 @@ public class Helpers {
             return spannableStringBuilder;
         }
 
-        public SpannableStringBuilder quick(CharSequence text, Object what) {
+        public static SpannableStringBuilder quick(CharSequence text, Object what) {
             SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
             spannableStringBuilder.setSpan(what, 0, text.length(), 0);
             return spannableStringBuilder;
         }
 
-        public SpannableStringBuilder quickBold(CharSequence text) {
+        public static SpannableStringBuilder quickBold(CharSequence text) {
             SpannableStringBuilder spannableString = new SpannableStringBuilder(text);
             spannableString.setSpan(SPAN_TYPE.BOLD.getWhat(), 0, text.length(), 0);
             return spannableString;
         }
 
-        public SpannableStringBuilder quickItalic(CharSequence text) {
+        public static SpannableStringBuilder quickItalic(CharSequence text) {
             SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
             spannableStringBuilder.setSpan(SPAN_TYPE.ITALIC.getWhat(), 0, text.length(), 0);
             return spannableStringBuilder;
         }
 
-        public SpannableStringBuilder quickStrikeThrough(CharSequence text) {
+        public static SpannableStringBuilder quickStrikeThrough(CharSequence text) {
             SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(text);
             spannableStringBuilder.setSpan(SPAN_TYPE.STRIKE_THROUGH.getWhat(), 0, text.length(), 0);
             return spannableStringBuilder;

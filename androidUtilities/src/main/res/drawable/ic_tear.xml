@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="start">
+        <vector
+            android:width="20dp"
+            android:height="40dp"
+            android:viewportWidth="20"
+            android:viewportHeight="40">
+            <path
+                android:pathData="m20,40a20,20 0,0 1,-17.3205 -10,20 20,0 0,1 0,-20A20,20 0,0 1,20 0l0,20z"
+                android:strokeLineJoin="round"
+                android:fillColor="@color/colorPrimary"
+                android:strokeColor="@color/colorPrimary"
+                android:strokeLineCap="square"/>
+        </vector>
+
+    </item>
+    <item
+        android:start="20dp"
+        android:end="30dp">
+        <vector
+            android:width="1px"
+            android:height="40dp"
+            android:viewportWidth="60"
+            android:viewportHeight="40">
+            <path
+                android:pathData="M-0,0h60v40h-60z"
+                android:strokeLineJoin="round"
+                android:fillColor="@color/colorPrimary"
+                android:strokeColor="@color/colorPrimary"
+                android:strokeLineCap="square"/>
+        </vector>
+
+    </item>
+    <item android:gravity="end">
+        <vector
+            android:width="30dp"
+            android:height="40dp"
+            android:viewportWidth="30"
+            android:viewportHeight="40">
+            <path
+                android:pathData="m0,40c0,-12.854 -0,-34.094 0,-40C14.388,0 15.903,11.908 30,20 15.903,28.092 14.434,40 0,40Z"
+                android:strokeLineJoin="round"
+                android:fillColor="@color/colorPrimary"
+                android:strokeColor="@color/colorPrimary"
+                android:strokeLineCap="square"/>
+        </vector>
+
+    </item>
+
+</layer-list>
