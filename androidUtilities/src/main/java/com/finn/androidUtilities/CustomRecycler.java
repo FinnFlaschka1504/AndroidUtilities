@@ -78,7 +78,8 @@ public class CustomRecycler<T> {
     private long lastClickTime;
     private boolean isMultiClickEnabled = false;
     private boolean showDivider = false;
-    private boolean hideLastDivider;
+    private boolean removeLastDivider;
+    private boolean autoRemoveLastDivider;
     private boolean useCustomRipple = true;
     private AppCompatActivity context;
     private RecyclerView recycler;
@@ -125,8 +126,8 @@ public class CustomRecycler<T> {
     private boolean reloading;
     private boolean trackReloading;
     private OnExpandedStateChangeListener<T> onExpandedStateChangeListener;
-    private CustomUtility.Quadruple<Pair<Integer[], CustomList<Integer>[]>, Boolean, Pair<Integer, Integer>, CustomUtility.TripleGenericReturnInterface<CustomRecycler<T>,T,Integer,String>> fastScroll;
-
+    private CustomUtility.Quadruple<CustomUtility.Triple<Integer[], CustomList<Integer>[], CustomUtility.GenericReturnInterface<T, Integer>>, Boolean, Pair<Integer, Integer>, CustomUtility.TripleGenericReturnInterface<CustomRecycler<T>, T, Integer, String>> fastScroll;
+    private CustomUtility.Quadruple<Integer, Integer, Integer, Integer> padding;
 
     public CustomRecycler(AppCompatActivity context) {
         this.context = context;
@@ -178,7 +179,7 @@ public class CustomRecycler<T> {
 
     public CustomRecycler<T> setGetActiveObjectList(GetActiveObjectList<T> getActiveObjectList) {
         this.getActiveObjectList = getActiveObjectList;
-        objectList.addAll(getActiveObjectList.runGetActiveObjectList(this));
+//        objectList.addAll(getActiveObjectList.runGetActiveObjectList(this));
         useActiveObjectList = true;
         return this;
     }
@@ -200,13 +201,23 @@ public class CustomRecycler<T> {
         return this;
     }
 
+    public CustomRecycler<T> enableDivider(int dividerMargin) {
+        return enableDivider()
+                .setDividerMargin_inDp(dividerMargin)
+                .autoRemoveLastDivider();
+    }
     public CustomRecycler<T> enableDivider() {
         this.showDivider = true;
         return this;
     }
 
     public CustomRecycler<T> removeLastDivider() {
-        this.hideLastDivider = true;
+        this.removeLastDivider = true;
+        return this;
+    }
+
+    public CustomRecycler<T> autoRemoveLastDivider() {
+        this.autoRemoveLastDivider = true;
         return this;
     }
 
@@ -319,7 +330,13 @@ public class CustomRecycler<T> {
         return this;
     }
 
-    public CustomRecycler<T> enableFastScroll(@Nullable Pair<Integer[], CustomList<Integer>[]> customHeight, boolean smoothScroll, @Nullable Pair<Integer,Integer> paddingTopAndBottom, @Nullable CustomUtility.TripleGenericReturnInterface<CustomRecycler<T>,T,Integer,String> popupProvider) {
+    public CustomRecycler<T> enableFastScroll(@Nullable CustomUtility.Triple<Integer[], CustomList<Integer>[], CustomUtility.GenericReturnInterface<T,Integer>> customHeight, boolean smoothScroll, @Nullable Pair<Integer,Integer> paddingTopAndBottom, @Nullable CustomUtility.TripleGenericReturnInterface<CustomRecycler<T>,T,Integer,String> popupProvider) {
+        if (customHeight != null && customHeight.third != null) {
+            final CustomList<Integer>[] heightList = new CustomList[]{new CustomList<>()};
+            final Integer[] scrollRange = {0};
+            customHeight.first = scrollRange;
+            customHeight.second = heightList;
+        }
         fastScroll = CustomUtility.Quadruple.create(customHeight, smoothScroll, paddingTopAndBottom, popupProvider);
         return this;
     }
@@ -336,8 +353,32 @@ public class CustomRecycler<T> {
         return enableFastScroll(null, false, paddingTopAndBottom, null);
     }
 
+    public CustomRecycler<T> enableFastScroll(Pair<Integer,Integer> paddingTopAndBottom, CustomUtility.TripleGenericReturnInterface<CustomRecycler<T>, T, Integer, String> popupProvider) {
+        return enableFastScroll(null, false, paddingTopAndBottom, popupProvider);
+    }
+
     public CustomRecycler<T> enableFastScroll(Integer[] scrollRange, CustomList<Integer>[] heightList) {
-        return enableFastScroll(Pair.create(scrollRange, heightList), false, null, null);
+        return enableFastScroll(CustomUtility.Triple.create(scrollRange, heightList, null), false, null, null);
+    }
+
+    public CustomRecycler<T> enableFastScroll(CustomUtility.GenericReturnInterface<T, Integer> heightMapper) {
+        return enableFastScroll(heightMapper, null);
+    }
+
+    public CustomRecycler<T> enableFastScroll(CustomUtility.GenericReturnInterface<T, Integer> heightMapper, CustomUtility.TripleGenericReturnInterface<CustomRecycler<T>, T, Integer, String> popupProvider) {
+        final CustomList<Integer>[] heightList = new CustomList[]{new CustomList<>()};
+        final Integer[] scrollRange = {0};
+        return enableFastScroll(CustomUtility.Triple.create(scrollRange, heightList, heightMapper), false, null, popupProvider);
+    }
+
+    public CustomRecycler<T> setPadding(int left, int top, int right, int bottom) {
+        padding = CustomUtility.Quadruple.create(left, top, right, bottom);
+        return this;
+    }
+
+    public CustomRecycler<T> setPadding(int bottom) {
+        padding = CustomUtility.Quadruple.create(0, 0, 0, bottom);
+        return this;
     }
 
     //  --------------- Drag & Swipe --------------->
@@ -389,7 +430,7 @@ public class CustomRecycler<T> {
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int index = viewHolder.getAdapterPosition();
                 if (swipeBackgroundHelper != null && swipeBackgroundHelper.thresholdBouncy && ((direction == 16 && swipeBackgroundHelper.bouncyDirection.first) || (direction == 32 && swipeBackgroundHelper.bouncyDirection.second))) {
-                    onSwiped.runSwyped(objectList, direction, objectList.get(index));
+                    onSwiped.runSwiped(CustomRecycler.this, objectList, direction, objectList.get(index), index);
                     if (!swipeBackgroundHelper.staySwiped) {
                         if (swipeBackgroundHelper.smoothBounce)
                             mAdapter.notifyItemChanged(index);
@@ -401,7 +442,7 @@ public class CustomRecycler<T> {
 
                 T t = objectList.remove(index);
                 mAdapter.notifyDataSetChanged();
-                onSwiped.runSwyped(objectList, direction, t);
+                onSwiped.runSwiped(CustomRecycler.this, objectList, direction, t, index);
             }
 
             @Override
@@ -824,7 +865,7 @@ public class CustomRecycler<T> {
     }
 
     public interface OnSwiped<T> {
-        void runSwyped(List<T> objectList, int direction, T t);
+        void runSwiped(CustomRecycler<T> customRecycler, List<T> objectList, int direction, T t, int index);
     }
     //  <--------------- Drag & Swipe ---------------
 
@@ -1006,14 +1047,20 @@ public class CustomRecycler<T> {
         if (onExpandedStateChangeListener != null)
             onExpandedStateChangeListener.runExpandedStateChangeListener(this, itemView, (T) expandable, !expanded);
     };
-    private CustomRecycler.OnClickListener<T> expandableOnClickListener_change = (customRecycler1, itemView, o, index) -> {
+    private CustomRecycler.OnClickListener<T> expandableOnClickListener_change = (customRecycler, itemView, o, index) -> {
         if (!(o instanceof Expandable))
             return;
         Expandable expandable = (Expandable) o;
         if (!expandable.canExpand())
             return;
         boolean expanded = expandable.isExpended();
-        CustomUtility.changeHeight(itemView, view -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(this, view, expandable.getObject(), !expandable.isExpended(), index));
+        Pair<Integer, Integer> heightPair = CustomUtility.changeHeight(itemView, view -> expandableHelper.setExpandableItemContent.runSetExpandableItemContent(this, view, expandable.getObject(), !expandable.isExpended(), index));
+        if (customRecycler.fastScroll != null && customRecycler.fastScroll.first != null) {
+            customRecycler.fastScroll.first.second[0].set(index, heightPair.second);
+            customRecycler.fastScroll.first.first[0] = customRecycler.fastScroll.first.second[0].stream().mapToInt(Integer::intValue).sum();
+        }
+        expandable.collapsedAndExpandedHeights = Pair.create(Math.min(heightPair.first, heightPair.second), Math.max(heightPair.first, heightPair.second));
+//        CustomUtility.logD("RecyclerViewHelper", ": %d | %d", heightPair.first, heightPair.second);
         expandable.setExpended(!expanded);
         if (onExpandedStateChangeListener != null)
             onExpandedStateChangeListener.runExpandedStateChangeListener(this, itemView, (T) expandable, !expanded);
@@ -1159,6 +1206,7 @@ public class CustomRecycler<T> {
         private CustomRecycler<T> customRecycler;
         private boolean showArrow = true;
         private Object payload;
+        private Pair<Integer, Integer> collapsedAndExpandedHeights;
 
         public String getName() {
             return name;
@@ -1197,6 +1245,13 @@ public class CustomRecycler<T> {
         //  --------------- Convenience --------------->
         public boolean canExpand() {
             return object != null || (list != null && !list.isEmpty());
+        }
+
+        public int getHeight(int defaultHeight) {
+            if (collapsedAndExpandedHeights != null)
+                return expended ? collapsedAndExpandedHeights.second : collapsedAndExpandedHeights.first;
+            else
+                return defaultHeight;
         }
         //  <--------------- Convenience ---------------
 
@@ -1427,6 +1482,82 @@ public class CustomRecycler<T> {
             layoutManager = new LinearLayoutManager(context, orientation, false);
         recycler.setLayoutManager(layoutManager);
 
+        if (padding != null) {
+            if (fastScroll != null && (padding.second > 0 || padding.fourth > 0)) {
+                fastScroll.third = Pair.create(CustomUtility.dpToPx(padding.second), CustomUtility.dpToPx(padding.fourth));
+            }
+            recycler.setPadding(CustomUtility.dpToPx(padding.first), CustomUtility.dpToPx(padding.second), CustomUtility.dpToPx(padding.third), CustomUtility.dpToPx(padding.fourth));
+            recycler.setClipToPadding(false);
+        }
+
+        if (fastScroll != null) {
+            FastScroller[] fastScroller = {null};
+            FastScrollRecyclerViewHelper viewHelper;
+            if (fastScroll.first == null)
+                viewHelper = new FastScrollRecyclerViewHelper(this, fastScroller, fastScroll.second, fastScroll.third, fastScroll.fourth != null ? position -> fastScroll.fourth.run(this, objectList.get(position), position) : null);
+            else {
+                viewHelper = new FastScrollRecyclerViewHelper(this, fastScroller, fastScroll.first.first, fastScroll.first.second, fastScroll.second, fastScroll.third, fastScroll.fourth != null ? position -> fastScroll.fourth.run(this, objectList.get(position), position) : null);
+                if (fastScroll.first.third != null && getActiveObjectList != null) {
+                    GetActiveObjectList<T> oldGetActiveObjectList = this.getActiveObjectList;
+                    getActiveObjectList = customRecycler -> {
+                        List<T> newList = oldGetActiveObjectList.runGetActiveObjectList(customRecycler);
+                        fastScroll.first.second[0] = newList.stream().map(fastScroll.first.third::run).collect(Collectors.toCollection(CustomList::new));
+                        fastScroll.first.first[0] = fastScroll.first.second[0].stream().mapToInt(Integer::intValue).sum();
+                        return newList;
+                    };
+                }
+            }
+
+            FastScrollerBuilder fastScrollerBuilder = new FastScrollerBuilder(recycler)
+                    .setThumbDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.fast_scroll_thumb)))
+                    .setTrackDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.fast_scroll_track)))
+                    .setPadding(0, 20, 0, 100)
+                    .setViewHelper(viewHelper);
+
+//            fastScrollerBuilder.disableScrollbarAutoHide();
+
+            if (fastScroll != null && fastScroll.fourth != null)
+                fastScrollerBuilder.setPopupStyle(popupView -> {
+//                    Resources resources = popupView.getResources();
+//                    int minimumSize = resources.getDimensionPixelSize(R.dimen.afs_popup_min_size);
+//                    popupView.setMinimumWidth(minimumSize);
+//                    popupView.setMinimumHeight(minimumSize);
+                    FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)
+                            popupView.getLayoutParams();
+                    layoutParams.setMargins(0, 0, CustomUtility.dpToPx(20), 0);
+                    layoutParams.width = FrameLayout.LayoutParams.WRAP_CONTENT; //CustomUtility.dpToPx(150);
+                    layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT;
+
+                    popupView.setMaxWidth(CustomUtility.dpToPx(150));
+
+                    CustomUtility.setPadding(popupView, 15, 11, 25, 10);
+                    layoutParams.gravity = Gravity.RIGHT | Gravity.BOTTOM;
+//                    layoutParams.setMarginEnd(resources.getDimensionPixelOffset(R.dimen.afs_popup_margin_end));
+                    popupView.setLayoutParams(layoutParams);
+                    popupView.setTypeface(Typeface.DEFAULT_BOLD);
+                    popupView.setBackgroundResource(R.drawable.ic_tear);
+//                    Context context = popupView.getContext();
+//                    popupView.setBackground(new AutoMirrorDrawable(Utils.getGradientDrawableWithTintAttr(
+//                            R.drawable.afs_popup_background, R.attr.colorControlActivated, context)));
+                    popupView.setEllipsize(TextUtils.TruncateAt.END);
+                    popupView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+//                    popupView.setGravity(Gravity.CENTER);
+//                    popupView.setIncludeFontPadding(false);
+                    popupView.setSingleLine(true);
+                    popupView.setTextColor(Color.WHITE);
+//                    popupView.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimensionPixelSize(
+//                            R.dimen.afs_popup_text_size));
+
+                });
+
+            fastScroller[0] = fastScrollerBuilder
+                    .build();
+
+//            recycler.setItemViewCacheSize(10);
+        }
+
+        if (getActiveObjectList != null)
+            objectList.addAll(getActiveObjectList.runGetActiveObjectList(this));
 
         if (expandableHelper != null) {
             expandableHelper.setExpandableList(objectList);
@@ -1479,14 +1610,13 @@ public class CustomRecycler<T> {
             }
         }
 
-
         mAdapter = new MyAdapter(objectList);
         recycler.setAdapter(mAdapter);
 
         if (showDivider) {
             Drawable mDivider = ContextCompat.getDrawable(context, R.drawable.divider);
             DividerItemDecoration dividerItemDecoration;
-            if (hideLastDivider) {
+            if (removeLastDivider || autoRemoveLastDivider || dividerMargin > 0) {
                 dividerItemDecoration = new DividerItemDecoration(context, orientation) {
                     @Override
                     public void onDraw(Canvas canvas, RecyclerView parent, RecyclerView.State state) {
@@ -1494,7 +1624,7 @@ public class CustomRecycler<T> {
                         int dividerRight = parent.getWidth() - parent.getPaddingRight() - dividerMargin;
 
                         int childCount = parent.getChildCount();
-                        for (int i = 0; i <= childCount - 2; i++) {
+                        for (int i = 0; i <= childCount - ((removeLastDivider || autoRemoveLastDivider && parent.canScrollVertically(-1)) ? 2 : 1); i++) {
                             View child = parent.getChildAt(i);
 
                             RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
@@ -1532,58 +1662,6 @@ public class CustomRecycler<T> {
                     });
         }
 
-        if (fastScroll != null) {
-            FastScroller[] fastScroller = {null};
-            FastScrollRecyclerViewHelper viewHelper;
-            if (fastScroll.first == null)
-                viewHelper = new FastScrollRecyclerViewHelper(this, fastScroller, fastScroll.second, fastScroll.third, fastScroll.fourth != null ? position -> fastScroll.fourth.run(this, objectList.get(position), position) : null);
-            else
-                viewHelper = new FastScrollRecyclerViewHelper(this, fastScroller, fastScroll.first.first, fastScroll.first.second, fastScroll.second, fastScroll.third, fastScroll.fourth != null ? position -> fastScroll.fourth.run(this, objectList.get(position), position) : null);
-
-            FastScrollerBuilder fastScrollerBuilder = new FastScrollerBuilder(recycler)
-                    .setThumbDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.fast_scroll_thumb)))
-                    .setTrackDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.fast_scroll_track)))
-                    .setPadding(0, 20, 0, 100)
-                    .setViewHelper(viewHelper);
-
-            if (fastScroll != null && fastScroll.fourth != null)
-                fastScrollerBuilder.setPopupStyle(popupView -> {
-//                    Resources resources = popupView.getResources();
-//                    int minimumSize = resources.getDimensionPixelSize(R.dimen.afs_popup_min_size);
-//                    popupView.setMinimumWidth(minimumSize);
-//                    popupView.setMinimumHeight(minimumSize);
-                    FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)
-                            popupView.getLayoutParams();
-                    layoutParams.setMargins(0, 0, CustomUtility.dpToPx(20), 0);
-                    layoutParams.width = FrameLayout.LayoutParams.WRAP_CONTENT; //CustomUtility.dpToPx(150);
-                    layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT;
-
-                    popupView.setMaxWidth(CustomUtility.dpToPx(150));
-
-                    CustomUtility.setPadding(popupView, 15, 11, 25, 10);
-                    layoutParams.gravity = Gravity.RIGHT | Gravity.BOTTOM;
-//                    layoutParams.setMarginEnd(resources.getDimensionPixelOffset(R.dimen.afs_popup_margin_end));
-                    popupView.setLayoutParams(layoutParams);
-                    popupView.setTypeface(Typeface.DEFAULT_BOLD);
-                    popupView.setBackgroundResource(R.drawable.ic_tear);
-//                    Context context = popupView.getContext();
-//                    popupView.setBackground(new AutoMirrorDrawable(Utils.getGradientDrawableWithTintAttr(
-//                            R.drawable.afs_popup_background, R.attr.colorControlActivated, context)));
-                    popupView.setEllipsize(TextUtils.TruncateAt.END);
-                    popupView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-//                    popupView.setGravity(Gravity.CENTER);
-//                    popupView.setIncludeFontPadding(false);
-                    popupView.setSingleLine(true);
-                    popupView.setTextColor(Color.WHITE);
-//                    popupView.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimensionPixelSize(
-//                            R.dimen.afs_popup_text_size));
-
-                });
-
-            fastScroller[0] = fastScrollerBuilder
-                    .build();
-
-        }
         return recycler;
     }
 
@@ -1631,6 +1709,8 @@ public class CustomRecycler<T> {
     public RecyclerView reloadNew() {
         reloading = true;
         mAdapter = new MyAdapter(objectList);
+        if (useActiveObjectList)
+            objectList.clear();
         this.recycler.setAdapter(mAdapter);
         generateRecyclerView();
         if (onReload != null || trackReloading)
@@ -1679,16 +1759,16 @@ public class CustomRecycler<T> {
 
     public Pair<CustomRecycler<T>, CustomDialog> goTo(GoToFilter<T> goToFilter, ElementToString<T> elementToString, String search) {
         final T[] currentObject = (T[]) new Object[1];
-        CustomList<T> filterdObjectList = new CustomList<>();
+        CustomList<T> filteredObjectList = new CustomList<>();
         List<T> allObjectList = getObjectList();
 
         if (search != null) {
-            filterdObjectList.clear();
-            filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(search, t)).collect(toList()));
-            if (filterdObjectList.isEmpty())
+            filteredObjectList.clear();
+            filteredObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(search, t)).collect(toList()));
+            if (filteredObjectList.isEmpty())
                 Toast.makeText(context, "Kein Eintrag für diese Suche", Toast.LENGTH_SHORT).show();
-            else if (filterdObjectList.size() == 1) {
-                scrollTo(allObjectList.indexOf(filterdObjectList.get(0)), true);
+            else if (filteredObjectList.size() == 1) {
+                scrollTo(allObjectList.indexOf(filteredObjectList.get(0)), true);
                 return new Pair<>(this, null);
             }
         }
@@ -1701,16 +1781,16 @@ public class CustomRecycler<T> {
         goToDialog
                 .setTitle("Gehe Zu")
                 .addButton("Zurück", customDialog1 -> {
-                    if (filterdObjectList.isEmpty())
+                    if (filteredObjectList.isEmpty())
                         return;
-                    currentObject[0] = filterdObjectList.previous(currentObject[0], true);
+                    currentObject[0] = filteredObjectList.previous(currentObject[0], true);
                     customDialog1.reloadView();
                 }, prevButtonId, false)
                 .hideLastAddedButton()
                 .addButton("Weiter", customDialog1 -> {
-                    if (filterdObjectList.isEmpty())
+                    if (filteredObjectList.isEmpty())
                         return;
-                    currentObject[0] = filterdObjectList.next(currentObject[0], true);
+                    currentObject[0] = filteredObjectList.next(currentObject[0], true);
                     customDialog1.reloadView();
                 }, nextButtonId,false)
                 .hideLastAddedButton()
@@ -1722,15 +1802,15 @@ public class CustomRecycler<T> {
                 .setEdit(new CustomDialog.EditBuilder().setHint("Filter").setFireActionDirectly(search != null && !search.isEmpty()).setText(search != null ? search : "").allowEmpty()
                                 .setOnAction((textInputHelper, textInputLayout, actionId, text1) -> {
                                     ((AutoCompleteTextView) textInputLayout.getEditText()).dismissDropDown();
-                                    filterdObjectList.clear();
-                                    filterdObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(text1, t)).collect(toList()));
-                                    if (filterdObjectList.isEmpty())
+                                    filteredObjectList.clear();
+                                    filteredObjectList.addAll(allObjectList.stream().filter(t -> goToFilter.runGoToFilter(text1, t)).collect(toList()));
+                                    if (filteredObjectList.isEmpty())
                                         Toast.makeText(context, "Kein Eintrag für diese Suche", Toast.LENGTH_SHORT).show();
-                                    else if (filterdObjectList.size() == 1) {
-                                        scrollTo(allObjectList.indexOf(filterdObjectList.get(0)), true);
+                                    else if (filteredObjectList.size() == 1) {
+                                        scrollTo(allObjectList.indexOf(filteredObjectList.get(0)), true);
                                         goToDialog.dismiss();
                                     } else {
-                                        currentObject[0] = filterdObjectList.get(0);
+                                        currentObject[0] = filteredObjectList.get(0);
                                         goToDialog.reloadView();
                                         goToDialog.getButton(prevButtonId).setVisibility(View.VISIBLE);
                                         goToDialog.getButton(nextButtonId).setVisibility(View.VISIBLE);
@@ -1765,7 +1845,7 @@ public class CustomRecycler<T> {
                     if (currentObject[0] == null)
                         layoutView.setVisibility(View.GONE);
                     else {
-                        setItemContent.runSetCellContent(CustomRecycler.this, layoutView, currentObject[0], filterdObjectList.indexOf(currentObject[0]));
+                        setItemContent.runSetCellContent(CustomRecycler.this, layoutView, currentObject[0], filteredObjectList.indexOf(currentObject[0]));
                         layoutView.setVisibility(View.VISIBLE);
                     }
                 })

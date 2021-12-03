@@ -18,6 +18,7 @@ package com.finn.androidUtilities;
 
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
 import android.view.MotionEvent;
@@ -25,12 +26,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroupOverlay;
 import android.view.ViewOverlay;
+import android.view.ViewParent;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,6 +41,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.finn.androidUtilities.CustomList;
 import com.finn.androidUtilities.CustomUtility;
 import com.finn.androidUtilities.CustomRecycler;
+import com.google.android.material.appbar.AppBarLayout;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -156,9 +160,60 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
             return null;
         };
 
-        final boolean[] blocked = {false};
+        final boolean[] blocked = {true};
+
+        final MotionEvent[] isFake = {null};
+
+        Runnable startFakeScroll = () -> {
+            long startTime = System.currentTimeMillis();
+            CustomUtility.GenericInterface<Integer> dispatch = posY -> {
+                MotionEvent motionEvent = MotionEvent.obtain(
+                        isFake[0].getDownTime(),
+                        SystemClock.uptimeMillis(),
+                        MotionEvent.ACTION_MOVE,
+                        isFake[0].getX(),
+                        posY,
+                        0
+                );
+                onTouchEvent.test(motionEvent);
+            };
+
+            int start = 85;
+            int end = 2640;
+            Animation a = new Animation() {
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    if (interpolatedTime == 1) {
+                        dispatch.run(end);
+                        long endTime = System.currentTimeMillis();
+                        CustomUtility.logD(TAG, "applyTransformation: %d", endTime - startTime);
+//                        thumbOffset = 0;
+                    } else {
+                        dispatch.run((int) ((end - start) * interpolatedTime));
+//                        thumbOffset = startOffset - (int) (startOffset * interpolatedTime);
+//                        onPreDraw.run();
+                    }
+                }
+
+                @Override
+                public boolean willChangeBounds() {
+                    return false;
+                }
+            };
+
+            a.setDuration(300);
+            thumbView.startAnimation(a);
+
+        };
+
+//        final long[] startTime = {System.currentTimeMillis()};
 
         CustomUtility.GenericReturnInterface<MotionEvent, Boolean> processMotionEvent = event -> {
+            if (isFake[0] != null) {
+                return true;
+            }
+
+
             if (thumbView == null && (thumbView = tryGetThumbView.run()) == null)
                 return onTouchEvent.test(event);
             else {
@@ -168,19 +223,31 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
                 float rawY = event.getY();
                 boolean isInX = rawX >= ints[0] && rawX <= ints[0] + thumbView.getWidth();
                 boolean isInY = rawY >= ints[1] && rawY <= ints[1] + thumbView.getHeight();
-
-//                CustomUtility.logD(TAG, "addOnTouchEventListener: y:%f | locY:%d | %s", event.getY(), ints[1], isInY);
+//                CustomUtility.logD(TAG, "addOnTouchEventListener: x:%f | y:%f 85 2640", rawX, rawY);
 
                 if (!blocked[0] && event.getAction() == MotionEvent.ACTION_UP) {
+//                    long endTime = System.currentTimeMillis();
+//                    CustomUtility.logD(TAG, "applyTransformation: %d", endTime - startTime[0]);
                     if (!smoothScroll) {
                         startResetThumbOffsetAnimation();
                     }
                     CustomUtility.reflectionCall(mView, "dispatchOnScrollStateChanged", Pair.create(int.class, RecyclerView.SCROLL_STATE_IDLE));
                 }
 
-//                if (event.getAction() == MotionEvent.ACTION_DOWN)
-//                    Log.d(TAG, String.format("addOnTouchEventListener: %d, %d | %d, %d || %s, %s", (int) rawX, (int) rawY, ints[0], ints[1], isInX, isInY));
                 if ((event.getAction() == MotionEvent.ACTION_DOWN && isInX && isInY) || (event.getAction() != MotionEvent.ACTION_DOWN && !blocked[0])) {
+//                    if (event.getAction() == MotionEvent.ACTION_DOWN)
+//                        startTime[0] = System.currentTimeMillis();
+//                    isFake[0] = event;
+//                    startFakeScroll.run();
+
+                    ViewParent parent;
+                    View appBarLayout;
+                    if (blocked[0] && (parent = mView.getParent()) instanceof CoordinatorLayout && ((CoordinatorLayout) parent).getChildCount() > 0 && (appBarLayout = ((CoordinatorLayout) parent).getChildAt(0)) instanceof AppBarLayout) {
+                        if (!((AppBarLayout) appBarLayout).isLifted()) {
+                            blocked[0] = true;
+                            return false;
+                        }
+                    }
                     blocked[0] = false;
                     return onTouchEvent.test(event);
                 } else
@@ -206,9 +273,13 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
     @Override
     public int getScrollRange() {
         if (scrollRange == null) {
-            return /*lastRange = */getItemHeight() * getItemCount() + (paddingTopAndBottom != null ?paddingTopAndBottom.first + paddingTopAndBottom.second : 0);// - mView.getPaddingBottom() - mView.getPaddingTop();
+            return /*lastRange = */getItemHeight() * getItemCount() + getPaddingSum();// - mView.getPaddingBottom() - mView.getPaddingTop();
         } else
-            return /*lastRange = */scrollRange[0] + (paddingTopAndBottom != null ?paddingTopAndBottom.first + paddingTopAndBottom.second : 0);
+            return /*lastRange = */scrollRange[0] + getPaddingSum();
+    }
+
+    private int getPaddingSum() {
+        return paddingTopAndBottom != null ? paddingTopAndBottom.first + paddingTopAndBottom.second : 0;
     }
 
     private int getItemCount() {
@@ -226,27 +297,19 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
     int prev;
     @Override
     public int getScrollOffset() {
-        LinearLayoutManager layoutManager = customRecycler.getLayoutManager();
         int position = getFirstItemPosition();
         if (position == RecyclerView.NO_POSITION) {
             return 0;
         }
-        int firstItemTop = getFirstItemOffset();
-//        int columns = 1;
-//        if (layoutManager instanceof GridLayoutManager)
-//            columns = ((GridLayoutManager) layoutManager).getSpanCount();
-//        Log.d(TAG, "getScrollOffset: " + position + " | " + firstItemTop + " | " + columns);
+        int firstItemOffset = getFirstItemOffset();
         int sum;
         if (heightList == null)
             sum = getItemHeight() * position;
         else
             sum = heightList[0].subList(0, position).stream().mapToInt(Integer::intValue).sum();
-        int i = mView.getPaddingTop() + sum - firstItemTop  + thumbOffset;
-//        if (i != prev) {
-////            Log.d(TAG, String.format("getScrollOffset: %d", i - prev));
-////            Log.d(TAG, String.format("getScrollOffset: %d | %d | %d\n", sum, firstItemTop, thumbOffset));
-//            prev = i;
-//        }
+        int i = mView.getPaddingTop() + sum - firstItemOffset  + thumbOffset;
+//        CustomUtility.logD(TAG, "getScrollOffset: %d | %d | %d", i - prev, thumbOffset, sum);
+        prev = i;
         return i;
     }
 
@@ -256,55 +319,33 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
         int i = 0;
         int size;
         boolean isLast;
-//        CustomUtility.logD(TAG, "scrollTo: %d | %d", scrollRange[0], offset);
-//        int initialOffset = offset;
-//        int availableDistance = lastRange - mView.getHeight() - initialOffset;
-        // ToDo: 1. Ausrechnen wie weit gescrollt werden kann wenn das letzte vollständig sichtbare Element oben ist
-        //  2. schauen wie viel davon schon gescrollt wurde, um dan anhand von prozenten zu sagen wann begonnen werden kann mit weiter scrollen
         LinearLayoutManager layoutManager = customRecycler.getLayoutManager();
-        boolean isLastItemVisible = layoutManager.findLastVisibleItemPosition() >= layoutManager.getItemCount() - 1;
+
         if (heightList == null) {
+
+//            CustomUtility.logD(TAG, "scrollTo: %d", offset);
+
             int columns = 1;
             if (layoutManager instanceof GridLayoutManager)
                 columns = ((GridLayoutManager) layoutManager).getSpanCount();
 
             int itemHeight = getItemHeight();
-            size = getItemCount();
-            for (; i < size; i++) {
-                if (offset - itemHeight < 0)
-                    break;
-                else
-                    offset -= itemHeight;
-            }
 
+
+            i = offset / itemHeight;
+//            i -= i % 50;
+            offset -= i * itemHeight;
 
             int lastFullyVisibleTopElement = getLastFullyVisibleTopElement();
             isLast = lastFullyVisibleTopElement <= getFirstVisiblePosition();
-//            isLast = /*layoutManager.findLastVisibleItemPosition() >= size - 1 isLastItemVisible && */istLastFullyVisibleTopElement() && (getThumbOffsetLastItemPercentage() >= 0.5 || getLastItemVisiblePercentage() <= 0.5);// && offset > itemHeight / 2;
-//            CustomUtility.logD(TAG, "scrollTo: %s | %s | %f | %f | %d", isLast, istLastFullyVisibleTopElement(), getThumbOffsetLastItemPercentage(), getLastItemVisiblePercentage(), wouldBeThumbOffset);
 
             int oldOffset = offset;
-            if (isLast) {
-                int lastItemClip =  (getItemCount() - lastFullyVisibleTopElement) * itemHeight - mView.getHeight();
+            if (isLast && !smoothScroll) {
+                int lastItemClip =  (getItemCount() - lastFullyVisibleTopElement) * itemHeight - mView.getHeight() + getPaddingSum();
                 double percentage = offset / (double) lastItemClip;
                 offset = (int) CustomUtility.mapNumber(percentage, 0.5, 0.9, 0, offset);
-//                double percentage = getThumbOffsetLastItemPercentage();
-//                CustomUtility.logD(TAG, "scrollTo: %f | %d | %d || %d", percentage, offset, lastItemClip, oldOffset);
             }
 
-
-//            wouldBeThumbOffset = offset;
-//            isLast = isLastItemVisible && istLastFullyVisibleTopElement() && (getThumbOffsetLastItemPercentage() >= 0.5 || getLastItemVisiblePercentage() <= 0.5);// && offset > (double) lastItemOffset / 2 && lastItemOffset + availableDistance < itemHeight;// && (double) itemHeight / 2 >  lastItemOffset;// && (double) itemHeight / 2 >  getLastItemOffset();// && offset > itemHeight / 2;
-////            thumbOffset = smoothScroll || isLast ? 0 : (offset /*+  itemHeight * (i % columns)*/);
-//
-////            CustomUtility.logD(TAG, "scrollTo: %s | %s | %f | %f", isLast, istLastFullyVisibleTopElement(), getThumbOffsetLastItemPercentage(), getLastItemVisiblePercentage());
-//            int oldOffset = offset;
-//            if (isLast) {
-//                offset = (int) CustomUtility.mapNumber(getThumbOffsetLastItemPercentage(), 0.5, 0.75, 0, offset);
-////                double percentage = getThumbOffsetLastItemPercentage();
-////                double v = CustomUtility.mapNumber(getThumbOffsetLastItemPercentage(), 0.5, 0.75, 0, offset);
-////                CustomUtility.logD(TAG, "scrollTo: %f | %d | %f || %d", percentage, offset, v, thumbOffset);
-//            }
             if (smoothScroll)
                 thumbOffset = 0;
             else if (isLast)
@@ -313,6 +354,19 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
                 thumbOffset = offset;
 
             layoutManager.scrollToPositionWithOffset(i * columns, smoothScroll || isLast ? -offset : 0);
+
+
+//            int rest = i % 3;
+//            if (rest == 0 || isLast) {
+//                layoutManager.scrollToPositionWithOffset(i * columns, smoothScroll || isLast ? -offset : 0);
+//                CustomUtility.logD(TAG, "scroll: %d | %d | %d | %d", rest, thumbOffset, i, offset);
+//            } else {
+//                thumbOffset -= itemHeight * rest;
+//                CustomUtility.logD(TAG, "thumb: %d | %d | %d | %d", rest, thumbOffset, i, offset);
+////                layoutManager.scrollToPositionWithOffset((i - rest) * columns, smoothScroll ? -offset : 0);
+//                if (mFastScroller != null && mFastScroller[0] != null)
+//                    CustomUtility.reflectionCall(mFastScroller[0], "updateScrollbarState");
+//            }
         } else {
             size = getItemCount();
             Integer itemHeight = 0;
@@ -332,7 +386,7 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
 
             int oldOffset = offset;
             if (isLast) {
-                int lastItemClip = heightList[0].subList(lastFullyVisibleTopElement, heightList[0].size()).stream().mapToInt(Integer::intValue).sum() - mView.getHeight();
+                int lastItemClip = heightList[0].subList(lastFullyVisibleTopElement, heightList[0].size()).stream().mapToInt(Integer::intValue).sum() - mView.getHeight() + getPaddingSum();
                 double percentage = offset / (double) lastItemClip;
                 offset = (int) CustomUtility.mapNumber(percentage, 0.5, 0.9, 0, offset);
 //                double percentage = getThumbOffsetLastItemPercentage();
@@ -389,7 +443,7 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
 
                 @Override
                 public boolean willChangeBounds() {
-                    return true;
+                    return false;
                 }
             };
 
@@ -506,6 +560,7 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
     private int getLastFullyVisibleTopElement() {
         int count = 0;
         int height = mView.getHeight();
+        height -= getPaddingSum();
         if (heightList != null) {
             for (int i = heightList[0].size() - 1; i >= 0 && height > 0; i--) {
                 height -= heightList[0].get(i);
@@ -513,10 +568,11 @@ public class FastScrollRecyclerViewHelper implements FastScroller.ViewHelper {
             }
         } else {
             int itemHeight = getItemHeight();
-            while (height > 0) {
-                height -= itemHeight;
-                count++;
-            }
+            count = (int) Math.ceil(height / (double) itemHeight);
+//            while (height > 0) {
+//                height -= itemHeight;
+//                count++;
+//            }
         }
 
         return getItemCount() - count;

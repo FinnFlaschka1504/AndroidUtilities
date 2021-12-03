@@ -223,12 +223,12 @@ public class Helpers {
                 NONE(false, false, 3), VALID(true, true, 0), INVALID(false, false, 2), WARNING(true, false, 1);
 
                 private boolean valid;
-                private boolean allwaysValid;
+                private boolean alwaysValid;
                 private int level;
 
-                STATUS(boolean valid, boolean allwaysValid, int level) {
+                STATUS(boolean valid, boolean alwaysValid, int level) {
                     this.valid = valid;
-                    this.allwaysValid = allwaysValid;
+                    this.alwaysValid = alwaysValid;
                     this.level = level;
                 }
 
@@ -237,7 +237,7 @@ public class Helpers {
                 }
 
                 public boolean isAlwaysValid() {
-                    return allwaysValid;
+                    return alwaysValid;
                 }
 
                 public int getLevel() {
@@ -1094,7 +1094,7 @@ public class Helpers {
         private List<Pair<String, CustomUtility.GenericInterface<String>>> requestList = new ArrayList<>();
         private ExecuteBeforeJavaScript executeBeforeJavaScript;
         private boolean alreadyLoaded;
-        private boolean isRedirekted;
+        private boolean isRedirected;
         private CustomUtility.GenericInterface<WebSettings> setSettings;
         private boolean showToasts = true;
         private int urlsIndex;

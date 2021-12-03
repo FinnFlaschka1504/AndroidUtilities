@@ -18,7 +18,7 @@
         tools:visibility="visible">
 
         <ImageView
-            android:id="@+id/dialog_custom_title_backButton"
+            android:id="@+id/dialog_custom_title_buttonLeft"
             style="@style/ImageButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -26,6 +26,7 @@
             android:layout_marginLeft="10dp"
             android:visibility="gone"
             app:srcCompat="@drawable/ic_arrow_back"
+            android:tint="@color/colorDrawable"
             tools:visibility="visible" />
 
         <LinearLayout
@@ -56,6 +57,17 @@
                 android:background="@color/colorDivider" />
         </LinearLayout>
 
+        <ImageView
+            android:id="@+id/dialog_custom_title_buttonRight"
+            style="@style/ImageButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_check"
+            android:tint="@color/colorDrawable"
+            tools:visibility="visible" />
     </FrameLayout>
 
     <com.finn.androidUtilities.MaxDimensionsLayout

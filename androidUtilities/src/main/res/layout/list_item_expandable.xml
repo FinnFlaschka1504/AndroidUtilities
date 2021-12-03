@@ -30,7 +30,7 @@
                 android:layout_marginHorizontal="25dp"
                 android:layout_marginLeft="8dp"
                 android:layout_weight="1"
-                android:text="Clicken"
+                android:text="Klicken"
                 android:textAlignment="center"
                 android:textSize="18sp" />
 

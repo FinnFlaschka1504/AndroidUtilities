@@ -100,6 +100,8 @@ public class CustomDialog {
     private boolean removeLastDivider;
     private boolean titleBackButton;
     private OnDialogCallback titleBackButton_clickListener;
+    private Pair<Integer, OnDialogCallback> titleLeftButton;
+    private Pair<Integer, OnDialogCallback> titleRightButton;
     private CustomList<Pair<Boolean, OnDialogCallback>> onDismissListenerList = new CustomList<>();
     private CustomList<Pair<Boolean, OnDialogCallback>> onShowListenerList = new CustomList<>();
     private boolean removeBackground;
@@ -262,13 +264,29 @@ public class CustomDialog {
         return this;
     }
 
+    public CustomDialog enableStackButtons(boolean showDivider) {
+        this.stackButtons = true;
+        if (showDivider)
+            enableButtonDividerAll();
+        return this;
+    }
+
     public CustomDialog enableStackButtons() {
         this.stackButtons = true;
+        enableButtonDividerAll();
+        return this;
+    }
+
+    public CustomDialog enableExpandButtons(boolean showDividers) {
+        this.expandButtons = true;
+        if (showDividers)
+            enableButtonDividerAll();
         return this;
     }
 
     public CustomDialog enableExpandButtons() {
         this.expandButtons = true;
+        enableButtonDividerAll();
         return this;
     }
 
@@ -285,6 +303,16 @@ public class CustomDialog {
     public CustomDialog enableTitleBackButton(OnDialogCallback onButtonClick) {
         this.titleBackButton = true;
         this.titleBackButton_clickListener = onButtonClick;
+        return this;
+    }
+
+    public CustomDialog enableTitleLeftButton(@DrawableRes int iconId, OnDialogCallback onButtonClick) {
+        titleLeftButton = Pair.create(iconId, onButtonClick);
+        return this;
+    }
+
+    public CustomDialog enableTitleRightButton(@DrawableRes int iconId, OnDialogCallback onButtonClick) {
+        titleRightButton = Pair.create(iconId, onButtonClick);
         return this;
     }
 
@@ -319,6 +347,11 @@ public class CustomDialog {
         return this;
     }
 
+    /**
+     * @param enableDoubleClick
+     * @param onFirstClick_onSecondClick_onDisabled
+     * @return True if second press is needed
+     */
     public CustomDialog enableDoubleClickOutsideToDismiss(@Nullable CustomUtility.GenericReturnInterface<CustomDialog, Boolean> enableDoubleClick, String... onFirstClick_onSecondClick_onDisabled) {
         setDismissWhenClickedOutside(false);
         Helpers.DoubleClickHelper doubleClickHelper = Helpers.DoubleClickHelper.create();
@@ -471,6 +504,14 @@ public class CustomDialog {
         if (textInputHelper == null)
             return false;
         return textInputHelper.isValid();
+    }
+
+    public ImageView getTitleLeftButton() {
+        return dialog.findViewById(R.id.dialog_custom_title_buttonLeft);
+    }
+
+    public ImageView getTitleRightButton() {
+        return dialog.findViewById(R.id.dialog_custom_title_buttonRight);
     }
     //  <----- Getters & Setters -----
 
@@ -924,7 +965,10 @@ public class CustomDialog {
             if (divider != null) {
                 button = new View(context);
                 button.setBackgroundColor(context.getColor(R.color.colorDivider));
-                button.setLayoutParams(new ViewGroup.LayoutParams(stackButtons ? LayoutParams.MATCH_PARENT : CustomUtility.dpToPx(divider), stackButtons ? CustomUtility.dpToPx(divider) : LayoutParams.MATCH_PARENT));
+                ViewGroup.MarginLayoutParams layoutParams = new ViewGroup.MarginLayoutParams(stackButtons ? LayoutParams.MATCH_PARENT : CustomUtility.dpToPx(divider), stackButtons ? CustomUtility.dpToPx(divider) : LayoutParams.MATCH_PARENT);
+                if (!stackButtons)
+                    layoutParams.setMargins(0, CustomUtility.dpToPx(8), 0, CustomUtility.dpToPx(8));
+                button.setLayoutParams(layoutParams);
             } else if (iconId == null) {
                 button = new Button(context, null, 0, ((coloredActionButtons && isActionButton()) || colored) ? R.style.ActionButtonStyle : R.style.ColoredBorderlessButtonStyle) {
                         @Override
@@ -973,7 +1017,7 @@ public class CustomDialog {
                 button.setId(id);
             }
 
-            if (!buttonLabelAllCaps)
+            if (!buttonLabelAllCaps && divider == null)
                 ((Button) button).setAllCaps(false);
 
             if (disabled)
@@ -1558,17 +1602,29 @@ public class CustomDialog {
         if (removeLastDivider || buttonHelperList.isEmpty())
             getDividers().getLast().setVisibility(View.GONE);
 
-        if (titleBackButton) {
-            ImageView dialog_custom_title_backButton = dialog.findViewById(R.id.dialog_custom_title_backButton);
-            dialog_custom_title_backButton.setOnClickListener(v -> {
-                if (titleBackButton_clickListener == null)
-                    dismiss();
-                else
-                    titleBackButton_clickListener.runOnDialogCallback(this);
-            });
-            dialog_custom_title_backButton.setVisibility(View.VISIBLE);
-            TextView dialog_custom_title = dialog.findViewById(R.id.dialog_custom_title);
+        if (titleBackButton || titleLeftButton != null || titleRightButton != null) {
+            ImageView titleButtonLeft = dialog.findViewById(R.id.dialog_custom_title_buttonLeft);
+            ImageView titleButtonRight = dialog.findViewById(R.id.dialog_custom_title_buttonRight);
+            if (titleBackButton) {
+                titleButtonLeft.setOnClickListener(v -> {
+                    if (titleBackButton_clickListener == null)
+                        dismiss();
+                    else
+                        titleBackButton_clickListener.runOnDialogCallback(this);
+                });
+                titleButtonLeft.setVisibility(View.VISIBLE);
+            } else if (titleLeftButton != null) {
+                titleButtonLeft.setImageResource(titleLeftButton.first);
+                titleButtonLeft.setOnClickListener(v -> titleLeftButton.second.runOnDialogCallback(this));
+                titleButtonLeft.setVisibility(View.VISIBLE);
+            }
 
+            if (titleRightButton != null) {
+                titleButtonRight.setImageResource(titleRightButton.first);
+                titleButtonRight.setOnClickListener(v -> titleRightButton.second.runOnDialogCallback(this));
+                titleButtonRight.setVisibility(View.VISIBLE);
+            }
+            TextView dialog_custom_title = dialog.findViewById(R.id.dialog_custom_title);
             CustomUtility.setMargins(dialog_custom_title, 60, -1, 60, -1);
         }
 

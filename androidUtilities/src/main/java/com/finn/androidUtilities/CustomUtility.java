@@ -79,6 +79,8 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -87,6 +89,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -97,6 +100,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -113,8 +117,8 @@ public class CustomUtility {
 
     //  --------------- isOnline --------------->
     static public boolean isOnline(Context context) {
-        boolean isOnleine = isOnline();
-        if (isOnleine) {
+        boolean isOnline = isOnline();
+        if (isOnline) {
             return true;
         } else {
             Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show();
@@ -517,23 +521,6 @@ public class CustomUtility {
         restartApp(context, context.getClass());
     }
 
-
-    public static void openUrl(Context context, String url, boolean select) {
-        if (!url.contains("http://") && !url.contains("https://"))
-            url = "http://".concat(url);
-        if (!select) {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.setData(Uri.parse(url));
-            context.startActivity(i);
-        } else {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.setData(Uri.parse(url));
-            Intent chooser = Intent.createChooser(i, "Öffnen mit...");
-            if (chooser.resolveActivity(context.getPackageManager()) != null)
-                context.startActivity(chooser);
-        }
-    }
-
     public static String formatToEuro(double amount) {
         if (amount % 1 == 0)
             return String.format(Locale.GERMANY, "%.0f €", amount);
@@ -636,11 +623,6 @@ public class CustomUtility {
     }
     //  <----- Filter -----
 
-    //  ------------------------- Checks ------------------------->
-    public static boolean isUrl(String text) {
-        return text.matches("(?i)^(?:(?:https?|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#]\\S*)?$");
-    }
-    //  <------------------------- Checks -------------------------
 
     //  --------------- Time --------------->
     public static Date removeTime(Date date) {
@@ -943,6 +925,13 @@ public class CustomUtility {
         return "";
     }
 
+    public static String getEllipsedString(String text, int length) {
+        if (text.length() < length)
+            return text;
+        else
+            return text.substring(0, length - 1).trim() + "…";
+    }
+
     public static String subString(String text, int start, int ende) {
         if (start < 0)
             start = text.length() + start;
@@ -1058,26 +1047,7 @@ public class CustomUtility {
         });
     }
 
-    public static void searchQueryOnInternet(AppCompatActivity activity, CharSequence query) {
-        query = encodeTextForUrl(query);
-        String url = "https://www.google.de/search?q=" + query;
 
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse(url));
-        Intent chooser = Intent.createChooser(intent, "Suchen mit...");
-        if (chooser.resolveActivity(activity.getPackageManager()) != null)
-            activity.startActivity(chooser);
-        else
-            Toast.makeText(activity, "Fehler", Toast.LENGTH_SHORT).show();
-    }
-
-    public static CharSequence encodeTextForUrl(CharSequence text) {
-        try {
-            text = URLEncoder.encode(text.toString(), "UTF-8");
-        } catch (UnsupportedEncodingException ignored) {
-        }
-        return text;
-    }
 
     public static CustomList<String> getAllSubTextMutations(String text) {
         text = text.toLowerCase();
@@ -1105,6 +1075,59 @@ public class CustomUtility {
         return String.valueOf(array);
     }
     //  <------------------------- Text -------------------------
+
+
+    /**  ------------------------- Internet ------------------------->  */
+    public static void openUrl(Context context, String url, boolean select) {
+        if (!url.contains("http://") && !url.contains("https://"))
+            url = "http://".concat(url);
+        if (!select) {
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            context.startActivity(i);
+        } else {
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            Intent chooser = Intent.createChooser(i, "Öffnen mit...");
+            if (chooser.resolveActivity(context.getPackageManager()) != null)
+                context.startActivity(chooser);
+        }
+    }
+
+    public static boolean isUrl(String text) {
+        return text.matches("(?i)^(?:(?:https?|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#]\\S*)?$");
+    }
+
+    public static CharSequence encodeTextForUrl(CharSequence text) {
+        try {
+            text = URLEncoder.encode(text.toString(), "UTF-8");
+        } catch (UnsupportedEncodingException ignored) {
+        }
+        return text;
+    }
+
+    public static void searchQueryOnInternet(AppCompatActivity activity, CharSequence query) {
+        query = encodeTextForUrl(query);
+        String url = "https://www.google.de/search?q=" + query;
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        Intent chooser = Intent.createChooser(intent, "Suchen mit...");
+        if (chooser.resolveActivity(activity.getPackageManager()) != null)
+            activity.startActivity(chooser);
+        else
+            Toast.makeText(activity, "Fehler", Toast.LENGTH_SHORT).show();
+    }
+
+    public static String getDomainName(String url) {
+        try {
+            URI uri = new URI(url);
+            String domain = uri.getHost();
+            return domain.startsWith("www.") ? domain.substring(4) : domain;
+        } catch (URISyntaxException e) {
+            return null;
+        }
+    }    /**  <------------------------- Internet -------------------------  */
 
 
     //  --------------- Layout --------------->
@@ -1160,7 +1183,7 @@ public class CustomUtility {
         v.startAnimation(a);
     }
 
-    public static void changeHeight(final View v, ChangeLayout changeLayout) {
+    public static Pair<Integer,Integer> changeHeight(final View v, ChangeLayout changeLayout) {
         int matchParentMeasureSpec = View.MeasureSpec.makeMeasureSpec(((View) v.getParent()).getWidth(), View.MeasureSpec.EXACTLY);
         int wrapContentMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         v.measure(matchParentMeasureSpec, wrapContentMeasureSpec);
@@ -1174,7 +1197,7 @@ public class CustomUtility {
         int targetHeight = v.getMeasuredHeight();
 
         if (previousHeight == targetHeight)
-            return;
+            return Pair.create(previousHeight,targetHeight);
 
         v.setPressed(false);
 
@@ -1186,6 +1209,7 @@ public class CustomUtility {
         });
 
         valueAnimator.setDuration(300).start();
+        return Pair.create(previousHeight,targetHeight);
     }
 
     public interface ChangeLayout {
@@ -1417,6 +1441,22 @@ public class CustomUtility {
             field.setAccessible(true);
             field.set(t, value);
         } catch (NoSuchFieldException | IllegalAccessException ignored) {
+        }
+    }
+
+    public static <T, V> Object reflectionGet(Object o, String... fieldNames) {
+        Object currentObject = o;
+        try {
+            for (String fieldName : fieldNames) {
+                Field field = currentObject.getClass().getDeclaredField(fieldName);
+                field.setAccessible(true);
+                currentObject = field.get(currentObject);
+                if (currentObject == null)
+                    break;
+            }
+            return currentObject;
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            return null;
         }
     }
 
@@ -2166,6 +2206,8 @@ public class CustomUtility {
 
     /**  ------------------------- Log ------------------------->  */
     public static void logD(String tag, String msg) {
+        if (tag == null)
+            tag = "GenericTag";
         logD(tag, msg, (Object) null);
 //        Log.d(tag + " position", "at " + fullClassName + "." + methodName + );
 
@@ -2195,12 +2237,82 @@ public class CustomUtility {
 
     }
 
-    public static void logD(String tag, String format, Object... args) {
+    public static void logD(@Nullable String tag, String format, Object... args) {
+        if (tag == null)
+            tag = "GenericTag";
         try {
             logD(tag, String.format(Locale.getDefault(), format, args), (Object) null);
         } catch (Exception e) {
             logD(tag, "<FEHLER> " + e.getMessage(), (Object) null);
         }
     }
+
+    public static GenericInterface<Boolean> logTiming() {
+        long start = System.nanoTime();
+        long[] last = {start};
+        logD(null, "Logged Duration: Start");
+        List<Long> steps = new ArrayList<>();
+        steps.add(0L);
+        return isStep -> {
+            long newTime = System.nanoTime();
+            if (isStep) {
+                long stepTime = newTime - last[0];
+                logD(null, String.format(Locale.getDefault(), "Logged Duration: Step: %12d | Duration: %d", stepTime, newTime - start));
+                last[0] = newTime;
+                steps.add(stepTime);
+            } else {
+                if (last[0] == start)
+                    logD(null, "Logged Duration: End:  " + (newTime - start));
+                else {
+                    long fullDuration = newTime - start;
+                    long stepTime = newTime - last[0];
+                    logD(null, String.format(Locale.getDefault(), "Logged Duration: End:  %12d | Duration: %d", stepTime, fullDuration));
+                    steps.add(stepTime);
+                    String resultTable =
+                            "  i |     step     |   duration   |   %" +
+                            "\n=========================================";
+                    long currentSum = 0;
+                    for (int i = 0; i < steps.size(); i++) {
+                        if (i == 0)
+                            continue;
+                        Long thisStep = steps.get(i);
+                        currentSum += thisStep;
+                        String lineString = String.format(Locale.getDefault(), "\n%3d | %12d | %12d | %5.2f", i, thisStep, currentSum, (thisStep / (double) fullDuration) * 100);
+                        resultTable += lineString;
+                    }
+                    logD(null, "\n" + resultTable);
+                }
+            }
+        };
+    }
+
+    public static final Map<String, GenericInterface<Boolean>> logTimingMap = new HashMap<>();
+
+    public static void logTiming(String tag, Boolean status) {
+        if (status == null) {
+            logTimingMap.put(tag, logTiming());
+        } else {
+            GenericInterface<Boolean> logger = logTimingMap.get(tag);
+            if (logger != null)
+                logger.run(status);
+            else
+                logD(null, "Logged Duration: <ERROR> (Tag '" + tag + "' nicht vorhanden)");
+        }
+    }
     /**  <------------------------- Log -------------------------  */
+
+
+    /**  ------------------------- Comparator ------------------------->  */
+    public static <T> Comparator<T> comparatorSimpleBool(Predicate<T> predicate) {
+        return (o1, o2) -> {
+            boolean res1 = predicate.test(o1);
+            boolean res2 = predicate.test(o2);
+            if (res1 && !res2)
+                return -1;
+            if (!res1 && res2)
+                return 1;
+            return 0;
+        };
+    }
+    /**  <------------------------- Comparator -------------------------  */
 }

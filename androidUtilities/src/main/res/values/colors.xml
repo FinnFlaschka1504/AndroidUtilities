@@ -7,6 +7,7 @@
     <color name="colorDivider">#D7D8DD</color>
 
     <color name="colorGreen">#4CAF50</color>
+    <color name="colorYellow">#FFC107</color>
     <color name="colorTransparent">#00FFFFFF</color>
 
     <color name="colorTileBackground">@android:color/background_light</color>
