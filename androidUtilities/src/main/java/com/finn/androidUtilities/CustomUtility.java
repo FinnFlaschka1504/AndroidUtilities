@@ -68,7 +68,7 @@ import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
-import com.pixplicity.sharp.Sharp;
+//import com.pixplicity.sharp.Sharp;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -110,7 +110,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
-import top.defaults.drawabletoolbox.DrawableBuilder;
+//import top.defaults.drawabletoolbox.DrawableBuilder;
 
 
 public class CustomUtility {
@@ -1338,24 +1338,24 @@ public class CustomUtility {
 
 
     //  --------------- DrawableBuilder --------------->
-    public static Drawable drawableBuilder_rectangle(int color, int corners, boolean ripple) {
-        DrawableBuilder drawableBuilder = new DrawableBuilder()
-                .rectangle()
-                .solidColor(color)
-                .cornerRadius(CustomUtility.dpToPx(corners));
-        if (ripple) drawableBuilder
-                .ripple()
-                .rippleColor(0xF8868686);
-        return drawableBuilder
-                .build();
-    }
-
-    public static Drawable drawableBuilder_oval(int color) {
-        return new DrawableBuilder()
-                .oval()
-                .solidColor(color)
-                .build();
-    }
+//    public static Drawable drawableBuilder_rectangle(int color, int corners, boolean ripple) {
+//        DrawableBuilder drawableBuilder = new DrawableBuilder()
+//                .rectangle()
+//                .solidColor(color)
+//                .cornerRadius(CustomUtility.dpToPx(corners));
+//        if (ripple) drawableBuilder
+//                .ripple()
+//                .rippleColor(0xF8868686);
+//        return drawableBuilder
+//                .build();
+//    }
+//
+//    public static Drawable drawableBuilder_oval(int color) {
+//        return new DrawableBuilder()
+//                .oval()
+//                .solidColor(color)
+//                .build();
+//    }
 
     public static int setAlphaOfColor(int color, int alpha) {
         return (color & 0x00ffffff) | (alpha << 24);
@@ -1971,7 +1971,7 @@ public class CustomUtility {
             public void onResponse(Call call, Response response) throws IOException {
                 InputStream stream = response.body().byteStream();
                 try {
-                    Sharp.loadInputStream(stream).into(target);
+//                    Sharp.loadInputStream(stream).into(target);
                 } catch (Exception e) {
                     runOnFailure.run();
                 }

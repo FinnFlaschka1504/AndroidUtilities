@@ -56,7 +56,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import kotlin.jvm.JvmStatic;
+//import kotlin.jvm.JvmStatic;
 import me.zhanghai.android.fastscroll.FastScroller;
 import me.zhanghai.android.fastscroll.FastScrollerBuilder;
 
@@ -807,7 +807,7 @@ public class CustomRecycler<T> {
             drawIcon(canvas, viewItem, dX, drawCommand.icon);
         }
 
-        @JvmStatic
+//        @JvmStatic
         void draw() {
             if (iconResId == 0)
                 return;
